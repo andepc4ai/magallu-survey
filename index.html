@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Magallu Voter Survey</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f3ec; --card:#fff; --ink:#1d1b16; --muted:#6b665c; --line:#e5dfd2;
+  --brand:#b4461c; --brand-ink:#fff; --brand-soft:#fbe9df;
+  --strong:#15803d; --leaning:#65a30d; --undecided:#d97706; --opposed:#dc2626;
+  --ok:#15803d; --radius:14px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Telugu",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:17px;line-height:1.35}
+button,input,select,textarea{font:inherit;color:inherit}
+.hide{display:none!important}
+.wrap{max-width:640px;margin:0 auto;padding:0 12px 96px}
+.en{color:var(--muted);font-size:.78em;font-weight:400}
+
+/* top bar */
+.top{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--brand-ink);padding:10px 14px 12px}
+.top .row{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
+.top h1{font-size:1.05rem;margin:0;flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.top .who{font-size:.85rem;opacity:.9}
+.iconbtn{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;min-width:44px;height:40px;padding:0 10px;font-size:.9rem}
+.prog{max-width:640px;margin:8px auto 0;display:flex;align-items:center;gap:10px;font-size:.88rem}
+.bar{flex:1;height:8px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:#fff;width:0;transition:width .3s}
+
+/* login */
+.login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login .box{background:var(--card);border-radius:20px;padding:26px 22px;width:100%;max-width:420px;box-shadow:0 6px 30px rgba(0,0,0,.08)}
+.login h2{margin:0 0 4px;font-size:1.4rem}
+.login p{margin:0 0 18px;color:var(--muted)}
+label.lb{display:block;font-weight:600;margin:14px 0 6px}
+.field{width:100%;height:54px;border:2px solid var(--line);border-radius:12px;padding:0 14px;background:#fff;font-size:1.1rem}
+.field:focus{outline:none;border-color:var(--brand)}
+.pin{letter-spacing:.6em;text-align:center;font-size:1.5rem}
+.big{width:100%;height:58px;border:0;border-radius:14px;background:var(--brand);color:#fff;font-weight:700;font-size:1.15rem;margin-top:20px}
+.big:active{transform:scale(.99)}
+.err{color:var(--opposed);margin-top:10px;min-height:1.2em;font-weight:600}
+
+/* filters */
+.search{position:relative;margin:12px 0 10px}
+.search input{width:100%;height:52px;border:2px solid var(--line);border-radius:14px;padding:0 14px 0 44px;background:#fff;font-size:1.05rem}
+.search input:focus{outline:none;border-color:var(--brand)}
+.search svg{position:absolute;left:14px;top:15px;opacity:.5}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 8px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:2px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;font-weight:600;font-size:.95rem;white-space:nowrap}
+.chip.on{background:var(--ink);border-color:var(--ink);color:#fff}
+select.field{height:50px;font-size:1rem;margin-bottom:8px}
+.count{color:var(--muted);font-size:.9rem;margin:4px 2px 10px}
+
+/* house list */
+.house{background:var(--card);border-radius:var(--radius);margin-bottom:10px;padding:12px 14px;border:1px solid var(--line);display:block;width:100%;text-align:left}
+.house:active{background:#fffaf5}
+.house .hd{display:flex;align-items:center;gap:8px}
+.hno{font-weight:700;font-size:1.08rem}
+.badge{font-size:.78rem;border-radius:999px;padding:2px 9px;font-weight:600;background:var(--brand-soft);color:var(--brand)}
+.badge.done{background:#dcfce7;color:var(--ok)}
+.badge.new{background:#e0e7ff;color:#3730a3}
+.house .st{color:var(--muted);font-size:.85rem;margin-top:2px}
+.names{margin-top:6px;font-size:.95rem;display:flex;flex-wrap:wrap;gap:4px 12px}
+.nm{display:inline-flex;align-items:center;gap:5px}
+.dot{width:10px;height:10px;border-radius:50%;background:#d6d0c2;flex:none}
+.dot.Strong{background:var(--strong)}.dot.Leaning{background:var(--leaning)}.dot.Undecided{background:var(--undecided)}.dot.Opposed{background:var(--opposed)}.dot.v{background:#94a3b8}
+.more{width:100%;height:52px;border:2px dashed var(--line);background:transparent;border-radius:14px;font-weight:600;color:var(--muted)}
+
+/* house screen */
+.sheet{position:fixed;inset:0;background:var(--bg);z-index:20;overflow-y:auto}
+.sheet .top{position:sticky}
+.hbox{background:var(--card);border-radius:var(--radius);padding:14px;margin:12px 0;border:1px solid var(--line)}
+.hbox h3{margin:0 0 10px;font-size:1rem}
+.wards{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wb{height:46px;border:2px solid var(--line);background:#fff;border-radius:10px;font-weight:700;font-size:1.05rem}
+.wb.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.allv{width:100%;height:52px;border:0;border-radius:12px;background:var(--ok);color:#fff;font-weight:700;margin-top:12px;font-size:1.02rem}
+.vc{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--line);border-left:6px solid #d6d0c2}
+.vc.Strong{border-left-color:var(--strong)}.vc.Leaning{border-left-color:var(--leaning)}.vc.Undecided{border-left-color:var(--undecided)}.vc.Opposed{border-left-color:var(--opposed)}
+.vn{font-weight:700;font-size:1.15rem}
+.vm{color:var(--muted);font-size:.88rem;margin:2px 0 10px}
+.q{font-weight:600;font-size:.92rem;margin:12px 0 6px}
+.tog{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tb{min-height:50px;border:2px solid var(--line);background:#fff;border-radius:12px;font-weight:700;padding:4px 6px;font-size:1rem}
+.tb small{display:block;font-weight:400;font-size:.72rem;color:var(--muted)}
+.tb.on small{color:inherit;opacity:.85}
+.tb.vis.on{background:var(--ok);border-color:var(--ok);color:#fff}
+.tb.nv.on{background:#475569;border-color:#475569;color:#fff}
+.sup{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sup .tb.on[data-v=Strong]{background:var(--strong);border-color:var(--strong);color:#fff}
+.sup .tb.on[data-v=Leaning]{background:var(--leaning);border-color:var(--leaning);color:#fff}
+.sup .tb.on[data-v=Undecided]{background:var(--undecided);border-color:var(--undecided);color:#fff}
+.sup .tb.on[data-v=Opposed]{background:var(--opposed);border-color:var(--opposed);color:#fff}
+.iss{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.iss .tb{min-height:58px;font-size:.95rem}
+.iss .tb.on{background:var(--ink);border-color:var(--ink);color:#fff}
+textarea{width:100%;min-height:58px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;resize:vertical;background:#fff}
+textarea:focus{outline:none;border-color:var(--brand)}
+.mob{display:flex;gap:8px;align-items:center}
+.mob input{flex:1;height:52px;border:2px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;font-size:1.15rem;letter-spacing:.06em}
+.mob input:focus{outline:none;border-color:var(--brand)}
+.mob input.bad{border-color:var(--opposed)}
+.mob input.good{border-color:var(--ok)}
+.call{flex:none;width:52px;height:52px;border-radius:12px;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.3rem}
+.mhint{font-size:.8rem;margin-top:4px;min-height:1em;color:var(--muted)}
+.mhint.bad{color:var(--opposed)}
+.next{width:100%;height:56px;border:0;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;font-size:1.05rem;margin:4px 0 20px}
+
+/* status bar */
+.sync{position:fixed;left:0;right:0;bottom:0;z-index:30;background:#1f2937;color:#fff;padding:10px 14px calc(10px + env(safe-area-inset-bottom));font-size:.92rem;display:flex;align-items:center;gap:10px;justify-content:center}
+.sync.ok{background:#14532d}.sync.off{background:#7c2d12}
+.toast{position:fixed;left:50%;bottom:64px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:999px;z-index:40;font-weight:600;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.show{opacity:1}
+.demo{background:#fef3c7;color:#78350f;text-align:center;font-size:.85rem;padding:6px 10px}
+.loading{text-align:center;padding:60px 20px;color:var(--muted)}
+.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}
+@keyframes s{to{transform:rotate(360deg)}}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+</style>
+</head>
+<body>
+
+<div id="demoBar" class="demo hide">ఇది డెమో — మార్పులు ఎక్కడా సేవ్ కావు · Preview only, nothing is saved</div>
+
+<!-- LOGIN -->
+<section id="vLogin" class="login">
+  <div class="box">
+    <h2>మగల్లు ఓటర్ సర్వే</h2>
+    <p>Magallu Voter Survey</p>
+    <label class="lb">మీ పేరు <span class="en">Your name</span></label>
+    <select id="lName" class="field"><option value="">— ఎంచుకోండి / Select —</option></select>
+    <label class="lb">పిన్ <span class="en">4-digit PIN</span></label>
+    <input id="lPin" class="field pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
+    <button id="lGo" class="big">లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span></button>
+    <div id="lErr" class="err"></div>
+  </div>
+</section>
+
+<!-- LIST -->
+<section id="vList" class="hide">
+  <div class="top">
+    <div class="row">
+      <h1>ఓటర్ సర్వే</h1>
+      <span class="who" id="who"></span>
+      <button class="iconbtn" id="btnRefresh" title="Refresh">⟳</button>
+      <button class="iconbtn" id="btnOut" title="Logout">⎋</button>
+    </div>
+    <div class="prog"><span id="progTxt">—</span><div class="bar"><i id="progBar"></i></div></div>
+  </div>
+  <div class="wrap">
+    <div class="search">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="పేరు / ఇంటి నం. / ఓటర్ ID వెతకండి">
+    </div>
+    <div class="chips" id="boothChips"></div>
+    <select id="secSel" class="field"></select>
+    <div class="chips" id="statChips"></div>
+    <div class="count" id="count"></div>
+    <div id="list"><div class="loading"><div class="spin"></div>డేటా లోడ్ అవుతోంది… <br><span class="en">Loading voters…</span></div></div>
+  </div>
+</section>
+
+<!-- HOUSE -->
+<section id="vHouse" class="sheet hide">
+  <div class="top">
+    <div class="row">
+      <button class="iconbtn" id="btnBack">← వెనక్కి</button>
+      <h1 id="hTitle"></h1>
+    </div>
+    <div class="prog" id="hSub"></div>
+  </div>
+  <div class="wrap" id="hBody"></div>
+</section>
+
+<div id="sync" class="sync ok hide"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+var DEMO_ROWS = /*DEMO_DATA*/[];
+(function(){
+"use strict";
+var HAS_GAS = typeof google !== 'undefined' && google.script && google.script.run;
+var API_URL = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
+var HAS_API = !HAS_GAS && /^https:\/\/script\.google\.com\//.test(API_URL);
+var DEMO = !HAS_GAS && !HAS_API;
+var LS = {
+  get:function(k){try{return JSON.parse(localStorage.getItem('mvs_'+k));}catch(e){return null;}},
+  set:function(k,v){try{localStorage.setItem('mvs_'+k,JSON.stringify(v));}catch(e){}},
+  del:function(k){try{localStorage.removeItem('mvs_'+k);}catch(e){}}
+};
+var $ = function(id){return document.getElementById(id);};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+var SUP = [
+  {v:'Strong',te:'పూర్తి మద్దతు',en:'Strong'},
+  {v:'Leaning',te:'మొగ్గు ఉంది',en:'Leaning'},
+  {v:'Undecided',te:'తేల్చలేదు',en:'Undecided'},
+  {v:'Opposed',te:'వ్యతిరేకం',en:'Opposed'}
+];
+var ISS = [
+  {v:'Water',te:'💧 నీరు',en:'Water'},
+  {v:'Road',te:'🛣️ రోడ్డు',en:'Road'},
+  {v:'Drainage',te:'🚰 డ్రైనేజీ',en:'Drainage'},
+  {v:'Pensions',te:'👵 పింఛన్',en:'Pensions'},
+  {v:'Govt Schemes',te:'📋 పథకాలు',en:'Govt Schemes'},
+  {v:'Other',te:'➕ ఇతర',en:'Other'}
+];
+var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్లి',Wife:'భార్య',Other:'సంబంధి'};
+
+var S = {
+  user: LS.get('user'),           // {name,pin,booth,wards}
+  rows: [], byId:{}, houses:[], hById:{},
+  booth: 'all', sec: 'all', stat: 'todo', q: '', limit: 40,
+  pending: LS.get('pending') || {}, // id -> {s,r,e,f}
+  inflight: false, online: navigator.onLine !== false,
+  openHouse: null, wards: 14
+};
+
+/* ---------- server calls ---------- */
+function call(fn){
+  var args = Array.prototype.slice.call(arguments,1);
+  return new Promise(function(res,rej){
+    if (DEMO) return setTimeout(function(){ try{ res(demoCall(fn,args)); }catch(e){ rej(e); } }, 250);
+    if (HAS_API){
+      fetch(API_URL, {method:'POST', redirect:'follow', credentials:'omit',
+        headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({fn:fn,args:args})})
+        .then(function(r){ return r.json(); })
+        .then(function(j){ if (j && j.ok) res(j.data); else rej(new Error(j && j.error || 'SERVER_ERROR')); })
+        .catch(rej);
+      return;
+    }
+    var r = google.script.run.withSuccessHandler(res).withFailureHandler(rej);
+    r[fn].apply(r,args);
+  });
+}
+function demoCall(fn,args){
+  if (fn==='listVolunteers') return ['Anudeep','Volunteer 1','Volunteer 2'];
+  if (fn==='login'){ if(String(args[1])!=='1234') throw new Error('WRONG_PIN'); return {name:args[0],booth:'',wards:14}; }
+  if (fn==='getVoters') { var saved = LS.get('demo_rows'); return {rows: saved || DEMO_ROWS, at:Date.now()}; }
+  if (fn==='saveUpdates'){
+    var rows = LS.get('demo_rows') || JSON.parse(JSON.stringify(DEMO_ROWS));
+    args[2].forEach(function(u){ rows.forEach(function(r){ if(r[10]===u.e){
+      var f=u.f; if('ward' in f) r[13]=f.ward; if('visited' in f) r[14]=f.visited; if('support' in f) r[15]=f.support;
+      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; r[18]=args[0]; }});});
+    LS.set('demo_rows',rows);
+    return {saved:args[2].length,failed:[]};
+  }
+}
+
+/* ---------- data shaping ---------- */
+function toObj(a){
+  return {s:a[0],r:a[1],booth:a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
+    e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',id:a[0]+':'+a[10]};
+}
+function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
+function ingest(raw){
+  S.rows = raw.map(toObj); S.byId = {};
+  S.rows.forEach(function(v){ S.byId[v.id]=v; });
+  // re-apply local unsent edits on top of server data
+  Object.keys(S.pending).forEach(function(id){ var v=S.byId[id]; if(v) applyLocal(v,S.pending[id].f); });
+  var map = {};
+  S.rows.forEach(function(v){
+    var hk = v.booth+'|'+(v.house || ('?'+v.sec+v.sr));
+    var h = map[hk] || (map[hk] = {id:hk,booth:v.booth,house:v.house||'—',sec:v.sec,secNo:v.secNo,v:[]});
+    h.v.push(v);
+  });
+  S.houses = Object.keys(map).map(function(k){ var h=map[k]; h.sort=h.booth+'|'+natKey(h.house); return h; })
+    .sort(function(a,b){ return a.sort<b.sort?-1:a.sort>b.sort?1:0; });
+  S.hById = map;
+  buildFilters();
+}
+function applyLocal(v,f){
+  if('ward' in f) v.ward = f.ward===''?'':Number(f.ward);
+  if('visited' in f) v.visited = f.visited==='Visited';
+  if('support' in f) v.support = f.support;
+  if('issue' in f) v.issue = f.issue;
+  if('notes' in f) v.notes = f.notes;
+  if('mobile' in f) v.mobile = f.mobile;
+}
+function cleanMobile(s){
+  var d = String(s||'').replace(/\D/g,'');
+  if (d.length===12 && d.indexOf('91')===0) d=d.slice(2);
+  if (d.length===11 && d.charAt(0)==='0') d=d.slice(1);
+  return d;
+}
+function validMobile(d){ return /^[6-9]\d{9}$/.test(d); }
+function isDone(v){ return v.visited && !!v.support; }
+
+/* ---------- edits & sync ---------- */
+function edit(v, f){
+  applyLocal(v,f); v.vol = S.user.name;
+  var p = S.pending[v.id] || (S.pending[v.id] = {s:v.s,r:v.r,e:v.e,f:{}});
+  for (var k in f) p.f[k] = f[k];
+  LS.set('pending',S.pending);
+  renderSync(); scheduleFlush(700);
+}
+var flushT;
+function scheduleFlush(ms){ clearTimeout(flushT); flushT = setTimeout(flush, ms); }
+function flush(){
+  var ids = Object.keys(S.pending);
+  if (!ids.length || S.inflight) return;
+  if (!S.online && !DEMO){ renderSync(); return; }
+  S.inflight = true; renderSync();
+  var batch = ids.slice(0,40).map(function(id){ return {id:id, u:JSON.parse(JSON.stringify(S.pending[id]))}; });
+  call('saveUpdates', S.user.name, S.user.pin, batch.map(function(b){return b.u;})).then(function(res){
+    batch.forEach(function(b){
+      var cur = S.pending[b.id]; if(!cur) return;
+      // drop only fields that haven't changed again while we were sending
+      for (var k in b.u.f) if (cur.f[k] === b.u.f[k]) delete cur.f[k];
+      if (!Object.keys(cur.f).length) delete S.pending[b.id];
+    });
+    LS.set('pending',S.pending); S.inflight=false; S.online=true;
+    if ((res.failed||[]).length) toast('⚠️ '+res.failed.length+' సేవ్ కాలేదు');
+    renderSync();
+    if (Object.keys(S.pending).length) scheduleFlush(300);
+  }).catch(function(err){
+    S.inflight=false;
+    if (String(err && err.message).indexOf('WRONG_PIN')>=0){ logout('పిన్ మారింది. మళ్ళీ లాగిన్ అవ్వండి'); return; }
+    S.online=false; renderSync(); scheduleFlush(8000);
+  });
+}
+function renderSync(){
+  var n = Object.keys(S.pending).length, el = $('sync');
+  if (!S.user){ el.classList.add('hide'); return; }
+  el.classList.remove('hide');
+  if (!n){ el.className='sync ok'; el.textContent = DEMO ? '✓ సేవ్ అయింది (డెమో)' : '✓ అన్నీ సేవ్ అయ్యాయి · All saved'; return; }
+  if (!S.online && !DEMO){ el.className='sync off'; el.textContent='📵 ఇంటర్నెట్ లేదు — '+n+' మంది వివరాలు ఫోన్‌లో ఉన్నాయి, నెట్ రాగానే పంపుతాం'; return; }
+  el.className='sync'; el.textContent='⏳ '+n+' పంపుతున్నాం… · Saving';
+}
+window.addEventListener('online',function(){S.online=true;renderSync();scheduleFlush(200);});
+window.addEventListener('offline',function(){S.online=false;renderSync();});
+setInterval(function(){ if(Object.keys(S.pending).length) flush(); }, 15000);
+
+/* ---------- filters ---------- */
+function buildFilters(){
+  var booths = {}; S.rows.forEach(function(v){booths[v.booth]=1;});
+  var bl = ['all'].concat(Object.keys(booths).sort());
+  $('boothChips').innerHTML = bl.map(function(b){
+    return '<button class="chip'+(String(S.booth)===String(b)?' on':'')+'" data-b="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>';
+  }).join('');
+  var secs = {};
+  S.rows.forEach(function(v){ if(S.booth==='all'||String(v.booth)===String(S.booth)) secs[v.sec]=(secs[v.sec]||0)+1; });
+  if (S.sec!=='all' && !secs[S.sec]) S.sec='all';
+  $('secSel').innerHTML = '<option value="all">అన్ని వీధులు · All streets</option>' +
+    Object.keys(secs).sort().map(function(s){ return '<option value="'+esc(s)+'"'+(s===S.sec?' selected':'')+'>'+esc(s)+' ('+secs[s]+')</option>'; }).join('');
+  var st = [['todo','మిగిలినవి','Pending'],['all','అన్నీ','All'],['done','పూర్తయినవి','Done']];
+  $('statChips').innerHTML = st.map(function(x){ return '<button class="chip'+(S.stat===x[0]?' on':'')+'" data-s="'+x[0]+'">'+x[1]+' <span class="en" style="color:inherit;opacity:.7">'+x[2]+'</span></button>'; }).join('');
+}
+$('boothChips').onclick=function(e){var b=e.target.closest('[data-b]'); if(!b)return; S.booth=b.dataset.b; S.limit=40; LS.set('booth',S.booth); buildFilters(); renderList();};
+$('statChips').onclick=function(e){var b=e.target.closest('[data-s]'); if(!b)return; S.stat=b.dataset.s; S.limit=40; buildFilters(); renderList();};
+$('secSel').onchange=function(){S.sec=this.value; S.limit=40; renderList();};
+var qT; $('q').oninput=function(){clearTimeout(qT); var t=this; qT=setTimeout(function(){S.q=t.value.trim().toLowerCase(); S.limit=40; renderList();},180);};
+
+/* ---------- list ---------- */
+function houseMatches(h){
+  if (S.booth!=='all' && String(h.booth)!==String(S.booth)) return false;
+  if (S.sec!=='all' && h.sec!==S.sec) return false;
+  var done = h.v.every(isDone);
+  if (S.stat==='todo' && done) return false;
+  if (S.stat==='done' && !h.v.some(isDone)) return false;
+  if (S.q){
+    var q=S.q;
+    if (String(h.house).toLowerCase().indexOf(q)===0) return true;
+    return h.v.some(function(v){ return (v.name+' '+v.relN+' '+v.e+' '+v.mobile).toLowerCase().indexOf(q)>=0; });
+  }
+  return true;
+}
+function renderList(){
+  var hs = S.houses.filter(houseMatches);
+  var scope = S.rows.filter(function(v){ return (S.booth==='all'||String(v.booth)===String(S.booth)) && (S.sec==='all'||v.sec===S.sec); });
+  var vis = scope.filter(isDone).length;
+  $('progTxt').textContent = 'పూర్తి '+vis+' / '+scope.length;
+  $('progBar').style.width = (scope.length? (100*vis/scope.length):0)+'%';
+  var voters = hs.reduce(function(a,h){return a+h.v.length;},0);
+  $('count').textContent = hs.length+' ఇళ్ళు · '+voters+' ఓటర్లు';
+  if (!hs.length){ $('list').innerHTML='<div class="empty">ఏమీ దొరకలేదు 🙂<br><span class="en">Nothing here</span></div>'; return; }
+  var html = hs.slice(0,S.limit).map(function(h){
+    var d = h.v.filter(isDone).length, all = d===h.v.length;
+    var anyNew = h.v.some(function(v){return v.isNew;});
+    return '<button class="house" data-h="'+esc(h.id)+'"><div class="hd"><span class="hno">🏠 '+esc(h.house)+'</span>'+
+      '<span class="badge'+(all?' done':'')+'">'+(all?'✓ పూర్తి':d+'/'+h.v.length)+'</span>'+
+      (anyNew?'<span class="badge new">కొత్త ఓటరు</span>':'')+
+      '<span style="flex:1"></span><span class="en">బూత్ '+h.booth+'</span></div>'+
+      '<div class="st">'+esc(h.sec)+(h.v[0].ward?' · వార్డు '+h.v[0].ward:'')+'</div>'+
+      '<div class="names">'+h.v.map(function(v){
+        return '<span class="nm"><i class="dot '+(v.support|| (v.visited?'v':''))+'"></i>'+esc(v.name)+'</span>';
+      }).join('')+'</div></button>';
+  }).join('');
+  if (hs.length>S.limit) html += '<button class="more" id="moreBtn">ఇంకా చూపించు ('+(hs.length-S.limit)+') · Show more</button>';
+  $('list').innerHTML = html;
+}
+$('list').onclick=function(e){
+  if (e.target.id==='moreBtn'){ S.limit+=40; renderList(); return; }
+  var b=e.target.closest('[data-h]'); if(b) openHouse(b.dataset.h);
+};
+
+/* ---------- house screen ---------- */
+function openHouse(hid){
+  S.openHouse = hid; renderHouse();
+  $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
+  document.body.style.overflow='hidden';
+}
+function closeHouse(){
+  S.openHouse=null; $('vHouse').classList.add('hide'); document.body.style.overflow=''; renderList();
+}
+$('btnBack').onclick=closeHouse;
+
+function renderHouse(){
+  var h = S.hById[S.openHouse]; if(!h) return;
+  $('hTitle').textContent = '🏠 ఇంటి నం. '+h.house;
+  $('hSub').textContent = h.sec+' · బూత్ '+h.booth+' · '+h.v.length+' ఓటర్లు';
+  var hw = h.v[0].ward;
+  var sameWard = h.v.every(function(v){return v.ward===hw;});
+  var wards=''; for(var i=1;i<=S.wards;i++) wards+='<button class="wb'+(sameWard&&hw===i?' on':'')+'" data-w="'+i+'">'+i+'</button>';
+  var html = '<div class="hbox"><h3>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></h3><div class="wards">'+wards+'</div>'+
+    '<button class="allv" data-allv="1">✓ ఇంట్లో అందరినీ కలిశాం <span style="font-weight:400">· Mark all visited</span></button></div>';
+  html += h.v.map(function(v){
+    return '<div class="vc '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+
+      '<div class="vn">'+esc(v.name)+(v.isNew?' <span class="badge new">కొత్త</span>':'')+'</div>'+
+      '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(v.relN)+'<br>'+esc(v.e)+' · క్ర.సం. '+esc(v.sr)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
+      '<div class="tog"><button class="tb vis'+(v.visited?' on':'')+'" data-f="visited" data-v="Visited">✓ కలిశాం<small>Visited</small></button>'+
+      '<button class="tb nv'+(!v.visited?' on':'')+'" data-f="visited" data-v="Not Visited">✗ కలవలేదు<small>Not visited</small></button></div>'+
+      '<div class="q">మద్దతు <span class="en">Support</span></div><div class="sup">'+
+        SUP.map(function(s){return '<button class="tb'+(v.support===s.v?' on':'')+'" data-f="support" data-v="'+s.v+'">'+s.te+'<small>'+s.en+'</small></button>';}).join('')+'</div>'+
+      '<div class="q">మొబైల్ నంబర్ <span class="en">Mobile number</span></div>'+
+      '<div class="mob"><input data-mobile="1" type="tel" inputmode="numeric" maxlength="14" placeholder="10 అంకెలు" value="'+esc(v.mobile)+'" class="'+(v.mobile?'good':'')+'">'+
+      (v.mobile?'<a class="call" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'</div>'+
+      '<div class="mhint" data-mhint="1">'+(v.mobile?'✓ సేవ్ అయింది':'')+'</div>'+
+      '<div class="q">ముఖ్య సమస్య <span class="en">Main issue</span></div><div class="iss">'+
+        ISS.map(function(s){return '<button class="tb'+(v.issue===s.v?' on':'')+'" data-f="issue" data-v="'+s.v+'">'+s.te+'<small>'+s.en+'</small></button>';}).join('')+'</div>'+
+      '<div class="q">వివరాలు <span class="en">Notes (optional)</span></div>'+
+      '<textarea data-notes="1" placeholder="ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు">'+esc(v.notes)+'</textarea>'+
+    '</div>';
+  }).join('');
+  var idx = nextHouseIndex(h);
+  html += '<button class="next" data-next="1">'+(idx>=0?'తర్వాతి ఇల్లు → <span style="font-weight:400">Next house</span>':'← జాబితాకు వెళ్ళండి · Back to list')+'</button>';
+  $('hBody').innerHTML = html;
+}
+function nextHouseIndex(h){
+  var list = S.houses.filter(function(x){ return (S.booth==='all'||String(x.booth)===String(S.booth)) && (S.sec==='all'||x.sec===S.sec); });
+  var i = list.indexOf(h); return i>=0 && i<list.length-1 ? S.houses.indexOf(list[i+1]) : -1;
+}
+$('hBody').onclick=function(e){
+  var h = S.hById[S.openHouse];
+  var w=e.target.closest('[data-w]');
+  if (w){ var n=Number(w.dataset.w); h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); renderHouse(); return; }
+  if (e.target.closest('[data-allv]')){ h.v.forEach(function(v){ if(!v.visited) edit(v,{visited:'Visited'}); }); toast('అందరినీ కలిశాం ✓'); renderHouse(); return; }
+  if (e.target.closest('[data-next]')){ var i=nextHouseIndex(h); if(i>=0) openHouse(S.houses[i].id); else closeHouse(); return; }
+  var b=e.target.closest('[data-f]'); if(!b) return;
+  var v=S.byId[b.closest('[data-id]').dataset.id], f=b.dataset.f, val=b.dataset.v, ch={};
+  if (f==='visited'){ ch.visited=val; if(val==='Not Visited'){ /* keep answers, just mark */ } }
+  else { ch[f] = (v[f]===val) ? '' : val; if (ch[f] && !v.visited) ch.visited='Visited'; }
+  edit(v,ch);
+  if (f==='support' && ch.support) toast('✓ సేవ్');
+  renderHouse();
+};
+var nT={};
+var mT={};
+$('hBody').addEventListener('input',function(e){
+  if(!e.target.dataset.mobile) return;
+  var inp=e.target, card=inp.closest('[data-id]'), id=card.dataset.id, hint=card.querySelector('[data-mhint]');
+  var d=cleanMobile(inp.value);
+  inp.classList.remove('bad','good'); hint.classList.remove('bad'); hint.textContent='';
+  clearTimeout(mT[id]);
+  if (!d){ mT[id]=setTimeout(function(){ var v=S.byId[id]; if(v && v.mobile) edit(v,{mobile:''}); },900); return; }
+  if (d.length<10){ hint.textContent=(10-d.length)+' అంకెలు ఇంకా · '+d.length+'/10'; return; }
+  if (!validMobile(d)){ inp.classList.add('bad'); hint.classList.add('bad'); hint.textContent='నంబర్ సరిగా లేదు · Invalid number'; return; }
+  inp.classList.add('good');
+  mT[id]=setTimeout(function(){ var v=S.byId[id]; if(v && v.mobile!==d){ edit(v,{mobile:d}); hint.textContent='✓ సేవ్ అయింది'; toast('📱 నంబర్ సేవ్'); } },600);
+});
+$('hBody').addEventListener('input',function(e){
+  if(!e.target.dataset.notes) return;
+  var id=e.target.closest('[data-id]').dataset.id, val=e.target.value;
+  clearTimeout(nT[id]); nT[id]=setTimeout(function(){ var v=S.byId[id]; if(v && v.notes!==val) edit(v,{notes:val}); },900);
+});
+
+/* ---------- misc ---------- */
+var tT; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('show');},1300); }
+
+function loadData(force){
+  var cached = LS.get('rows');
+  if (cached && !force){ ingest(cached); renderList(); }
+  return call('getVoters', S.user.name, S.user.pin).then(function(res){
+    LS.set('rows',res.rows); ingest(res.rows); renderList(); if(S.openHouse) renderHouse();
+    S.online=true; renderSync(); if (force) toast('తాజా డేటా ✓');
+  }).catch(function(err){
+    if (String(err && err.message).indexOf('WRONG_PIN')>=0){ logout('పిన్ మారింది. మళ్ళీ లాగిన్ అవ్వండి'); return; }
+    S.online=false; renderSync();
+    if (!cached) $('list').innerHTML='<div class="empty">ఇంటర్నెట్ లేదు. నెట్ వచ్చాక ⟳ నొక్కండి<br><span class="en">No internet — tap ⟳ to retry</span></div>';
+  });
+}
+$('btnRefresh').onclick=function(){ flush(); loadData(true); };
+$('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); };
+
+function logout(msg){
+  S.user=null; LS.del('user'); LS.del('rows');
+  $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
+  $('lErr').textContent = msg||''; renderSync(); initLogin();
+}
+function showApp(){
+  $('vLogin').classList.add('hide'); $('vList').classList.remove('hide');
+  $('who').textContent = '👤 '+S.user.name;
+  S.wards = S.user.wards || 14;
+  var savedBooth = LS.get('booth');
+  S.booth = savedBooth || (S.user.booth ? String(S.user.booth) : 'all');
+  renderSync(); loadData(false); scheduleFlush(500);
+}
+function initLogin(){
+  call('listVolunteers').then(function(names){
+    $('lName').innerHTML='<option value="">— ఎంచుకోండి / Select —</option>'+names.map(function(n){return '<option>'+esc(n)+'</option>';}).join('');
+    if (DEMO){ $('lName').value=names[0]; $('lPin').placeholder='1234'; }
+  }).catch(function(err){
+    var msg = String(err && err.message || err || '');
+    $('lErr').textContent = navigator.onLine===false ? 'ఇంటర్నెట్ చెక్ చేయండి · Check internet'
+      : 'లోడ్ కాలేదు. Chrome Incognito లో తెరవండి · Could not load ('+msg.slice(0,80)+'). Try an Incognito/private window.';
+  });
+}
+$('lGo').onclick=function(){
+  var n=$('lName').value, p=$('lPin').value.trim();
+  if(!n){ $('lErr').textContent='మీ పేరు ఎంచుకోండి'; return; }
+  if(!p){ $('lErr').textContent='పిన్ ఇవ్వండి'; return; }
+  $('lErr').textContent=''; $('lGo').disabled=true;
+  call('login',n,p).then(function(u){
+    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards}; LS.set('user',S.user); $('lGo').disabled=false; showApp();
+  }).catch(function(err){
+    $('lGo').disabled=false;
+    $('lErr').textContent = String(err && err.message).indexOf('WRONG_PIN')>=0 ? 'పిన్ తప్పు · Wrong PIN' : 'ఇంటర్నెట్ చెక్ చేయండి · Check internet';
+  });
+};
+$('lPin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lGo').click(); });
+
+if (DEMO) $('demoBar').classList.remove('hide');
+if (S.user) showApp(); else initLogin();
+})();
+</script>
+</body>
+</html>
