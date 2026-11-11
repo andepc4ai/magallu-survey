@@ -483,6 +483,7 @@ $('hBody').addEventListener('input',function(e){
 var tT; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('show');},1300); }
 
 function loadData(force){
+  if (!force && S.fresh){ var fr=S.fresh; S.fresh=null; ingest(fr); renderList(); return Promise.resolve(); }
   var cached = LS.get('rows');
   if (cached && !force){ ingest(cached); renderList(); }
   return call('getVoters', S.user.name, S.user.pin).then(function(res){
@@ -499,6 +500,7 @@ $('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ము
 
 function logout(msg){
   S.user=null; LS.del('user'); LS.del('rows');
+  $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
   $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
   $('lErr').textContent = msg||''; renderSync(); initLogin();
 }
@@ -525,10 +527,13 @@ $('lGo').onclick=function(){
   if(!n){ $('lErr').textContent='మీ పేరు ఎంచుకోండి'; return; }
   if(!p){ $('lErr').textContent='పిన్ ఇవ్వండి'; return; }
   $('lErr').textContent=''; $('lGo').disabled=true;
-  call('login',n,p).then(function(u){
-    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards}; LS.set('user',S.user); $('lGo').disabled=false; showApp();
+  $('lGo').textContent='లోడ్ అవుతోంది… · Loading voters…';
+  call('login',n,p,true).then(function(u){
+    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards}; LS.set('user',S.user);
+    if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); S.fresh=u.voters.rows; }
+    $('lGo').disabled=false; showApp();
   }).catch(function(err){
-    $('lGo').disabled=false;
+    $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
     $('lErr').textContent = String(err && err.message).indexOf('WRONG_PIN')>=0 ? 'పిన్ తప్పు · Wrong PIN' : 'ఇంటర్నెట్ చెక్ చేయండి · Check internet';
   });
 };
