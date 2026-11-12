@@ -163,6 +163,7 @@ textarea:focus{outline:none;border-color:var(--brand)}
 .hvbtns{display:flex;gap:8px;margin-top:6px}.hvsave{flex:1;min-height:52px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-weight:700;font-size:1rem}.hvsave small{display:block;font-weight:400;font-size:.75rem}
 .hvsave:disabled{opacity:.5}.hvcancel{border:1px solid #d6d3d1;background:#fff;border-radius:12px;padding:0 16px;font-weight:700}
 .hvh{width:100%;margin-top:8px;min-height:44px;border:1px solid #d6d3d1;background:#fff;border-radius:12px;font-weight:700}.vlist.hv{background:#fff;border-radius:12px;padding:0 10px}
+.badge.nosup{background:#fef3c7;color:#92400e}
 </style>
 </head>
 <body>
@@ -514,7 +515,7 @@ function cleanMobile(s){
   return d;
 }
 function validMobile(d){ return /^[6-9]\d{9}$/.test(d); }
-function isDone(v){ return v.visited && !!v.support; }
+function isDone(v){ return !!v.visited || (v.visits||0)>0 || pendingVisits(v).length>0; }   // done = visited at least once
 
 /* ---------- edits & sync ---------- */
 function newVisitId(){ return 'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -622,6 +623,7 @@ function renderList(){
     var anyNew = h.v.some(function(v){return v.isNew;});
     return '<button class="house" data-h="'+esc(h.id)+'"><div class="hd"><span class="hno">🏠 '+esc(h.house)+'</span>'+
       '<span class="badge'+(all?' done':'')+'">'+(all?'✓ పూర్తి':d+'/'+h.v.length)+'</span>'+
+      (function(){ var ns=h.v.filter(function(v){ return isDone(v) && !v.support; }).length; return ns?'<span class="badge nosup">మద్దతు ? '+ns+'</span>':''; })()+
       (anyNew?'<span class="badge new">కొత్త ఓటరు</span>':'')+
       (function(){ var mv=Math.max.apply(null,h.v.map(function(v){return v.visits||0;})); return mv?'<span class="badge vc2">👣 '+mv+'</span>':''; })()+
       '<span style="flex:1"></span><span class="en">బూత్ '+h.booth+'</span></div>'+
