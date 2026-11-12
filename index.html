@@ -183,6 +183,7 @@ select.chip{appearance:auto;font-weight:700}
 .pm{font-size:.82rem;color:var(--muted);margin-top:2px}.pm b{color:#1c1917;font-size:.95rem}.pcall{display:inline-block;margin-top:4px;color:#0f766e;font-weight:700;text-decoration:none}
 .pvb{flex:none;width:88px;min-height:64px;border:2px solid #d6d3d1;background:#fff;border-radius:14px;font-weight:700;font-size:.95rem;line-height:1.2}
 .pvb.on{background:#16a34a;border-color:#16a34a;color:#fff}.pvb.ask{background:#b91c1c;border-color:#b91c1c;color:#fff}
+.fold.opt{opacity:.8;border-style:dashed}
 </style>
 </head>
 <body>
@@ -484,7 +485,7 @@ function setHouseLeader(h, val){
   delete S.open['house:leader']; toast(val?'👤 '+leaderName(val)+' ✓':'తీసేశాం ✓'); renderHouse();
 }
 function foldRow(key, label, valueHtml, cls){
-  return '<button class="fold '+(cls||'')+'" data-unfold="'+esc(key)+'"><span class="fl">'+label+'</span><span class="fv">'+valueHtml+'</span><span class="fc">✓ మార్చు</span></button>';
+  return '<button class="fold '+(cls||'')+'" data-unfold="'+esc(key)+'"><span class="fl">'+label+'</span><span class="fv">'+valueHtml+'</span><span class="fc">'+(cls==='opt'?'➕ ఎంచుకో':'✓ మార్చు')+'</span></button>';
 }
 
 /* ---------- server calls ---------- */
@@ -868,8 +869,10 @@ function supportHtml(v){
 }
 function occupationHtml(v){
   var k=v.id+':occupation';
-  if (v.occupation && !S.open[k]) return foldRow(k,'వృత్తి', esc(OCC_TE[v.occupation]||v.occupation)+(OCC_TE[v.occupation]?' <span class="en">'+esc(v.occupation)+'</span>':''));
-  return '<div class="q">వృత్తి <span class="en">Occupation</span></div><div class="iss occ">'+
+  if (!S.open[k]) return v.occupation   // optional: stays closed until tapped
+    ? foldRow(k,'వృత్తి', esc(OCC_TE[v.occupation]||v.occupation)+(OCC_TE[v.occupation]?' <span class="en">'+esc(v.occupation)+'</span>':''))
+    : foldRow(k,'వృత్తి', '<span class="en">ఐచ్ఛికం · Optional</span>', 'opt');
+  return '<div class="q qh"><span>వృత్తి <span class="en">Occupation (optional)</span></span><button class="done" data-fold="'+esc(k)+'">మూసివేయి</button></div><div class="iss occ">'+
     lists().occupations.map(function(o){return '<button class="tb'+(v.occupation===o?' on':'')+'" data-f="occupation" data-v="'+esc(o)+'">'+esc(OCC_TE[o]||o)+(OCC_TE[o]?'<small>'+esc(o)+'</small>':'')+'</button>';}).join('')+'</div>';
 }
 function personCasteHtml(v, hc, sameCaste){
