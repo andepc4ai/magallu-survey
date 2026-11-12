@@ -20,7 +20,7 @@ button,input,select{font:inherit;color:inherit}
 .f{width:100%;height:52px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.05rem}
 .f:focus{outline:none;border-color:#6d28d9}
 .tabs{display:flex;gap:8px;margin:10px 0}
-.tab{flex:1;height:44px;border:2px solid #e5dfd2;background:#fff;border-radius:999px;font-weight:700}
+.tab{flex:1;height:44px;font-size:.9rem;padding:0 4px;border:2px solid #e5dfd2;background:#fff;border-radius:999px;font-weight:700}
 .tab.on{background:#1d1b16;border-color:#1d1b16;color:#fff}
 .row{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #ece6da;border-radius:12px;padding:8px 10px;margin-bottom:8px}
 .row.ok{border-color:#16a34a}
@@ -124,7 +124,10 @@ function loadVoters(){
 function renderList(){
   var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
   var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
-  $('prog').textContent = filled.length+' / '+rows.length+' ఇంటిపేర్లు · '+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు';
+  $('prog').textContent = 'మొత్తం పూర్తి · Done: '+filled.length+' / '+rows.length+' ఇంటిపేర్లు ('+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు)';
+  var cnt = {missing: rows.length-filled.length, all: rows.length, done: filled.length};
+  var lbl = {missing:'కులం లేనివి', all:'అన్నీ', done:'ఉన్నవి'};
+  [].forEach.call(document.querySelectorAll('.tab'), function(t){ t.textContent = lbl[t.dataset.m]+' ('+cnt[t.dataset.m]+')'; });
   $('pbar').style.width = (100*done/Math.max(tot,1))+'%';
   var list = rows.filter(function(r){
     var ok = NAMES.indexOf(r[3])>=0;
