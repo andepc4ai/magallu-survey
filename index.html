@@ -593,8 +593,8 @@ function renderHouse(){
     (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
   var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
   var sug = suggestCaste(h.v[0].surname);
-  if (sameCaste && hc && !S.open['house:caste'])
-    html += '<div class="hbox" style="padding:8px 14px">'+foldRow('house:caste','కులం · ఇల్లు', esc(CASTE_TE[hc]||hc)+(CASTE_TE[hc]?' <span class="en">'+esc(hc)+'</span>':''))+'</div>';
+  var allCaste = h.v.every(function(v){ return !!v.caste; });
+  if (allCaste && !S.open['house:caste']) { /* caste filled for everyone in the house: treated as confirmed, box hidden */ }
   else html += '<div class="hbox"><h3>కులం <span class="en">Caste — whole house</span></h3>'+
     (sug && !(sameCaste && hc===sug) ? '<button class="sugg" data-hcaste="'+esc(sug)+'">💡 ఇంటిపేరు ప్రకారం: '+esc(CASTE_TE[sug]||sug)+' ('+esc(sug)+') — సరైతే నొక్కండి</button>' : '')+
     '<div class="cgrid">'+lists().castes.map(function(c){
