@@ -24,11 +24,26 @@ button,input,select,textarea{font:inherit;color:inherit}
 .top{position:sticky;top:0;z-index:5;background:#FACC15;color:#1c1917;padding:10px 14px 12px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .top .row{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
 .top h1{font-size:1.05rem;margin:0;flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.top .who{font-size:.85rem;opacity:.9}
-.quick{display:flex;gap:8px;margin:12px 0 0}
-.quick a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;border-radius:12px;background:#fff;border:2px solid #FACC15;color:#1c1917;font-weight:700;text-decoration:none;font-size:1rem}
-@media (max-width:420px){#vList .top h1{display:none}#vList .top .who{flex:1}}
+.top .who{font-size:.95rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+#vHome .top .who{flex:1}
+.htitle{margin:18px 2px 12px;font-size:1.15rem}
+.hgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hgrid a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:132px;padding:12px 8px;border-radius:18px;background:#fff;border:1px solid var(--line);border-bottom:5px solid #FACC15;color:#1c1917;text-decoration:none;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.05)}
+.hgrid a.wide{grid-column:1/-1;min-height:112px}
+.hgrid a i{font-style:normal;font-size:2.8rem;line-height:1.1}
+.hgrid a b{font-size:1.08rem;line-height:1.25}
+.hgrid a small{color:var(--muted);font-size:.78rem}
+.hgrid a:active{background:#fef9c3;transform:scale(.99)}
+.hgrid a.main{background:#FEF3C7;border-color:#FACC15}
+.flab{font-weight:700;font-size:.95rem;margin:2px 2px 6px}
+.wchips{flex-wrap:wrap;overflow:visible;gap:6px}
+.wchips .chip{min-width:48px;padding:5px 10px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:1.02rem}
+.wchips .chip small{font-weight:400;font-size:.66rem;opacity:.75}
+.selrow{display:flex;gap:8px}
+.selrow select.field{flex:1 1 0;min-width:0;padding:0 8px;font-size:.95rem}
+.selrow #boothSel{flex:0 0 38%}
 .iconbtn{background:rgba(0,0,0,.1);border:0;color:#1c1917;border-radius:10px;min-width:44px;height:40px;padding:0 10px;font-size:.9rem}
+.iconbtn.sq{flex:none;width:44px;padding:0;display:flex;align-items:center;justify-content:center}
 .prog{max-width:640px;margin:8px auto 0;display:flex;align-items:center;gap:10px;font-size:.88rem}
 .bar{flex:1;height:8px;background:rgba(0,0,0,.15);border-radius:6px;overflow:hidden}
 .bar i{display:block;height:100%;background:#1c1917;width:0;transition:width .3s}
@@ -204,34 +219,46 @@ select.chip{appearance:auto;font-weight:700}
   </div>
 </section>
 
-<!-- LIST -->
+<!-- HOME: big icon tiles -->
+<section id="vHome" class="hide">
+  <div class="top">
+    <div class="row">
+      <span class="who" id="who"></span>
+      <button class="iconbtn sq" id="btnRefresh" title="Refresh" aria-label="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
+      <button class="iconbtn sq" id="btnOut" title="Logout" aria-label="Logout"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg></button>
+    </div>
+    <div class="prog"><span id="homeTxt">—</span><div class="bar"><i id="homeBar"></i></div></div>
+  </div>
+  <div class="wrap">
+    <h2 class="htitle">మగల్లు ఓటర్ సర్వే</h2>
+    <nav class="hgrid" id="hgrid">
+      <a href="#" id="tHouses"><i>🏠</i><b>ఇళ్ళు · ఓటర్లు</b><small id="tHousesN">Houses &amp; voters</small></a>
+      <a href="family/" class="hide" id="tFam"><i>👪</i><b>కుటుంబాలు</b><small>Families</small></a>
+      <a href="castes/" class="hide" id="tCaste"><i>🏷️</i><b>కులాలు</b><small>Castes</small></a>
+      <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
+      <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 28 Nov</small></a>
+    </nav>
+  </div>
+</section>
+
+<!-- LIST: houses and voters -->
 <section id="vList" class="hide">
   <div class="top">
     <div class="row">
-      <h1>ఓటర్ సర్వే</h1>
-      <span class="who" id="who"></span>
-      <button class="iconbtn" id="btnPoll" title="Polling day">🗳️</button>
-      <button class="iconbtn" id="btnDash" title="Dashboard">📊</button>
-      <button class="iconbtn hide" id="btnFam" title="Families">👪</button>
-      <button class="iconbtn hide" id="btnSur" title="Surname to caste">🏷</button>
-      <button class="iconbtn" id="btnRefresh" title="Refresh">⟳</button>
-      <button class="iconbtn" id="btnOut" title="Logout">⎋</button>
+      <button class="iconbtn" id="btnHome">← హోమ్</button>
+      <h1>🏠 ఇళ్ళు · ఓటర్లు</h1>
+      <button class="iconbtn sq" id="btnListRef" title="Refresh" aria-label="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
     </div>
     <div class="prog"><span id="progTxt">—</span><div class="bar"><i id="progBar"></i></div></div>
   </div>
   <div class="wrap">
-    <div class="quick hide" id="quick">
-      <a href="#" id="quickPoll">🗳️ పోలింగ్ రోజు</a>
-      <a href="#" id="quickDash">📊 డాష్‌బోర్డ్</a>
-      <a href="family/">👪 కుటుంబాలు</a>
-      <a href="castes/" class="hide" id="quickCaste">🏷 కులాలు</a>
-    </div>
     <div class="search">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="పేరు / ఇంటి నం. / ఓటర్ ID వెతకండి">
     </div>
-    <div class="chips" id="boothChips"></div>
-    <select id="secSel" class="field"></select>
+    <div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>
+    <div class="chips wchips" id="wardChips"></div>
+    <div class="selrow"><select id="boothSel" class="field"></select><select id="secSel" class="field"></select></div>
     <div class="chips" id="statChips"></div>
     <div class="count" id="count"></div>
     <div id="list"><div class="loading"><div class="spin"></div>డేటా లోడ్ అవుతోంది… <br><span class="en">Loading voters…</span></div></div>
@@ -448,7 +475,7 @@ var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్�
 var S = {
   user: LS.get('user'),           // {name,pin,booth,wards}
   rows: [], byId:{}, houses:[], hById:{},
-  booth: 'all', sec: 'all', stat: 'todo', q: '', limit: 40,
+  booth: 'all', sec: 'all', wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
   pending: LS.get('pending') || {}, // id -> {s,r,e,f}
   inflight: false, online: navigator.onLine !== false,
   openHouse: null, wards: 14,
@@ -646,14 +673,33 @@ window.addEventListener('offline',function(){S.online=false;renderSync();});
 setInterval(function(){ if(Object.keys(S.pending).length) flush(); }, 15000);
 
 /* ---------- filters ---------- */
+/* ward of a house = first ward set on any of its voters; 'none' when no ward yet */
+function hWard(h){ for (var i=0;i<h.v.length;i++){ if (h.v[i].ward!=='' && h.v[i].ward!=null) return String(h.v[i].ward); } return 'none'; }
+function wardOk(h){ return !S.wsel.length || S.wsel.indexOf(hWard(h))>=0; }
+function inScope(h){ return (S.booth==='all'||String(h.booth)===String(S.booth)) && (S.sec==='all'||h.sec===S.sec) && wardOk(h); }
+// wards this user may pick: admin (or no wards set) → all wards; volunteer → only their wards
+function wardChoices(){
+  var my = (S.user && !S.user.admin && S.user.myWards || []).map(String).filter(Boolean);
+  if (my.length) return my.sort(function(a,b){ return a-b; });
+  var out=[]; for (var i=1;i<=S.wards;i++) out.push(String(i)); return out;
+}
+function buildWardChips(){
+  var n = {}; S.houses.forEach(function(h){ if ((S.booth==='all'||String(h.booth)===String(S.booth))){ var w=hWard(h); n[w]=(n[w]||0)+1; } });
+  var ch = wardChoices(); if (n.none) ch = ch.concat('none');
+  S.wsel = S.wsel.filter(function(w){ return ch.indexOf(w)>=0; });
+  $('wardChips').innerHTML = '<button class="chip'+(S.wsel.length?'':' on')+'" data-wd="all">అన్నీ<small>All</small></button>' +
+    ch.map(function(w){ return '<button class="chip'+(S.wsel.indexOf(w)>=0?' on':'')+'" data-wd="'+w+'">'+(w==='none'?'వార్డు లేదు':w)+'<small>'+(n[w]||0)+' ఇళ్ళు</small></button>'; }).join('');
+}
 function buildFilters(){
   var booths = {}; S.rows.forEach(function(v){booths[v.booth]=1;});
   var bl = ['all'].concat(Object.keys(booths).sort());
-  $('boothChips').innerHTML = bl.map(function(b){
-    return '<button class="chip'+(String(S.booth)===String(b)?' on':'')+'" data-b="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>';
+  if (bl.indexOf(String(S.booth))<0) S.booth='all';
+  $('boothSel').innerHTML = bl.map(function(b){
+    return '<option value="'+esc(b)+'"'+(String(S.booth)===String(b)?' selected':'')+'>'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+esc(b))+'</option>';
   }).join('');
+  buildWardChips();
   var secs = {};
-  S.rows.forEach(function(v){ if(S.booth==='all'||String(v.booth)===String(S.booth)) secs[v.sec]=(secs[v.sec]||0)+1; });
+  S.houses.forEach(function(h){ if((S.booth==='all'||String(h.booth)===String(S.booth)) && wardOk(h)) secs[h.sec]=(secs[h.sec]||0)+h.v.length; });
   if (S.sec!=='all' && !secs[S.sec]) S.sec='all';
   $('secSel').innerHTML = '<option value="all">అన్ని వీధులు · All streets</option>' +
     Object.keys(secs).sort().map(function(s){ return '<option value="'+esc(s)+'"'+(s===S.sec?' selected':'')+'>'+esc(s)+' ('+secs[s]+')</option>'; }).join('');
@@ -664,7 +710,10 @@ function buildFilters(){
     (S.stat==='revisit'?'<select id="revDays" class="chip">'+[3,7,14,30].map(function(d){ return '<option value="'+d+'"'+(S.revDays===d?' selected':'')+'>'+d+'+ రోజులు</option>'; }).join('')+'</select>':'');
   var rd=$('revDays'); if (rd) rd.onchange=function(){ S.revDays=Number(this.value); S.limit=40; renderList(); };
 }
-$('boothChips').onclick=function(e){var b=e.target.closest('[data-b]'); if(!b)return; S.booth=b.dataset.b; S.limit=40; LS.set('booth',S.booth); buildFilters(); renderList();};
+$('boothSel').onchange=function(){ S.booth=this.value; S.limit=40; LS.set('booth',S.booth); buildFilters(); renderList(); };
+$('wardChips').onclick=function(e){ var b=e.target.closest('[data-wd]'); if(!b) return; var w=b.dataset.wd;
+  if (w==='all') S.wsel=[]; else { var i=S.wsel.indexOf(w); if (i>=0) S.wsel.splice(i,1); else S.wsel.push(w); }
+  S.limit=40; LS.set('wsel',S.wsel); buildFilters(); renderList(); };
 $('statChips').onclick=function(e){var b=e.target.closest('[data-s]'); if(!b)return; S.stat=b.dataset.s; S.limit=40; buildFilters(); renderList();};
 $('secSel').onchange=function(){S.sec=this.value; S.limit=40; renderList();};
 var qT; $('q').oninput=function(){clearTimeout(qT); var t=this; qT=setTimeout(function(){S.q=t.value.trim().toLowerCase(); S.Q=Fuzzy.query(S.q); S.limit=40; renderList();},200);};
@@ -679,8 +728,7 @@ function needsRevisit(h){
 function hasOpenNeeds(h){ return h.v.some(function(v){ var st=istat(v); return issues(v).some(function(x){ return (st[x]||'Open')!=='Solved'; }); }); }
 function isMine(h){ var L=leaderName(topLeader(h.v)).toLowerCase(), me=String(S.user&&S.user.name||'').toLowerCase(); return !!L && !!me && (L===me || L.indexOf(me)>=0 || me.indexOf(L)>=0); }
 function houseMatches(h){
-  if (S.booth!=='all' && String(h.booth)!==String(S.booth)) return false;
-  if (S.sec!=='all' && h.sec!==S.sec) return false;
+  if (!inScope(h)) return false;
   var done = h.v.every(isDone);
   if (S.stat==='todo' && done) return false;
   if (S.stat==='done' && !h.v.some(isDone)) return false;
@@ -699,14 +747,16 @@ function houseMatches(h){
   return true;
 }
 function renderList(){
+  buildWardChips();
   var hs = S.houses.filter(houseMatches);
   if (S.q) hs = hs.slice().sort(function(a,b){ return (b._score||0)-(a._score||0); });   // best matches first
   else if (S.stat==='revisit') hs = hs.slice().sort(function(a,b){            // longest without a visit first, undecided before leaning
     function k(h){ return Math.min.apply(null,h.v.map(lastSeen)) - (h.v.some(function(v){return v.support==='Undecided';})?2*DAY:0); } return k(a)-k(b); });
-  var scope = S.rows.filter(function(v){ return (S.booth==='all'||String(v.booth)===String(S.booth)) && (S.sec==='all'||v.sec===S.sec); });
+  var scope = []; S.houses.forEach(function(h){ if (inScope(h)) scope = scope.concat(h.v); });
   var vis = scope.filter(isDone).length;
   $('progTxt').textContent = 'పూర్తి '+vis+' / '+scope.length;
   $('progBar').style.width = (scope.length? (100*vis/scope.length):0)+'%';
+  renderHome();
   var voters = hs.reduce(function(a,h){return a+h.v.length;},0);
   $('count').textContent = hs.length+' ఇళ్ళు · '+voters+' ఓటర్లు';
   if (!hs.length){ $('list').innerHTML='<div class="empty">ఏమీ దొరకలేదు 🙂<br><span class="en">Nothing here</span></div>'; return; }
@@ -906,7 +956,7 @@ function issueHtml(v){
     ISS.map(function(x){return '<button class="tb'+(cur.indexOf(x.v)>=0?' on':'')+'" data-issue="'+x.v+'">'+x.te+'<small>'+x.en+'</small></button>';}).join('')+'</div>';
 }
 function nextHouseIndex(h){
-  var list = S.houses.filter(function(x){ return (S.booth==='all'||String(x.booth)===String(S.booth)) && (S.sec==='all'||x.sec===S.sec); });
+  var list = S.houses.filter(inScope);
   var i = list.indexOf(h); return i>=0 && i<list.length-1 ? S.houses.indexOf(list[i+1]) : -1;
 }
 $('hBody').onclick=function(e){
@@ -1067,13 +1117,9 @@ function surFlush(){
     setTimeout(surFlush, 6000);
   });
 }
-// One shared screen: on the live app the 🏷 button opens the /castes/ page
-$('btnFam').onclick=function(){ location.href='family/'; };
-$('btnDash').onclick=function(){ openDash(); };
 /* ---------- polling day: tick who has voted; chase supporters who haven't ---------- */
 var P = { booth:null, tab:'sup', q:'', limit:60, ask:null, timer:null };
-$('btnPoll').onclick=function(){ openPoll(); };
-$('quickPoll').onclick=function(e){ e.preventDefault(); openPoll(); };
+$('tPoll').onclick=function(e){ e.preventDefault(); openPoll(); };
 $('btnPollBack').onclick=function(){ $('vPoll').classList.add('hide'); document.body.style.overflow=''; clearInterval(P.timer); renderList(); };
 $('btnPollRef').onclick=function(){ pollRefresh(true); };
 function openPoll(){
@@ -1127,7 +1173,7 @@ $('vPoll').addEventListener('click',function(e){
   }
 });
 var pT; $('pq').oninput=function(){ clearTimeout(pT); var x=this; pT=setTimeout(function(){ P.q=x.value.trim().toLowerCase(); P.limit=60; renderPoll(); },150); };
-$('quickDash').onclick=function(e){ e.preventDefault(); openDash(); };
+$('tDash').onclick=function(e){ e.preventDefault(); openDash(); };
 $('btnDashBack').onclick=function(){ $('vDash').classList.add('hide'); document.body.style.overflow=''; };
 
 /* ---------- dashboard: admin sees everything, a volunteer sees their wards ---------- */
@@ -1193,7 +1239,8 @@ function groupTable(te,en,keyFn,col){
   return '<div class="dcard"><h3>'+te+' <span class="en">'+en+'</span></h3><table class="dt"><tr><th>'+col+'</th><th>ఓటర్లు</th><th>కలిశాం</th><th>మద్దతు</th><th>తేల్చలేదు</th></tr>'+
     keys.map(function(k){ var o=g[k]; return '<tr><td>'+esc(k)+'</td><td>'+o.n+'</td><td>'+o.vis+' <small>'+pct(o.vis,o.n)+'%</small><div class="mini"><i style="width:'+pct(o.vis,o.n)+'%"></i></div></td><td>'+o.st+'</td><td>'+o.un+'</td></tr>'; }).join('')+'</table></div>';
 }
-$('btnSur').onclick=function(){ if (HAS_API) location.href='castes/'; else surOpen(); };
+// One shared screen: on the live app the 🏷 tile opens the /castes/ page
+$('tCaste').onclick=function(e){ if (!HAS_API){ e.preventDefault(); surOpen(); } };
 $('btnSurBack').onclick=function(){ surClose(); if(S.openHouse) renderHouse(); };
 $('surChips').onclick=function(e){ var b=e.target.closest('[data-sm]'); if(!b) return; SU.mode=b.dataset.sm; surRender(); };
 var sqT; $('sq').oninput=function(){ clearTimeout(sqT); var t=this; sqT=setTimeout(function(){ SU.q=t.value.trim().toLowerCase(); surRender(); },150); };
@@ -1242,7 +1289,7 @@ function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
     S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
-    $('btnSur').classList.toggle('hide', !S.user.admin);
+    $('tCaste').classList.toggle('hide', !S.user.admin); renderHome();
     if (S.openHouse) renderHouse();
   }).catch(function(){});
 }
@@ -1253,16 +1300,35 @@ $('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ము
 function logout(msg){
   S.user=null; LS.del('user'); LS.del('rows');
   $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
-  $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
+  S.wsel=[]; LS.del('wsel'); LS.del('view');
+  $('vHome').classList.add('hide'); $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
   $('lErr').textContent = msg||''; renderSync(); initLogin();
 }
+/* ---------- home page (big icon tiles) ↔ house list ---------- */
+function showView(v){
+  $('vHome').classList.toggle('hide', v!=='home'); $('vList').classList.toggle('hide', v!=='list');
+  LS.set('view', v); window.scrollTo(0,0);
+  if (v==='home') renderHome();
+}
+function renderHome(){
+  var tiles = [].slice.call($('hgrid').children).filter(function(a){ return !a.classList.contains('hide'); });
+  tiles.forEach(function(a,i){ a.classList.toggle('wide', i===tiles.length-1 && tiles.length%2===1); });
+  var scope = []; S.houses.forEach(function(h){ if (wardOk(h)) scope = scope.concat(h.v); });
+  if (!S.rows.length){ $('homeTxt').textContent='—'; return; }
+  var vis = scope.filter(isDone).length;
+  $('homeTxt').textContent = 'పూర్తి '+vis+' / '+scope.length + (S.wsel.length ? ' · వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(', ') : '');
+  $('homeBar').style.width = (scope.length?(100*vis/scope.length):0)+'%';
+  $('tHousesN').textContent = S.houses.length+' ఇళ్ళు · '+S.rows.length+' ఓటర్లు';
+}
+$('tHouses').onclick=function(e){ e.preventDefault(); showView('list'); };
+$('btnHome').onclick=function(){ showView('home'); };
+$('btnListRef').onclick=function(){ flush(); loadData(true); };
 function showApp(){
-  $('vLogin').classList.add('hide'); $('vList').classList.remove('hide');
+  $('vLogin').classList.add('hide');
   $('who').textContent = '👤 '+S.user.name;
-  $('btnSur').classList.toggle('hide', !S.user.admin);
-  $('btnFam').classList.toggle('hide', !HAS_API);
-  $('quick').classList.toggle('hide', !HAS_API);
-  $('quickCaste').classList.toggle('hide', !S.user.admin);
+  $('tFam').classList.toggle('hide', !HAS_API);
+  $('tCaste').classList.toggle('hide', !S.user.admin);
+  showView(LS.get('view')==='list' ? 'list' : 'home');
   S.wards = S.user.wards || 12;
   var savedBooth = LS.get('booth');
   S.booth = savedBooth || (S.user.booth ? String(S.user.booth) : 'all');
