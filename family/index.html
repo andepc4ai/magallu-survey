@@ -11,11 +11,11 @@ body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",sy
 button,input,select{font:inherit;color:inherit}
 a{color:inherit}
 .hide{display:none!important}
-.top{position:sticky;top:0;z-index:5;background:#0f766e;color:#fff;padding:10px 14px}
+.top{position:sticky;top:0;z-index:5;background:#FACC15;color:#1c1917;padding:10px 14px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .top .r{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
 .top h1{margin:0;font-size:1.08rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .top .sub{max-width:640px;margin:4px auto 0;font-size:.85rem;opacity:.95}
-.tb{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:10px;height:40px;padding:0 12px;font-weight:700;text-decoration:none;display:flex;align-items:center;white-space:nowrap}
+.tb{border:0;background:rgba(0,0,0,.1);color:#1c1917;border-radius:10px;height:40px;padding:0 12px;font-weight:700;text-decoration:none;display:flex;align-items:center;white-space:nowrap}
 .wrap{max-width:640px;margin:0 auto;padding:12px 12px 80px}
 .f{width:100%;height:50px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.02rem}
 .f:focus{outline:none;border-color:#0f766e}
@@ -104,7 +104,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <section id="vFam" class="hide">
   <div class="top">
-    <div class="r"><button class="tb" data-back>← వెనక్కి</button><h1 id="ftitle"></h1></div>
+    <div class="r"><button class="tb" data-back title="Back">←</button><h1 id="ftitle"></h1><button class="tb" data-home>👪 కుటుంబాలు</button></div>
     <div class="sub" id="fsub"></div>
   </div>
   <div class="wrap">
@@ -116,7 +116,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <section id="vPerson" class="hide">
   <div class="top">
-    <div class="r"><button class="tb" data-back>← వెనక్కి</button><h1 id="ptitle"></h1></div>
+    <div class="r"><button class="tb" data-back title="Back">←</button><h1 id="ptitle"></h1><button class="tb" data-home>👪 కుటుంబాలు</button></div>
     <div class="sub" id="psub"></div>
   </div>
   <div class="wrap" id="pbody"></div>
@@ -348,7 +348,7 @@ window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).
 /* ---------- routing (phone back button works) ---------- */
 function cur(){ var o={}; location.hash.slice(1).split('&').forEach(function(kv){ var i=kv.indexOf('='); if(i>0) o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); }); return o; }
 function go(h){ scrolls[location.hash]=window.scrollY; location.hash=h; }
-document.addEventListener('click',function(e){ if(e.target.closest('[data-back]')){ if (history.length>1) history.back(); else location.hash=''; } });
+document.addEventListener('click',function(e){ if(e.target.closest('[data-home]')){ go(''); return; } if(e.target.closest('[data-back]')){ if (history.length>1) history.back(); else location.hash=''; } });
 function route(){
   if (!M) return;
   var c=cur(); ['vList','vFam','vPerson'].forEach(function(v){ $(v).classList.add('hide'); });

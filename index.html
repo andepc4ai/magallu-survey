@@ -21,14 +21,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 .en{color:var(--muted);font-size:.78em;font-weight:400}
 
 /* top bar */
-.top{position:sticky;top:0;z-index:5;background:var(--brand);color:var(--brand-ink);padding:10px 14px 12px}
+.top{position:sticky;top:0;z-index:5;background:#FACC15;color:#1c1917;padding:10px 14px 12px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .top .row{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
 .top h1{font-size:1.05rem;margin:0;flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .top .who{font-size:.85rem;opacity:.9}
-.iconbtn{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:10px;min-width:44px;height:40px;padding:0 10px;font-size:.9rem}
+@media (max-width:420px){#vList .top h1{display:none}#vList .top .who{flex:1}}
+.iconbtn{background:rgba(0,0,0,.1);border:0;color:#1c1917;border-radius:10px;min-width:44px;height:40px;padding:0 10px;font-size:.9rem}
 .prog{max-width:640px;margin:8px auto 0;display:flex;align-items:center;gap:10px;font-size:.88rem}
-.bar{flex:1;height:8px;background:rgba(255,255,255,.25);border-radius:6px;overflow:hidden}
-.bar i{display:block;height:100%;background:#fff;width:0;transition:width .3s}
+.bar{flex:1;height:8px;background:rgba(0,0,0,.15);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:#1c1917;width:0;transition:width .3s}
 
 /* login */
 .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
