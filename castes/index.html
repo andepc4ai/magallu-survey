@@ -71,6 +71,7 @@ select.cs.big{width:100%;height:52px;font-size:1.05rem}
   </div>
   <div class="wrap">
     <div class="card"><h3>కులం · Caste</h3><select id="oneCaste" class="cs big"></select></div>
+    <a id="famLink" class="card" style="display:block;text-decoration:none;color:#0f766e;font-weight:700;text-align:center" href="../family/">👪 ఈ ఇంటిపేరు కుటుంబాలు చూడండి · Family trees ›</a>
     <div id="people"></div>
   </div>
 </section>
@@ -153,6 +154,7 @@ function renderOne(s){
   $('oneCaste').innerHTML = casteOptions(r[3]);
   $('oneCaste').className = 'cs big'+(NAMES.indexOf(r[3])>=0?' set':'');
   $('oneCaste').dataset.s = s;
+  $('famLink').href = '../family/#s=' + encodeURIComponent(s);
   if (!voters){
     $('people').innerHTML='<div class="msg">ఓటర్ల జాబితా లోడ్ అవుతోంది… · Loading people…</div>';
     loadVoters().then(function(){ if (current()===s) renderOne(s); })

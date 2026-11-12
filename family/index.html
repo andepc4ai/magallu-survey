@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>👪 కుటుంబాలు · Magallu</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",system-ui,sans-serif;font-size:16px}
+button,input,select{font:inherit;color:inherit}
+a{color:inherit}
+.hide{display:none!important}
+.top{position:sticky;top:0;z-index:5;background:#0f766e;color:#fff;padding:10px 14px}
+.top .r{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
+.top h1{margin:0;font-size:1.08rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .sub{max-width:640px;margin:4px auto 0;font-size:.85rem;opacity:.95}
+.tb{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:10px;height:40px;padding:0 12px;font-weight:700;text-decoration:none;display:flex;align-items:center;white-space:nowrap}
+.wrap{max-width:640px;margin:0 auto;padding:12px 12px 80px}
+.f{width:100%;height:50px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.02rem}
+.f:focus{outline:none;border-color:#0f766e}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:2px solid #e5dfd2;background:#fff;border-radius:999px;padding:7px 13px;font-weight:700;font-size:.9rem;white-space:nowrap}
+.chip.on{background:#1d1b16;border-color:#1d1b16;color:#fff}
+.chip.warn.on{background:#b45309;border-color:#b45309}
+.count{color:#6b665c;font-size:.88rem;margin:8px 2px}
+.fc{display:block;width:100%;text-align:left;background:#fff;border:1px solid #e9e2d5;border-radius:14px;padding:12px 14px;margin-bottom:10px;cursor:pointer}
+.fc b{font-size:1.06rem}.fc .m{color:#6b665c;font-size:.85rem;margin:2px 0 8px}
+.sbar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:#e7e2d8}
+.sbar i{display:block;height:100%}
+.leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem;color:#4b463d;margin-top:6px}
+.leg span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;background:var(--c)}
+.c-Strong{--c:#15803d;background:#15803d}.c-Leaning{--c:#84cc16;background:#84cc16}.c-Undecided{--c:#f59e0b;background:#f59e0b}.c-Opposed{--c:#dc2626;background:#dc2626}.c-none{--c:#cbd5e1;background:#cbd5e1}
+.warnb{display:inline-block;background:#fef3c7;color:#92400e;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:700;margin-left:6px}
+.more{width:100%;height:50px;border:2px dashed #d6cfc0;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
+.card{background:#fff;border:1px solid #e9e2d5;border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:1rem}
+/* tree */
+.tree{margin:0;padding:0}
+.node{margin:6px 0}
+.couple{display:flex;flex-wrap:wrap;gap:6px;align-items:stretch}
+.pc{display:flex;align-items:center;gap:8px;background:#fff;border:2px solid #e5dfd2;border-radius:12px;padding:8px 10px;cursor:pointer;min-width:0;max-width:100%;text-align:left}
+.pc .d{width:12px;height:12px;border-radius:50%;flex:none;background:#cbd5e1}
+.pc b{display:block;font-size:.96rem;line-height:1.25}.pc span{display:block;color:#6b665c;font-size:.76rem}
+.pc.nv{border-style:dashed;background:#f8f7f4;color:#6b665c}
+.pc.me{border-color:#0f766e;box-shadow:0 0 0 2px #99f6e4}
+.pc.chk{border-color:#f59e0b}
+.amp{align-self:center;color:#9a9284;font-weight:700}
+.kids{margin-left:14px;padding-left:12px;border-left:3px solid #d6e9e6}
+/* person */
+.pr{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid #f0ebe1}
+.pr:first-of-type{border-top:0}
+.pr .l{color:#6b665c;font-size:.88rem;min-width:84px}
+.pr .v{flex:1;text-align:right}
+.lnk{background:none;border:0;color:#0f766e;font-weight:700;text-decoration:underline;padding:0;cursor:pointer;text-align:right}
+.btns{display:flex;gap:8px;margin-top:10px}
+.b{flex:1;min-height:48px;border:0;border-radius:12px;font-weight:700}
+.b.ok{background:#15803d;color:#fff}.b.ch{background:#1d1b16;color:#fff}.b.fam{background:#0f766e;color:#fff;width:100%}
+.relbox{background:#f0fdfa;border:2px solid #99f6e4;border-radius:12px;padding:12px;margin-top:6px}
+.relbox.chk{background:#fffbeb;border-color:#fcd34d}
+.pick{max-height:55vh;overflow:auto;margin-top:10px}
+.po{display:block;width:100%;text-align:left;background:#fff;border:1px solid #e9e2d5;border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer}
+.po span{color:#6b665c;font-size:.8rem}
+.po.none{background:#f8f7f4;font-weight:700}
+.msg{text-align:center;color:#6b665c;padding:40px 10px}
+.st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
+.st.busy{background:#1f2937}.st.bad{background:#7c2d12}
+.box{background:#fff;border-radius:18px;padding:22px 18px;margin-top:40px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+label{display:block;font-weight:700;margin:14px 0 6px}
+.pin{text-align:center;letter-spacing:.5em;font-size:1.4rem}
+.go{width:100%;height:54px;border:0;border-radius:14px;background:#0f766e;color:#fff;font-weight:700;margin-top:18px}
+.err{color:#dc2626;font-weight:700;margin-top:10px;min-height:1.2em}
+</style>
+</head>
+<body>
+
+<section id="vLogin" class="wrap hide">
+  <div class="box">
+    <h2 style="margin:0">👪 కుటుంబాలు</h2>
+    <div style="color:#6b665c">Magallu families · volunteer login</div>
+    <label>మీ పేరు · Name</label>
+    <select id="who" class="f"><option value="">— Select —</option></select>
+    <label>పిన్ · PIN</label>
+    <input id="pin" class="f pin" type="password" inputmode="numeric" maxlength="6">
+    <button id="go" class="go">లోపలికి · Enter</button>
+    <div id="err" class="err"></div>
+  </div>
+</section>
+
+<section id="vList" class="hide">
+  <div class="top">
+    <div class="r"><a class="tb" href="../">🏠 యాప్</a><h1>👪 కుటుంబాలు</h1><button class="tb" id="reload" title="Refresh">⟳</button></div>
+    <div class="sub" id="lsub">—</div>
+  </div>
+  <div class="wrap">
+    <input id="q" class="f" type="search" placeholder="పేరు / ఇంటిపేరు / ఇంటి నం. వెతకండి">
+    <div class="chips" id="sizeChips"></div>
+    <div class="chips" id="boothChips"></div>
+    <div class="count" id="lcount"></div>
+    <div id="flist"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
+  </div>
+</section>
+
+<section id="vFam" class="hide">
+  <div class="top">
+    <div class="r"><button class="tb" data-back>← వెనక్కి</button><h1 id="ftitle"></h1></div>
+    <div class="sub" id="fsub"></div>
+  </div>
+  <div class="wrap">
+    <div class="card"><div class="sbar" id="fbar"></div><div class="leg" id="fleg"></div></div>
+    <div class="count">పేరు నొక్కితే వివరాలు, సరిచేయడం · Tap a name to see or fix links</div>
+    <div id="ftree" class="tree"></div>
+  </div>
+</section>
+
+<section id="vPerson" class="hide">
+  <div class="top">
+    <div class="r"><button class="tb" data-back>← వెనక్కి</button><h1 id="ptitle"></h1></div>
+    <div class="sub" id="psub"></div>
+  </div>
+  <div class="wrap" id="pbody"></div>
+</section>
+
+<div id="st" class="st hide"></div>
+
+<script src="engine.js"></script>
+<script>
+(function(){
+"use strict";
+var API = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
+var SUP = [['Strong','పూర్తి మద్దతు'],['Leaning','మొగ్గు'],['Undecided','తేల్చలేదు'],['Opposed','వ్యతిరేకం'],['none','అడగలేదు']];
+var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్లి',Wife:'భార్య',Other:'భార్య/భర్త'};
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+var LS = { get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } },
+           set:function(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
+function call(fn, args){
+  return fetch(API, { method:'POST', redirect:'follow', credentials:'omit', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ fn:fn, args:args||[] }) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if (j && j.ok) return j.data; throw new Error(j && j.error || 'SERVER_ERROR'); });
+}
+function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
+
+var U = LS.get('mvs_user');           // shared with the volunteer app
+var TE = {}, DATA = null, M = null, links = {}, queue = {}, busy = false;
+var F = { q:'', size:2, booth:'all', check:false, sur:'', limit:40 }, scrolls = {};
+
+fetch('te_surnames.json').then(function(r){ return r.json(); }).then(function(j){ TE=j; if (M) route(); }).catch(function(){});
+function tes(s){ return TE[s] || ''; }
+
+/* ---------- login & data ---------- */
+function showLogin(msg){
+  ['vList','vFam','vPerson'].forEach(function(v){ $(v).classList.add('hide'); }); $('vLogin').classList.remove('hide');
+  $('err').textContent = msg||'';
+  call('listVolunteers').then(function(n){
+    $('who').innerHTML='<option value="">— Select —</option>'+n.map(function(x){return '<option>'+esc(x)+'</option>';}).join('');
+  }).catch(function(){ $('err').textContent='ఇంటర్నెట్ చెక్ చేయండి · Check internet'; });
+}
+$('go').onclick=function(){
+  var n=$('who').value, p=$('pin').value.trim(); if(!n||!p){ $('err').textContent='పేరు, పిన్ ఇవ్వండి'; return; }
+  $('go').disabled=true; $('go').textContent='లోడ్ అవుతోంది…';
+  call('login',[n,p]).then(function(u){
+    U = Object.assign(LS.get('mvs_user')||{}, {name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin});
+    LS.set('mvs_user',U); $('vLogin').classList.add('hide'); load(true);
+  }).catch(function(e){ $('err').textContent = String(e.message)==='WRONG_PIN' ? 'పిన్ తప్పు · Wrong PIN' : 'లోడ్ కాలేదు · '+e.message; })
+    .then(function(){ $('go').disabled=false; $('go').textContent='లోపలికి · Enter'; });
+};
+$('pin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('go').click(); });
+
+function load(force){
+  var cached = LS.get('fam_data');
+  if (cached && !force){ DATA=cached; rebuild(); route(); }
+  else $('flist').innerHTML='<div class="msg">కుటుంబాలు తయారవుతున్నాయి… · Building families…</div>';
+  return call('getFamilyData',[U.name,U.pin]).then(function(d){
+    DATA=d; LS.set('fam_data',d); rebuild(); route(); st('','✓ తాజా · Up to date');
+  }).catch(function(e){
+    if (String(e.message)==='WRONG_PIN'){ LS.set('mvs_user',null); U=null; showLogin('మళ్ళీ లాగిన్ అవ్వండి · Please log in again'); return; }
+    if (!DATA) $('flist').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'</div>';
+    st('bad','📵 ఇంటర్నెట్ లేదు — పాత డేటా చూపిస్తున్నాం · Offline');
+  });
+}
+function rebuild(){
+  links = Object.assign({}, DATA.links||{}, pendingLinks());
+  M = FamilyEngine.build(DATA.voters, links);
+  M.byHead = {}; M.families.forEach(function(f){ M.byHead[f.head]=f; });
+}
+function pendingLinks(){ var o={}; Object.keys(queue).forEach(function(k){ o[k]={to:queue[k].to, ok:queue[k].ok}; }); return o; }
+$('reload').onclick=function(){ load(true); };
+
+/* ---------- helpers ---------- */
+function P(id){ return M.P[id]; }
+function famOf(id){ return M.families.filter(function(f){ return f.members.indexOf(id)>=0; })[0]; }
+function supCounts(f){ var c={}; SUP.forEach(function(s){ c[s[0]]=0; }); Object.keys(f.support).forEach(function(k){ c[k==='-'||!c.hasOwnProperty(k)?'none':k]+=f.support[k]; }); return c; }
+function barHtml(f){ var c=supCounts(f), t=f.voters||1;
+  return SUP.map(function(s){ return c[s[0]]?'<i class="c-'+s[0]+'" style="width:'+(100*c[s[0]]/t)+'%"></i>':''; }).join(''); }
+function legHtml(f){ var c=supCounts(f); return SUP.filter(function(s){ return c[s[0]]; }).map(function(s){ return '<span class="c-'+s[0]+'" style="background:none">'+s[1]+' '+c[s[0]]+'</span>'; }).join(''); }
+function displayName(p){ return p ? (p.name||'') : ''; }
+function headTitle(f){ var h=P(f.head); return (h.vote?'':'') + displayName(h) + ' కుటుంబం'; }
+function surOf(f){ var h=P(f.head); return h.sur ? (tes(h.sur)||h.sur) : ''; }
+function sdot(p){ return '<i class="d c-'+(p.vote?(p.support||'none'):'none')+'"></i>'; }
+
+/* ---------- family list ---------- */
+function renderList(){
+  var fams = M.families.filter(function(f){ return f.voters>0; });
+  var multi = fams.filter(function(f){ return f.voters>=2; });
+  $('lsub').textContent = multi.length+' కుటుంబాలు (2+ ఓటర్లు) · '+multi.reduce(function(a,f){return a+f.voters;},0)+' ఓటర్లు';
+  var checks = fams.reduce(function(a,f){ return a+f.check; },0);
+  $('sizeChips').innerHTML = [[2,'2+'],[5,'5+'],[10,'10+'],[1,'అన్నీ']].map(function(x){
+    return '<button class="chip'+(F.size===x[0]&&!F.check?' on':'')+'" data-size="'+x[0]+'">'+x[1]+' ఓటర్లు</button>'; }).join('')+
+    '<button class="chip warn'+(F.check?' on':'')+'" data-chk="1">⚠ సరిచూడాలి ('+checks+')</button>';
+  var booths={}; fams.forEach(function(f){ f.members.forEach(function(id){ var p=P(id); if(p.vote) booths[p.booth]=1; }); });
+  $('boothChips').innerHTML = ['all'].concat(Object.keys(booths).sort()).map(function(b){
+    return '<button class="chip'+(String(F.booth)===String(b)?' on':'')+'" data-booth="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
+  var q = F.q;
+  var list = fams.filter(function(f){
+    if (F.check ? !f.check : f.voters < F.size) return false;
+    var ms = f.members.map(P);
+    if (F.booth!=='all' && !ms.some(function(p){ return p.vote && String(p.booth)===String(F.booth); })) return false;
+    if (F.sur && !ms.some(function(p){ return p.sur===F.sur; })) return false;
+    if (q) return ms.some(function(p){ return (p.name+' '+p.sur+' '+tes(p.sur)+' '+(p.house||'')).toLowerCase().indexOf(q)>=0; });
+    return true;
+  });
+  $('lcount').innerHTML = list.length+' కుటుంబాలు'+(F.sur?' · ఇంటిపేరు: <b>'+esc(tes(F.sur)||F.sur)+'</b> <button class="lnk" id="clrSur">✕</button>':'');
+  if (!list.length){ $('flist').innerHTML='<div class="msg">ఏమీ లేవు · Nothing here</div>'; return; }
+  $('flist').innerHTML = list.slice(0,F.limit).map(function(f){
+    var h=P(f.head);
+    return '<button class="fc" data-fam="'+esc(f.head)+'"><b>'+esc(displayName(h))+'</b>'+(h.vote?'':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
+      (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+
+      '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
+      '<div class="sbar">'+barHtml(f)+'</div><div class="leg">'+legHtml(f)+'</div></button>';
+  }).join('') + (list.length>F.limit?'<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>':'');
+}
+$('sizeChips').onclick=function(e){ var b=e.target.closest('button'); if(!b) return;
+  if (b.dataset.chk){ F.check=!F.check; } else { F.size=Number(b.dataset.size); F.check=false; } F.limit=40; renderList(); };
+$('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
+var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=40; renderList(); },180); };
+$('flist').onclick=function(e){
+  if (e.target.id==='more'){ F.limit+=40; renderList(); return; }
+  var b=e.target.closest('[data-fam]'); if (b) go('f='+encodeURIComponent(b.dataset.fam));
+};
+$('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=2; go(''); } };
+
+/* ---------- family tree ---------- */
+function pcard(p, me){
+  var chk = p.vote && p.rel && !p.sure;
+  return '<button class="pc'+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
+    '<div><b>'+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—'):'ఓటు లేదు · no vote')+'</span></div></button>';
+}
+function treeHtml(id, seen, me){
+  if (seen[id]) return ''; seen[id]=1;
+  var p=P(id), sp=p.spouses.filter(function(s){ return !seen[s]; });
+  sp.forEach(function(s){ seen[s]=1; });
+  var kids = p.kids.slice();
+  sp.forEach(function(s){ P(s).kids.forEach(function(k){ if(kids.indexOf(k)<0) kids.push(k); }); });
+  kids = kids.filter(function(k){ return !seen[k]; }).sort(function(a,b){ return (P(b).age||0)-(P(a).age||0); });
+  return '<div class="node"><div class="couple">'+pcard(p, me===id)+sp.map(function(s){ return '<span class="amp">+</span>'+pcard(P(s), me===s); }).join('')+'</div>'+
+    (kids.length?'<div class="kids">'+kids.map(function(k){ return treeHtml(k, seen, me); }).join('')+'</div>':'')+'</div>';
+}
+function renderFam(head, me){
+  var f = M.byHead[head] || famOf(head);
+  if (!f){ go(''); return; }
+  $('ftitle').textContent = displayName(P(f.head))+' కుటుంబం';
+  $('fsub').textContent = (surOf(f)?surOf(f)+' · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు'+(f.check?' · ⚠ '+f.check+' సరిచూడాలి':'');
+  $('fbar').innerHTML = barHtml(f); $('fleg').innerHTML = legHtml(f);
+  var seen={}, html=f.roots.map(function(r){ return treeHtml(r, seen, me); }).join('');
+  f.members.forEach(function(id){ if(!seen[id]) html+=treeHtml(id, seen, me); });
+  $('ftree').innerHTML = html;
+}
+$('ftree').onclick=function(e){ var b=e.target.closest('[data-p]'); if(b) go('p='+encodeURIComponent(b.dataset.p)); };
+
+/* ---------- person ---------- */
+function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)+'">'+esc(displayName(p))+(p.vote?'':' (ఓటు లేదు)')+'</button>':''; }
+function renderPerson(id, picking){
+  var p=P(id); if(!p){ go(''); return; }
+  $('ptitle').textContent = displayName(p);
+  $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
+  var f = famOf(id), h='';
+  if (p.vote){
+    var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt;
+    h += '<div class="card"><h3>జాబితాలో ఉన్న సంబంధం · As on voter list</h3>'+
+      '<div>'+esc(relLbl)+': <b>'+esc(p.rn||'—')+'</b></div>'+
+      '<div class="relbox'+(r&&!p.sure?' chk':'')+'">'+
+        (r ? 'అనుసంధానం · Linked to: '+plink(r.id)+(r.vote?' <span style="color:#6b665c;font-size:.8rem">(🏠 '+esc(r.house)+', '+(r.age||'')+')</span>':'')+
+             '<div style="margin-top:6px;font-weight:700">'+(p.sure?'✓ సరైనది · '+(p.manual||(links[id]&&links[id].ok)?'confirmed':'auto'):'⚠ సరిచూడండి · please check')+'</div>'
+           : 'ఓటర్లలో దొరకలేదు · Not found among voters')+
+      '</div>'+
+      '<div class="btns">'+(r&&!p.sure?'<button class="b ok" data-ok="'+esc(id)+'">✓ సరైనది</button>':'')+
+        '<button class="b ch" data-pick="'+esc(id)+'">✏️ '+(r?'మార్చు · Change':'ఎంచుకో · Pick')+'</button></div>'+
+      (picking?'<input class="f" id="pq" style="margin-top:10px" placeholder="పేరు వెతకండి · Search name"><div class="pick" id="plist"></div>':'')+
+      '</div>';
+  }
+  var rows = [];
+  if (p.father) rows.push(['తండ్రి', plink(p.father)]);
+  if (p.mother) rows.push(['తల్లి', plink(p.mother)]);
+  if (p.spouses.length) rows.push([p.g==='Female'?'భర్త':'భార్య', p.spouses.map(plink).join('<br>')]);
+  var sib = {}; [p.father,p.mother].forEach(function(x){ if(x) P(x).kids.forEach(function(k){ if(k!==id) sib[k]=1; }); });
+  if (Object.keys(sib).length) rows.push(['తోబుట్టువులు', Object.keys(sib).map(plink).join('<br>')]);
+  if (p.kids.length) rows.push(['పిల్లలు', p.kids.map(plink).join('<br>')]);
+  h += '<div class="card"><h3>కుటుంబ సంబంధాలు · Relations</h3>'+(rows.length?rows.map(function(x){ return '<div class="pr"><div class="l">'+x[0]+'</div><div class="v">'+x[1]+'</div></div>'; }).join(''):'<div style="color:#6b665c">సంబంధాలు లేవు</div>')+'</div>';
+  if (f && f.voters>1) h += '<button class="b fam" data-fam="'+esc(f.head)+'">👪 కుటుంబ వృక్షం చూడండి · '+f.voters+' ఓటర్లు</button>';
+  $('pbody').innerHTML = h;
+  if (picking) renderPick(id, '');
+}
+function candidates(p, q){
+  var want = p.rt==='Mother' ? 'Female' : (p.rt==='Other' ? (p.g==='Male'?'Female':'Male') : 'Male');
+  var all = Object.keys(M.P).map(P).filter(function(c){ return c.id!==p.id && c.g===want && (c.vote || c.sur===p.sur); });
+  if (q) all = all.filter(function(c){ return (c.name+' '+(c.house||'')).toLowerCase().indexOf(q)>=0; });
+  else { var rk = FamilyEngine.key(p.rn, p.sur); all = all.filter(function(c){ return c.sur===p.sur || c.hk===p.hk || FamilyEngine.key(c.name,c.sur)===rk; }); }
+  function sc(c){ return (c.hk===p.hk?5:0)+(c.sur===p.sur?3:0)+(c.street===p.street?1:0)+(FamilyEngine.key(c.name,c.sur)===FamilyEngine.key(p.rn,p.sur)?4:0); }
+  return all.sort(function(a,b){ return sc(b)-sc(a); }).slice(0,60);
+}
+function renderPick(id, q){
+  var p=P(id), c=candidates(p, q);
+  $('plist').innerHTML = '<button class="po none" data-set="none">✕ ఓటర్లలో లేరు · Not on the voter list</button>'+
+    c.map(function(x){ return '<button class="po" data-set="'+esc(x.id)+'"><b>'+esc(x.name)+'</b><br><span>'+(x.vote?(x.age||'')+' ఏళ్ళు · 🏠 '+esc(x.house)+' · '+esc(x.street):'ఓటు లేదు · shared relative')+'</span></button>'; }).join('');
+  var inp=$('pq'); if (inp && !inp.dataset.bound){ inp.dataset.bound=1; var t; inp.oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ renderPick(id, v.trim().toLowerCase()); },150); }; }
+}
+$('pbody').onclick=function(e){
+  var t;
+  if ((t=e.target.closest('[data-p]'))) { go('p='+encodeURIComponent(t.dataset.p)); return; }
+  if ((t=e.target.closest('[data-fam]'))) { go('f='+encodeURIComponent(t.dataset.fam)+'&me='+encodeURIComponent(cur().p||'')); return; }
+  if ((t=e.target.closest('[data-ok]'))) { var p=P(t.dataset.ok); setLink(p, p.rel, true); return; }
+  if ((t=e.target.closest('[data-pick]'))) { renderPerson(t.dataset.pick, true); var pq=$('pq'); if(pq) pq.focus(); return; }
+  if ((t=e.target.closest('[data-set]'))) { var me=P(cur().p); setLink(me, t.dataset.set, true); return; }
+};
+function setLink(p, to, ok){
+  queue[p.id] = { e:p.id, n:p.name, to:to||'none', ok:!!ok };
+  rebuild(); route(); save();
+}
+function save(){
+  var items = Object.keys(queue).map(function(k){ return queue[k]; });
+  if (!items.length || busy) return;
+  busy=true; st('busy','⏳ సేవ్ అవుతోంది… · Saving');
+  call('saveFamilyLinks',[U.name,U.pin,items]).then(function(){
+    busy=false;
+    items.forEach(function(it){ DATA.links[it.e]={to:it.to, ok:it.ok}; if (queue[it.e]===it) delete queue[it.e]; });
+    LS.set('fam_data', DATA);
+    if (Object.keys(queue).length) save(); else st('','✓ సేవ్ అయింది · Saved');
+  }).catch(function(e){ busy=false; st('bad','⚠️ సేవ్ కాలేదు, మళ్ళీ ప్రయత్నిస్తాం · Retrying'); setTimeout(save,5000); });
+}
+window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
+
+/* ---------- routing (phone back button works) ---------- */
+function cur(){ var o={}; location.hash.slice(1).split('&').forEach(function(kv){ var i=kv.indexOf('='); if(i>0) o[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); }); return o; }
+function go(h){ scrolls[location.hash]=window.scrollY; location.hash=h; }
+document.addEventListener('click',function(e){ if(e.target.closest('[data-back]')){ if (history.length>1) history.back(); else location.hash=''; } });
+function route(){
+  if (!M) return;
+  var c=cur(); ['vList','vFam','vPerson'].forEach(function(v){ $(v).classList.add('hide'); });
+  if (c.p){ $('vPerson').classList.remove('hide'); renderPerson(c.p, false); }
+  else if (c.f){ $('vFam').classList.remove('hide'); renderFam(c.f, c.me); }
+  else { if (c.s!==undefined){ F.sur=c.s; F.size=1; F.check=false; } $('vList').classList.remove('hide'); renderList(); }
+  window.scrollTo(0, scrolls[location.hash]||0);
+}
+window.addEventListener('hashchange', route);
+
+if (U && U.name && U.pin) load(false); else showLogin('');
+})();
+</script>
+</body>
+</html>

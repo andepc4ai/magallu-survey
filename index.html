@@ -159,6 +159,7 @@ textarea:focus{outline:none;border-color:var(--brand)}
     <div class="row">
       <h1>ఓటర్ సర్వే</h1>
       <span class="who" id="who"></span>
+      <button class="iconbtn hide" id="btnFam" title="Families">👪</button>
       <button class="iconbtn hide" id="btnSur" title="Surname to caste">🏷</button>
       <button class="iconbtn" id="btnRefresh" title="Refresh">⟳</button>
       <button class="iconbtn" id="btnOut" title="Logout">⎋</button>
@@ -473,7 +474,8 @@ function renderHouse(){
   var sameWard = h.v.every(function(v){return v.ward===hw;});
   var wards=''; for(var i=1;i<=S.wards;i++) wards+='<button class="wb'+(sameWard&&hw===i?' on':'')+'" data-w="'+i+'">'+i+'</button>';
   var html = '<div class="hbox"><h3>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></h3><div class="wards">'+wards+'</div>'+
-    '<button class="allv" data-allv="1">✓ ఇంట్లో అందరినీ కలిశాం <span style="font-weight:400">· Mark all visited</span></button></div>';
+    '<button class="allv" data-allv="1">✓ ఇంట్లో అందరినీ కలిశాం <span style="font-weight:400">· Mark all visited</span></button>'+
+    (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
   var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
   var sug = suggestCaste(h.v[0].surname);
   html += '<div class="hbox"><h3>కులం <span class="en">Caste — whole house</span></h3>'+
@@ -612,6 +614,7 @@ function surFlush(){
   });
 }
 // One shared screen: on the live app the 🏷 button opens the /castes/ page
+$('btnFam').onclick=function(){ location.href='family/'; };
 $('btnSur').onclick=function(){ if (HAS_API) location.href='castes/'; else surOpen(); };
 $('btnSurBack').onclick=function(){ surClose(); if(S.openHouse) renderHouse(); };
 $('surChips').onclick=function(e){ var b=e.target.closest('[data-sm]'); if(!b) return; SU.mode=b.dataset.sm; surRender(); };
@@ -669,6 +672,7 @@ function showApp(){
   $('vLogin').classList.add('hide'); $('vList').classList.remove('hide');
   $('who').textContent = '👤 '+S.user.name;
   $('btnSur').classList.toggle('hide', !S.user.admin);
+  $('btnFam').classList.toggle('hide', !HAS_API);
   S.wards = S.user.wards || 14;
   var savedBooth = LS.get('booth');
   S.booth = savedBooth || (S.user.booth ? String(S.user.booth) : 'all');
