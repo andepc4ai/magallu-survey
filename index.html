@@ -143,6 +143,11 @@ textarea:focus{outline:none;border-color:var(--brand)}
 .spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}
 @keyframes s{to{transform:rotate(360deg)}}
 .empty{text-align:center;color:var(--muted);padding:40px 10px}
+.lq{width:100%;font-size:1.05rem;padding:12px;border:2px solid #e5dfd2;border-radius:12px;box-sizing:border-box}
+.lsug{margin-top:6px}.lpick{display:block;width:100%;text-align:left;background:#fff;border:1px solid #e9e2d5;border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:.95rem}
+.lpick span{color:#6b665c;font-size:.8rem}.lbtns{display:flex;gap:8px;margin-top:8px}
+.lsave{flex:1;background:#1d1b16;color:#fff;border:0;border-radius:12px;padding:12px;font-weight:700}.lclr{background:#fff;color:#b91c1c;border:1px solid #fca5a5;border-radius:12px;padding:12px;font-weight:700}
+.lcall{display:inline-block;margin:4px 0 6px;color:#0f766e;font-weight:700;text-decoration:none}
 </style>
 </head>
 <body>
@@ -378,6 +383,34 @@ var S = {
   open: {}           // sections the volunteer opened again with "మార్చు"
 };
 function issues(v){ return String(v.issue||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }
+/* ---------- family leader (stored as "Name (EPIC)" when picked from the voter list, else just the name) ---------- */
+function leaderName(s){ var m=/^(.*?)\s*\(([A-Z]{2,4}\d{5,})\)$/.exec(String(s||'')); return m?m[1]:String(s||''); }
+function leaderEpic(s){ var m=/\(([A-Z]{2,4}\d{5,})\)$/.exec(String(s||'')); return m?m[1]:''; }
+function topLeader(vs){ var c={}, best='', n=0; vs.forEach(function(v){ if(v.leader){ c[v.leader]=(c[v.leader]||0)+1; if(c[v.leader]>n){ n=c[v.leader]; best=v.leader; } } }); return best; }
+function houseLeaderHtml(h){
+  var L = topLeader(h.v);
+  if (L && !S.open['house:leader']){
+    var lv = leaderEpic(L) && S.rows.filter(function(x){ return x.e===leaderEpic(L); })[0];
+    return '<div class="hbox" style="padding:8px 14px">'+foldRow('house:leader','👤 నాయకుడు', esc(leaderName(L))+(lv?' <span class="en">🏠 '+esc(lv.house)+'</span>':''))+
+      (lv&&lv.mobile?'<a class="lcall" href="tel:'+esc(lv.mobile)+'">📞 '+esc(lv.mobile)+'</a>':'')+'</div>';
+  }
+  return '<div class="hbox"><h3>👤 నాయకుడు <span class="en">Leader who tracks this family</span></h3>'+
+    '<input class="lq" data-lq="1" placeholder="పేరు టైప్ చేయండి · Type a name" autocomplete="off" value="'+esc(L?leaderName(L):'')+'">'+
+    '<div class="lsug" id="lsug"></div>'+
+    '<div class="lbtns"><button class="lsave" data-lsave="1">✓ ఈ పేరు సేవ్ · Save typed name</button>'+
+    (L?'<button class="lclr" data-lclr="1">✕ తీసేయి</button>':'')+'</div></div>';
+}
+function leaderSugHtml(q){
+  q=String(q||'').trim(); if (q.length<2) return '';
+  var Q=Fuzzy.query(q);
+  return S.rows.map(function(v){ return {v:v, s:Fuzzy.score(v.name,Q)}; }).filter(function(x){ return x.s>0; })
+    .sort(function(a,b){ return b.s-a.s; }).slice(0,6).map(function(x){ var v=x.v;
+      return '<button class="lpick" data-lpick="'+esc(v.name+' ('+v.e+')')+'"><b>'+esc(v.name)+'</b> <span>'+esc(v.age)+' ఏళ్ళు · 🏠 '+esc(v.house)+' · '+esc(v.sec)+'</span></button>'; }).join('');
+}
+function setHouseLeader(h, val){
+  h.v.forEach(function(v){ if(v.leader!==val) edit(v,{leader:val}); });
+  delete S.open['house:leader']; toast(val?'👤 '+leaderName(val)+' ✓':'తీసేశాం ✓'); renderHouse();
+}
 function foldRow(key, label, valueHtml, cls){
   return '<button class="fold '+(cls||'')+'" data-unfold="'+esc(key)+'"><span class="fl">'+label+'</span><span class="fv">'+valueHtml+'</span><span class="fc">✓ మార్చు</span></button>';
 }
@@ -409,7 +442,7 @@ function demoCall(fn,args){
     var rows = LS.get('demo_rows') || JSON.parse(JSON.stringify(DEMO_ROWS));
     args[2].forEach(function(u){ rows.forEach(function(r){ if(r[10]===u.e){
       var f=u.f; if('ward' in f) r[13]=f.ward; if('visited' in f) r[14]=f.visited; if('support' in f) r[15]=f.support;
-      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; r[18]=args[0]; }});});
+      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; r[18]=args[0]; }});});
     LS.set('demo_rows',rows);
     return {saved:args[2].length,failed:[]};
   }
@@ -419,7 +452,7 @@ function demoCall(fn,args){
 function toObj(a){
   return {s:a[0],r:a[1],booth:a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
@@ -447,6 +480,7 @@ function applyLocal(v,f){
   if('mobile' in f) v.mobile = f.mobile;
   if('caste' in f) v.caste = f.caste;
   if('occupation' in f) v.occupation = f.occupation;
+  if('leader' in f) v.leader = f.leader;
 }
 function cleanMobile(s){
   var d = String(s||'').replace(/\D/g,'');
@@ -534,7 +568,7 @@ function houseMatches(h){
     var hn=String(h.house).toLowerCase(); if (hn===q) best=60; else if (hn.indexOf(q)===0) best=40;
     h.v.forEach(function(v){
       if ((v.e+' '+v.mobile).toLowerCase().indexOf(q)>=0) best=Math.max(best,40);
-      var a=Fuzzy.score(v.name, S.Q), b=Fuzzy.score(v.name+' '+v.relN+' '+v.caste, S.Q); best=Math.max(best, a?a+2:0, b?Math.max(0.1,b-4):0);
+      var a=Fuzzy.score(v.name, S.Q), b=Fuzzy.score(v.name+' '+v.relN+' '+v.caste+' '+leaderName(v.leader), S.Q); best=Math.max(best, a?a+2:0, b?Math.max(0.1,b-4):0);
     });
     h._score=best; return best>0;
   }
@@ -591,6 +625,7 @@ function renderHouse(){
   var html = '<div class="hbox"><h3>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></h3><div class="wards">'+wards+'</div>'+
     '<button class="allv" data-allv="1">✓ ఇంట్లో అందరినీ కలిశాం <span style="font-weight:400">· Mark all visited</span></button>'+
     (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
+  html += houseLeaderHtml(h);
   var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
   var sug = suggestCaste(h.v[0].surname);
   var allCaste = h.v.every(function(v){ return !!v.caste; });
@@ -658,6 +693,9 @@ $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
   var w=e.target.closest('[data-w]');
   if (w){ var n=Number(w.dataset.w); h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); renderHouse(); return; }
+  var lp=e.target.closest('[data-lpick]'); if (lp){ setHouseLeader(h, lp.dataset.lpick); return; }
+  if (e.target.closest('[data-lsave]')){ var lv=(document.querySelector('[data-lq]')||{}).value||''; lv=lv.trim(); if(!lv){ toast('పేరు టైప్ చేయండి'); return; } setHouseLeader(h, lv); return; }
+  if (e.target.closest('[data-lclr]')){ setHouseLeader(h, ''); return; }
   var hcb=e.target.closest('[data-hcaste]');
   if (hcb){ var c=hcb.dataset.hcaste; h.v.forEach(function(v){ if(v.caste!==c) edit(v,{caste:c}); delete S.open[v.id+':caste']; }); delete S.open['house:caste']; toast('కులం: '+(CASTE_TE[c]||c)+' ✓'); renderHouse(); return; }
   if (e.target.closest('[data-allv]')){ h.v.forEach(function(v){ if(!v.visited) edit(v,{visited:'Visited'}); }); toast('అందరినీ కలిశాం ✓'); renderHouse(); return; }
@@ -691,6 +729,7 @@ $('hBody').addEventListener('change',function(e){
 });
 var mT={};
 $('hBody').addEventListener('input',function(e){
+  if(e.target.dataset.lq){ var box=$('lsug'); if(box) box.innerHTML=leaderSugHtml(e.target.value); return; }
   if(!e.target.dataset.mobile) return;
   var inp=e.target, card=inp.closest('[data-id]'), id=card.dataset.id, hint=card.querySelector('[data-mhint]');
   var d=cleanMobile(inp.value);
