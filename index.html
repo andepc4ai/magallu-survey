@@ -507,7 +507,7 @@ function call(fn){
 }
 function demoCall(fn,args){
   if (fn==='listVolunteers') return ['Anudeep','Volunteer 1','Volunteer 2'];
-  if (fn==='login'){ if(String(args[1])!=='1234') throw new Error('WRONG_PIN'); return {name:args[0],booth:'',wards:14,admin:true,lists:{castes:DEF_LISTS.castes,occupations:DEF_LISTS.occupations,surnameCaste:{gunti:'Madiga',shaik:'Muslim',tammisetti:'Vadrangi'}}}; }
+  if (fn==='login'){ if(String(args[1])!=='1234') throw new Error('WRONG_PIN'); return {name:args[0],booth:'',wards:12,admin:true,lists:{castes:DEF_LISTS.castes,occupations:DEF_LISTS.occupations,surnameCaste:{gunti:'Madiga',shaik:'Muslim',tammisetti:'Vadrangi'}}}; }
   if (fn==='getVisits') return (LS.get('demo_visits')||[]).filter(function(x){ return args[2].indexOf(x.e)>=0; }).sort(function(a,b){ return b.t-a.t; });
   if (fn==='deleteVisit') { var dv=(LS.get('demo_visits')||[]).filter(function(x){ return x.id!==args[2]; }), gone=(LS.get('demo_visits')||[]).filter(function(x){ return x.id===args[2]; })[0]; LS.set('demo_visits',dv);
     var mine=dv.filter(function(x){ return x.e===gone.e; }).sort(function(a,b){ return b.t-a.t; }); var rows=LS.get('demo_rows')||JSON.parse(JSON.stringify(DEMO_ROWS));
@@ -752,7 +752,10 @@ function renderHouse(){
   var hw = h.v[0].ward;
   var sameWard = h.v.every(function(v){return v.ward===hw;});
   var wards=''; for(var i=1;i<=S.wards;i++) wards+='<button class="wb'+(sameWard&&hw===i?' on':'')+'" data-w="'+i+'">'+i+'</button>';
-  var html = '<div class="hbox"><h3>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></h3><div class="wards">'+wards+'</div>'+
+  var wardTop = S.open['house:ward']
+    ? '<div class="q qh"><span>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></span><button class="done" data-fold="house:ward">మూసివేయి</button></div><div class="wards">'+wards+'</div>'
+    : foldRow('house:ward','వార్డు', sameWard&&hw ? '<b>'+hw+'</b>' : h.v.some(function(v){ return v.ward; }) ? 'కొందరికి వేరు <span class="en">mixed</span>' : '<span class="en">ఎంచుకోలేదు · not set</span>', sameWard&&hw?'':'opt');
+  var html = '<div class="hbox">'+wardTop+
     houseVisitHtml(h)+
     (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
   html += houseLeaderHtml(h);
@@ -760,7 +763,9 @@ function renderHouse(){
   var sug = suggestCaste(h.v[0].surname);
   var allCaste = h.v.every(function(v){ return !!v.caste; });
   if (allCaste && !S.open['house:caste']) { /* caste filled for everyone in the house: treated as confirmed, box hidden */ }
-  else html += '<div class="hbox"><h3>కులం <span class="en">Caste — whole house</span></h3>'+
+  else if (!S.open['house:caste']) html += '<div class="hbox" style="padding:8px 14px">'+foldRow('house:caste','కులం · ఇల్లు',
+      (sameCaste&&hc ? esc(CASTE_TE[hc]||hc) : '<span class="en">ఎంచుకోలేదు · not set</span>')+(sug&&!(sameCaste&&hc)?' <span class="en">💡 '+esc(CASTE_TE[sug]||sug)+'?</span>':''), 'opt')+'</div>';
+  else html += '<div class="hbox"><div class="q qh"><span>కులం <span class="en">Caste — whole house</span></span><button class="done" data-fold="house:caste">మూసివేయి</button></div>'+
     (sug && !(sameCaste && hc===sug) ? '<button class="sugg" data-hcaste="'+esc(sug)+'">💡 ఇంటిపేరు ప్రకారం: '+esc(CASTE_TE[sug]||sug)+' ('+esc(sug)+') — సరైతే నొక్కండి</button>' : '')+
     '<div class="cgrid">'+lists().castes.map(function(c){
       return '<button class="cb'+(sameCaste&&hc===c?' on':'')+'" data-hcaste="'+esc(c)+'">'+esc(CASTE_TE[c]||c)+(CASTE_TE[c]?'<small>'+esc(c)+'</small>':'')+'</button>';
@@ -909,7 +914,7 @@ $('hBody').onclick=function(e){
   var w=e.target.closest('[data-w]');
   if (w){ var n=Number(w.dataset.w), allN=h.v.every(function(v){ return v.ward===n; });
     if (allN){ h.v.forEach(function(v){ edit(v,{ward:''}); }); toast('వార్డు తీసేశాం · Ward cleared'); }
-    else { h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); }
+    else { h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); delete S.open['house:ward']; }
     renderHouse(); return; }
   var lp=e.target.closest('[data-lpick]'); if (lp){ setHouseLeader(h, lp.dataset.lpick); return; }
   if (e.target.closest('[data-lsave]')){ var lv=(document.querySelector('[data-lq]')||{}).value||''; lv=lv.trim(); if(!lv){ toast('పేరు టైప్ చేయండి'); return; } setHouseLeader(h, lv); return; }
@@ -1236,7 +1241,7 @@ function loadData(force){
 function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
-    S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.myWards = u.myWards||[]; LS.set('user', S.user);
+    S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
     $('btnSur').classList.toggle('hide', !S.user.admin);
     if (S.openHouse) renderHouse();
   }).catch(function(){});
@@ -1258,7 +1263,7 @@ function showApp(){
   $('btnFam').classList.toggle('hide', !HAS_API);
   $('quick').classList.toggle('hide', !HAS_API);
   $('quickCaste').classList.toggle('hide', !S.user.admin);
-  S.wards = S.user.wards || 14;
+  S.wards = S.user.wards || 12;
   var savedBooth = LS.get('booth');
   S.booth = savedBooth || (S.user.booth ? String(S.user.booth) : 'all');
   renderSync(); loadData(false); scheduleFlush(500);
