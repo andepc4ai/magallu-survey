@@ -1,6 +1,7 @@
 /* Magallu family engine: builds family links from the voter roll.
  * Voter row: [epic, name, relType, relName, surname, house, booth, street, age, gender, support, visited]
- * overrides: { epic: { to: 'EPIC' | 'X:key' | 'none', ok: true } }  (to = corrected relative; ok = confirmed)
+ * overrides: { epic: { to: 'EPIC' | 'X:key' | 'none', ok: true, as: 'Father'|'Mother'|'Husband'|'Wife'|'Son'|'Daughter'|'Brother'|'Sister'|'Relative' } }
+ * extras:    { epic: [ { to: 'EPIC', as: <same list>, slot: 'x1' } ] }  (more relations added by volunteers)
  */
 var FamilyEngine = (function () {
   function canon(s) {
@@ -29,8 +30,20 @@ var FamilyEngine = (function () {
     return d + (a.length - i) + (b.length - j) <= 1;
   }
 
-  function build(rows, overrides) {
-    overrides = overrides || {};
+  // relation of p's relative r, as seen from p: Father/Mother/Husband/Wife/Other/Son/Daughter/Brother/Sister
+  function linkRel(P, p, r, as) {
+    if (!r || r.id === p.id) return;
+    if (as === 'Father') { p.father = r.id; push(r.kids, p.id); }
+    else if (as === 'Mother') { p.mother = r.id; push(r.kids, p.id); }
+    else if (as === 'Husband' || as === 'Wife' || as === 'Other') { push(p.spouses, r.id); push(r.spouses, p.id); }
+    else if (as === 'Son' || as === 'Daughter') { if (p.g === 'Female') { if (!r.mother) r.mother = p.id; } else if (!r.father) r.father = p.id; push(p.kids, r.id); }
+    else if (as === 'Brother' || as === 'Sister') { push(p.sibs, r.id); push(r.sibs, p.id); }
+    else { push(p.rels, r.id); push(r.rels, p.id); }                       // 'Relative': same family, no fixed place
+  }
+  function push(a, x) { if (a.indexOf(x) < 0) a.push(x); }
+
+  function build(rows, overrides, extras) {
+    overrides = overrides || {}; extras = extras || {};
     var P = {}, list = [];
     rows.forEach(function (r) {
       var p = { id: String(r[0]), name: r[1], rt: r[2], rn: String(r[3] || '').trim(), sur: String(r[4] || '').trim(),
@@ -72,18 +85,33 @@ var FamilyEngine = (function () {
       p.rel = top.id;
       p.sure = score(p, top) >= 5 || (!fuzzy && cands.length === 1);
     });
+    // 1b) a man gets only one auto-matched wife: the one in his house (others keep their own husband)
+    var wivesOf = {};
+    list.forEach(function (p) { if (p.rt === 'Husband' && p.rel) (wivesOf[p.rel] = wivesOf[p.rel] || []).push(p); });
+    Object.keys(wivesOf).forEach(function (h) {
+      var ws = wivesOf[h], H = P[h]; if (ws.length < 2) return;
+      ws.sort(function (a, b) { return score(b, H) - score(a, H); });
+      ws.slice(1).forEach(function (w) { if (score(w, H) >= 5 && score(ws[0], H) >= 5) return; w.rel = null; w.sure = false; unmatched.push(w); });
+    });
+    // 1c) a child whose matched father lives elsewhere, but whose mother (in the same house) names the same
+    //     husband and was not matched -> the father is not on the roll; keep mother and children together
+    list.forEach(function (c) {
+      if (c.rt !== 'Father' || !c.rel || score(c, P[c.rel]) >= 5) return;
+      var mom = list.filter(function (w) { return w.rt === 'Husband' && !w.rel && w.hk === c.hk && w.relKey === c.relKey; })[0];
+      if (mom) { c.rel = null; c.sure = false; unmatched.push(c); }
+    });
     // 2) relatives without a vote, shared by 2+ voters -> one "no vote" person
     var groups = {};
     unmatched.forEach(function (p) {
       if (p.rt === 'Other') return;
-      var gk = p.sc + '|' + p.relKey + '|' + (p.rt === 'Mother' ? 'F' : 'M');
+      var gk = p.sc + '|' + p.relKey + '|' + (p.rt === 'Mother' ? 'F' : 'M') + '|' + p.booth;
       (groups[gk] = groups[gk] || []).push(p);
     });
     Object.keys(groups).forEach(function (gk) {
       var g = groups[gk];
       if (g.length < 2) return;
       var id = 'X:' + gk;
-      var x = { id: id, name: g[0].rn + (g[0].sur && canon(g[0].rn).indexOf(g[0].sc) < 0 ? ' ' + g[0].sur : ''), g: gk.slice(-1) === 'F' ? 'Female' : 'Male',
+      var x = { id: id, name: g[0].rn + (g[0].sur && canon(g[0].rn).indexOf(g[0].sc) < 0 ? ' ' + g[0].sur : ''), g: gk.split('|')[2] === 'F' ? 'Female' : 'Male',
         sur: g[0].sur, sc: g[0].sc, vote: false, house: '', booth: g[0].booth, street: g[0].street, age: 0 };
       P[id] = x;
       g.forEach(function (p) { p.rel = id; p.sure = true; });
@@ -93,20 +121,31 @@ var FamilyEngine = (function () {
       var p = P[id], o = overrides[id]; if (!p || !o) return;
       if (o.to === 'none') { p.rel = null; p.manual = true; }
       else if (o.to && P[o.to]) { p.rel = o.to; p.manual = true; p.sure = true; }
+      if (o.as) p.as = o.as;
       if (o.ok) p.sure = true;
     });
     // 4) derive parents / spouse / children / siblings
-    Object.keys(P).forEach(function (id) { var p = P[id]; p.kids = []; p.spouses = []; p.father = p.mother = null; });
+    Object.keys(P).forEach(function (id) { var p = P[id]; p.kids = []; p.spouses = []; p.sibs = []; p.rels = []; p.father = p.mother = null; p.extra = []; });
     Object.keys(P).forEach(function (id) {
       var p = P[id], r = p.rel && P[p.rel]; if (!r) return;
-      if (p.rt === 'Husband' || p.rt === 'Other') { p.spouses.push(r.id); r.spouses.push(p.id); }
-      else if (p.rt === 'Father') { p.father = r.id; r.kids.push(p.id); }
-      else if (p.rt === 'Mother') { p.mother = r.id; r.kids.push(p.id); }
+      linkRel(P, p, r, p.as || p.rt);
+    });
+    Object.keys(extras).forEach(function (id) {
+      var p = P[id]; if (!p) return;
+      extras[id].forEach(function (x) { var r = P[x.to]; if (!r) return; linkRel(P, p, r, x.as); p.extra.push({ to: x.to, as: x.as, slot: x.slot }); });
     });
     // mother = father's only wife (when not given)
     Object.keys(P).forEach(function (id) {
       var p = P[id];
-      if (p.father && !p.mother) { var f = P[p.father]; if (f.spouses.length === 1) { p.mother = f.spouses[0]; P[p.mother].kids.push(p.id); } }
+      if (p.father && !p.mother) { var f = P[p.father]; if (f.spouses.length === 1) { p.mother = f.spouses[0]; push(P[p.mother].kids, p.id); } }
+    });
+    // brothers / sisters share parents
+    for (var pass = 0; pass < 2; pass++) Object.keys(P).forEach(function (id) {
+      var p = P[id];
+      p.sibs.forEach(function (sid) { var s = P[sid];
+        if (p.father && !s.father) { s.father = p.father; push(P[p.father].kids, sid); }
+        if (p.mother && !s.mother) { s.mother = p.mother; push(P[p.mother].kids, sid); }
+      });
     });
     // 5) families = connected groups
     var fam = {}, fid = 0;
@@ -115,7 +154,7 @@ var FamilyEngine = (function () {
       var stack = [id]; fam[id] = fid;
       while (stack.length) {
         var c = P[stack.pop()];
-        [c.father, c.mother].concat(c.spouses, c.kids).forEach(function (n) { if (n && fam[n] === undefined) { fam[n] = fid; stack.push(n); } });
+        [c.father, c.mother].concat(c.spouses, c.kids, c.sibs, c.rels).forEach(function (n) { if (n && fam[n] === undefined) { fam[n] = fid; stack.push(n); } });
       }
       fid++;
     });

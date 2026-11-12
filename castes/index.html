@@ -136,7 +136,7 @@ function renderList(){
     if (mode==='missing' && ok) return false;
     if (mode==='done' && !ok) return false;
     if (!q) return true;
-    r._s = (r[1].toLowerCase().indexOf(q)>=0 || te(r[1]).indexOf(q)>=0) ? 10 : Fuzzy.score(r[1], Q);
+    r._s = Fuzzy.score(r[1], Q) + (r[1].toLowerCase()===q||te(r[1])===q ? 50 : (r[1].toLowerCase().indexOf(q)===0||te(r[1]).indexOf(q)===0) ? 20 : (r[1].toLowerCase().indexOf(q)>=0||te(r[1]).indexOf(q)>=0) ? 8 : 0);
     return r._s>0;
   });
   if (q) list.sort(function(a,b){ return b._s-a._s || b[2]-a[2]; });
