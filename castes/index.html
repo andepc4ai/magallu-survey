@@ -78,6 +78,7 @@ select.cs.big{width:100%;height:52px;font-size:1.05rem}
 
 <div id="st" class="st hide"></div>
 
+<script src="../fuzzy.js"></script>
 <script>
 (function(){
 "use strict";
@@ -96,7 +97,7 @@ function call(fn, args){
     .then(function(r){ return r.json(); })
     .then(function(j){ if (j && j.ok) return j.data; throw new Error(j && j.error || 'SERVER_ERROR'); });
 }
-var rows = [], bySur = {}, voters = null, votersP = null, mode = 'missing', q = '', queue = {}, busy = false, listScroll = 0;
+var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'missing', q = '', queue = {}, busy = false, listScroll = 0;
 function te(s){ return TE[s] || ''; }
 function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
 function casteOptions(cur){
@@ -134,8 +135,11 @@ function renderList(){
     var ok = NAMES.indexOf(r[3])>=0;
     if (mode==='missing' && ok) return false;
     if (mode==='done' && !ok) return false;
-    return !q || r[1].toLowerCase().indexOf(q)>=0 || te(r[1]).indexOf(q)>=0;
+    if (!q) return true;
+    r._s = (r[1].toLowerCase().indexOf(q)>=0 || te(r[1]).indexOf(q)>=0) ? 10 : Fuzzy.score(r[1], Q);
+    return r._s>0;
   });
+  if (q) list.sort(function(a,b){ return b._s-a._s || b[2]-a[2]; });
   if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'&&!q?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
   $('list').innerHTML = list.slice(0,200).map(function(r){
     var cur=r[3], ok=NAMES.indexOf(cur)>=0;
@@ -226,7 +230,7 @@ document.querySelector('.tabs').onclick=function(e){
   var b=e.target.closest('[data-m]'); if(!b) return;
   mode=b.dataset.m; [].forEach.call(document.querySelectorAll('.tab'),function(t){ t.classList.toggle('on', t===b); }); renderList();
 };
-var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); renderList(); },150); };
+var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); Q=Fuzzy.query(q); renderList(); },150); };
 window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
 
 load();

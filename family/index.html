@@ -131,6 +131,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 <div id="st" class="st hide"></div>
 
 <script src="engine.js"></script>
+<script src="../fuzzy.js"></script>
 <script>
 (function(){
 "use strict";
@@ -242,9 +243,17 @@ function renderList(){
     var ms = f.members.map(P);
     if (F.booth!=='all' && !ms.some(function(p){ return p.vote && String(p.booth)===String(F.booth); })) return false;
     if (F.sur && !ms.some(function(p){ return p.sur===F.sur; })) return false;
-    if (q) return ms.some(function(p){ return (p.name+' '+p.sur+' '+tes(p.sur)+' '+(p.house||'')+' '+(p.caste||'')+' '+cte(p.caste)).toLowerCase().indexOf(q)>=0; });
+    if (q){
+      var Q=F.Q, best=0;
+      ms.forEach(function(p){
+        if (String(p.house||'').toLowerCase().indexOf(q)===0 || cte(p.caste).indexOf(q)>=0 || tes(p.sur).indexOf(q)>=0) best=Math.max(best,10);
+        best=Math.max(best, Fuzzy.score(p.name+' '+p.sur+' '+(p.caste||''), Q));
+      });
+      f._score=best; return best>0;
+    }
     return true;
   });
+  if (q && !F.swing) list = list.slice().sort(function(a,b){ return (b._score||0)-(a._score||0) || b.voters-a.voters; });
   if (F.swing) list = list.slice().sort(function(a,b){ return undecided(b)-undecided(a) || b.voters-a.voters; });
   $('lcount').innerHTML = list.length+' కుటుంబాలు'+(F.swing?' · ఎక్కువ తేల్చనివారు ముందు':'')+(F.sur?' · ఇంటిపేరు: <b>'+esc(tes(F.sur)||F.sur)+'</b> <button class="lnk" id="clrSur">✕</button>':'');
   if (!list.length){ $('flist').innerHTML='<div class="msg">ఏమీ లేవు · Nothing here</div>'; return; }
@@ -260,7 +269,7 @@ $('sizeChips').onclick=function(e){ var b=e.target.closest('button'); if(!b) ret
   if (b.dataset.swing){ F.swing=!F.swing; F.check=false; }
   else if (b.dataset.chk){ F.check=!F.check; F.swing=false; } else { F.size=Number(b.dataset.size); F.check=false; F.swing=false; } F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
-var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=40; renderList(); },180); };
+var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.Q=Fuzzy.query(F.q); F.limit=40; renderList(); },200); };
 $('flist').onclick=function(e){
   if (e.target.id==='more'){ F.limit+=40; renderList(); return; }
   if (e.target.closest('a')) return;      // call button: let the phone dial
@@ -334,7 +343,7 @@ function renderPerson(id, picking){
 function candidates(p, q){
   var want = p.rt==='Mother' ? 'Female' : (p.rt==='Other' ? (p.g==='Male'?'Female':'Male') : 'Male');
   var all = Object.keys(M.P).map(P).filter(function(c){ return c.id!==p.id && c.g===want && (c.vote || c.sur===p.sur); });
-  if (q) all = all.filter(function(c){ return (c.name+' '+(c.house||'')).toLowerCase().indexOf(q)>=0; });
+  if (q){ var Q=Fuzzy.query(q); all = all.filter(function(c){ return (c.house||'').toLowerCase().indexOf(q)===0 || Fuzzy.score(c.name, Q)>0; }); }
   else { var rk = FamilyEngine.key(p.rn, p.sur); all = all.filter(function(c){ return c.sur===p.sur || c.hk===p.hk || FamilyEngine.key(c.name,c.sur)===rk; }); }
   function sc(c){ return (c.hk===p.hk?5:0)+(c.sur===p.sur?3:0)+(c.street===p.street?1:0)+(FamilyEngine.key(c.name,c.sur)===FamilyEngine.key(p.rn,p.sur)?4:0); }
   return all.sort(function(a,b){ return sc(b)-sc(a); }).slice(0,60);
