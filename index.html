@@ -804,7 +804,10 @@ function nextHouseIndex(h){
 $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
   var w=e.target.closest('[data-w]');
-  if (w){ var n=Number(w.dataset.w); h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); renderHouse(); return; }
+  if (w){ var n=Number(w.dataset.w), allN=h.v.every(function(v){ return v.ward===n; });
+    if (allN){ h.v.forEach(function(v){ edit(v,{ward:''}); }); toast('వార్డు తీసేశాం · Ward cleared'); }
+    else { h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); }
+    renderHouse(); return; }
   var lp=e.target.closest('[data-lpick]'); if (lp){ setHouseLeader(h, lp.dataset.lpick); return; }
   if (e.target.closest('[data-lsave]')){ var lv=(document.querySelector('[data-lq]')||{}).value||''; lv=lv.trim(); if(!lv){ toast('పేరు టైప్ చేయండి'); return; } setHouseLeader(h, lv); return; }
   if (e.target.closest('[data-lclr]')){ setHouseLeader(h, ''); return; }
