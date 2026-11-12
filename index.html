@@ -101,13 +101,20 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 textarea{width:100%;min-height:58px;border:2px solid var(--line);border-radius:12px;padding:10px 12px;resize:vertical;background:#fff}
 textarea:focus{outline:none;border-color:var(--brand)}
 .mob{display:flex;gap:8px;align-items:center}
-.mob input{flex:1;height:52px;border:2px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;font-size:1.15rem;letter-spacing:.06em}
+.mob input{flex:1;min-width:0;width:100%;height:52px;border:2px solid var(--line);border-radius:12px;padding:0 12px;background:#fff;font-size:1.15rem;letter-spacing:.06em}
 .mob input:focus{outline:none;border-color:var(--brand)}
 .mob input.bad{border-color:var(--opposed)}
 .mob input.good{border-color:var(--ok)}
 .call{flex:none;width:52px;height:52px;border-radius:12px;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1.3rem}
 .mhint{font-size:.8rem;margin-top:4px;min-height:1em;color:var(--muted)}
 .mhint.bad{color:var(--opposed)}
+.cgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.cb{min-height:44px;border:2px solid var(--line);background:#fff;border-radius:10px;font-weight:600;font-size:.88rem;padding:2px 4px}
+.cb small{display:block;font-weight:400;font-size:.68rem;color:var(--muted)}
+.cb.on{background:#6d28d9;border-color:#6d28d9;color:#fff}.cb.on small{color:#fff;opacity:.85}
+.sugg{width:100%;min-height:46px;border:2px dashed #6d28d9;background:#f5f3ff;color:#5b21b6;border-radius:10px;font-weight:700;margin:2px 0 10px}
+.occ .tb.on{background:#0369a1;border-color:#0369a1;color:#fff}
+.csel{width:100%;height:46px;border:2px solid var(--line);border-radius:10px;background:#fff;padding:0 8px}
 .next{width:100%;height:56px;border:0;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;font-size:1.05rem;margin:4px 0 20px}
 
 /* status bar */
@@ -209,6 +216,20 @@ var ISS = [
   {v:'Govt Schemes',te:'📋 పథకాలు',en:'Govt Schemes'},
   {v:'Other',te:'➕ ఇతర',en:'Other'}
 ];
+var CASTE_TE = {Kamma:'కమ్మ',Kapu:'కాపు',Madiga:'మాదిగ',Mala:'మాల',Yadava:'యాదవ',Vadrangi:'వడ్రంగి',Vysya:'వైశ్య',Rajaka:'రజక',
+  'Nayi-Brahmin':'నాయీ బ్రాహ్మణ',Brahmin:'బ్రాహ్మణ',Kummari:'కుమ్మరి',Yerukala:'ఎరుకల',Muslim:'ముస్లిం',Christian:'క్రైస్తవ',Other:'ఇతర'};
+var OCC_TE = {Farmer:'🌾 రైతు','Agri Labour':'వ్యవసాయ కూలీ','Daily Wage':'రోజు కూలీ',Business:'🏪 వ్యాపారం','Govt Job':'ప్రభుత్వ ఉద్యోగం',
+  'Private Job':'ప్రైవేట్ ఉద్యోగం',Student:'🎓 విద్యార్థి',Homemaker:'🏠 గృహిణి',Retired:'రిటైర్డ్',Unemployed:'నిరుద్యోగి',
+  'Abroad / Outside':'✈️ బయట ఊరు',Other:'ఇతర'};
+var CASTE_ALIAS = {maala:'Mala',vysyas:'Vysya',vysyulu:'Vysya',rajaka:'Rajaka'};
+var DEF_LISTS = {castes:Object.keys(CASTE_TE), occupations:Object.keys(OCC_TE), surnameCaste:{}};
+function lists(){ return (S.user && S.user.lists) || DEF_LISTS; }
+function suggestCaste(surname){
+  var k = (lists().surnameCaste||{})[String(surname||'').trim().toLowerCase()];
+  if (!k) return '';
+  k = String(k).trim();
+  return CASTE_ALIAS[k.toLowerCase()] || k;
+}
 var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్లి',Wife:'భార్య',Other:'సంబంధి'};
 
 var S = {
@@ -239,13 +260,13 @@ function call(fn){
 }
 function demoCall(fn,args){
   if (fn==='listVolunteers') return ['Anudeep','Volunteer 1','Volunteer 2'];
-  if (fn==='login'){ if(String(args[1])!=='1234') throw new Error('WRONG_PIN'); return {name:args[0],booth:'',wards:14}; }
+  if (fn==='login'){ if(String(args[1])!=='1234') throw new Error('WRONG_PIN'); return {name:args[0],booth:'',wards:14,lists:{castes:DEF_LISTS.castes,occupations:DEF_LISTS.occupations,surnameCaste:{gunti:'Madiga',shaik:'Muslim',tammisetti:'Vadrangi'}}}; }
   if (fn==='getVoters') { var saved = LS.get('demo_rows'); return {rows: saved || DEMO_ROWS, at:Date.now()}; }
   if (fn==='saveUpdates'){
     var rows = LS.get('demo_rows') || JSON.parse(JSON.stringify(DEMO_ROWS));
     args[2].forEach(function(u){ rows.forEach(function(r){ if(r[10]===u.e){
       var f=u.f; if('ward' in f) r[13]=f.ward; if('visited' in f) r[14]=f.visited; if('support' in f) r[15]=f.support;
-      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; r[18]=args[0]; }});});
+      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; r[18]=args[0]; }});});
     LS.set('demo_rows',rows);
     return {saved:args[2].length,failed:[]};
   }
@@ -255,7 +276,7 @@ function demoCall(fn,args){
 function toObj(a){
   return {s:a[0],r:a[1],booth:a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
@@ -281,6 +302,8 @@ function applyLocal(v,f){
   if('issue' in f) v.issue = f.issue;
   if('notes' in f) v.notes = f.notes;
   if('mobile' in f) v.mobile = f.mobile;
+  if('caste' in f) v.caste = f.caste;
+  if('occupation' in f) v.occupation = f.occupation;
 }
 function cleanMobile(s){
   var d = String(s||'').replace(/\D/g,'');
@@ -366,7 +389,7 @@ function houseMatches(h){
   if (S.q){
     var q=S.q;
     if (String(h.house).toLowerCase().indexOf(q)===0) return true;
-    return h.v.some(function(v){ return (v.name+' '+v.relN+' '+v.e+' '+v.mobile).toLowerCase().indexOf(q)>=0; });
+    return h.v.some(function(v){ return (v.name+' '+v.relN+' '+v.e+' '+v.mobile+' '+v.caste).toLowerCase().indexOf(q)>=0; });
   }
   return true;
 }
@@ -419,6 +442,13 @@ function renderHouse(){
   var wards=''; for(var i=1;i<=S.wards;i++) wards+='<button class="wb'+(sameWard&&hw===i?' on':'')+'" data-w="'+i+'">'+i+'</button>';
   var html = '<div class="hbox"><h3>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></h3><div class="wards">'+wards+'</div>'+
     '<button class="allv" data-allv="1">✓ ఇంట్లో అందరినీ కలిశాం <span style="font-weight:400">· Mark all visited</span></button></div>';
+  var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
+  var sug = suggestCaste(h.v[0].surname);
+  html += '<div class="hbox"><h3>కులం <span class="en">Caste — whole house</span></h3>'+
+    (sug && !(sameCaste && hc===sug) ? '<button class="sugg" data-hcaste="'+esc(sug)+'">💡 ఇంటిపేరు ప్రకారం: '+esc(CASTE_TE[sug]||sug)+' ('+esc(sug)+') — సరైతే నొక్కండి</button>' : '')+
+    '<div class="cgrid">'+lists().castes.map(function(c){
+      return '<button class="cb'+(sameCaste&&hc===c?' on':'')+'" data-hcaste="'+esc(c)+'">'+esc(CASTE_TE[c]||c)+(CASTE_TE[c]?'<small>'+esc(c)+'</small>':'')+'</button>';
+    }).join('')+'</div></div>';
   html += h.v.map(function(v){
     return '<div class="vc '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+
       '<div class="vn">'+esc(v.name)+(v.isNew?' <span class="badge new">కొత్త</span>':'')+'</div>'+
@@ -427,6 +457,12 @@ function renderHouse(){
       '<button class="tb nv'+(!v.visited?' on':'')+'" data-f="visited" data-v="Not Visited">✗ కలవలేదు<small>Not visited</small></button></div>'+
       '<div class="q">మద్దతు <span class="en">Support</span></div><div class="sup">'+
         SUP.map(function(s){return '<button class="tb'+(v.support===s.v?' on':'')+'" data-f="support" data-v="'+s.v+'">'+s.te+'<small>'+s.en+'</small></button>';}).join('')+'</div>'+
+      '<div class="q">వృత్తి <span class="en">Occupation</span></div><div class="iss occ">'+
+        lists().occupations.map(function(o){return '<button class="tb'+(v.occupation===o?' on':'')+'" data-f="occupation" data-v="'+esc(o)+'">'+esc(OCC_TE[o]||o)+(OCC_TE[o]?'<small>'+esc(o)+'</small>':'')+'</button>';}).join('')+'</div>'+
+      '<div class="q">కులం <span class="en">Caste (if different from house)</span></div>'+
+      '<select class="csel" data-pcaste="1"><option value="">—</option>'+
+        lists().castes.concat(v.caste && lists().castes.indexOf(v.caste)<0 ? [v.caste] : []).map(function(c){return '<option value="'+esc(c)+'"'+(v.caste===c?' selected':'')+'>'+esc((CASTE_TE[c]?CASTE_TE[c]+' · ':'')+c)+'</option>';}).join('')+
+      '</select>'+
       '<div class="q">మొబైల్ నంబర్ <span class="en">Mobile number</span></div>'+
       '<div class="mob"><input data-mobile="1" type="tel" inputmode="numeric" maxlength="14" placeholder="10 అంకెలు" value="'+esc(v.mobile)+'" class="'+(v.mobile?'good':'')+'">'+
       (v.mobile?'<a class="call" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'</div>'+
@@ -449,6 +485,8 @@ $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
   var w=e.target.closest('[data-w]');
   if (w){ var n=Number(w.dataset.w); h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); renderHouse(); return; }
+  var hcb=e.target.closest('[data-hcaste]');
+  if (hcb){ var c=hcb.dataset.hcaste; h.v.forEach(function(v){ if(v.caste!==c) edit(v,{caste:c}); }); toast('కులం: '+(CASTE_TE[c]||c)+' ✓'); renderHouse(); return; }
   if (e.target.closest('[data-allv]')){ h.v.forEach(function(v){ if(!v.visited) edit(v,{visited:'Visited'}); }); toast('అందరినీ కలిశాం ✓'); renderHouse(); return; }
   if (e.target.closest('[data-next]')){ var i=nextHouseIndex(h); if(i>=0) openHouse(S.houses[i].id); else closeHouse(); return; }
   var b=e.target.closest('[data-f]'); if(!b) return;
@@ -460,6 +498,10 @@ $('hBody').onclick=function(e){
   renderHouse();
 };
 var nT={};
+$('hBody').addEventListener('change',function(e){
+  if(!e.target.dataset.pcaste) return;
+  var v=S.byId[e.target.closest('[data-id]').dataset.id]; if(v && v.caste!==e.target.value){ edit(v,{caste:e.target.value}); toast('✓ సేవ్'); }
+});
 var mT={};
 $('hBody').addEventListener('input',function(e){
   if(!e.target.dataset.mobile) return;
@@ -529,7 +571,7 @@ $('lGo').onclick=function(){
   $('lErr').textContent=''; $('lGo').disabled=true;
   $('lGo').textContent='లోడ్ అవుతోంది… · Loading voters…';
   call('login',n,p,true).then(function(u){
-    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards}; LS.set('user',S.user);
+    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists}; LS.set('user',S.user);
     if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); S.fresh=u.voters.rows; }
     $('lGo').disabled=false; showApp();
   }).catch(function(err){
