@@ -548,7 +548,7 @@ function ingest(raw){
     h.v.push(v);
   });
   S.houses = Object.keys(map).map(function(k){ var h=map[k]; h.sort=h.booth+'|'+natKey(h.house); return h; })
-    .sort(function(a,b){ return a.sort<b.sort?-1:a.sort>b.sort?1:0; });
+    .sort(function(a,b){ return (b.v.length-a.v.length) || (a.sort<b.sort?-1:a.sort>b.sort?1:0); });   // biggest houses first
   S.hById = map;
   buildFilters();
 }
