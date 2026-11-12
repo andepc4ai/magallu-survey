@@ -32,6 +32,12 @@ a{color:inherit}
 .leg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.8rem;color:#4b463d;margin-top:6px}
 .leg span:before{content:"";display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;background:var(--c)}
 .c-Strong{--c:#15803d;background:#15803d}.c-Leaning{--c:#84cc16;background:#84cc16}.c-Undecided{--c:#f59e0b;background:#f59e0b}.c-Opposed{--c:#dc2626;background:#dc2626}.c-none{--c:#cbd5e1;background:#cbd5e1}
+.swing{display:inline-block;background:#fef9c3;color:#854d0e;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:700;margin-left:6px}
+.contact{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed #e9e2d5;font-size:.88rem}
+.contact .who{flex:1;min-width:0;color:#4b463d}
+.callb{flex:none;display:inline-flex;align-items:center;gap:4px;background:#15803d;color:#fff;border-radius:10px;padding:7px 12px;font-weight:700;text-decoration:none}
+.nocall{color:#9a9284;font-size:.8rem}
+.b.house{background:#FACC15;color:#1c1917;width:100%;display:flex;align-items:center;justify-content:center;text-decoration:none;margin-bottom:10px}
 .warnb{display:inline-block;background:#fef3c7;color:#92400e;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:700;margin-left:6px}
 .more{width:100%;height:50px;border:2px dashed #d6cfc0;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
 .card{background:#fff;border:1px solid #e9e2d5;border-radius:14px;padding:14px;margin-bottom:12px}
@@ -108,7 +114,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
     <div class="sub" id="fsub"></div>
   </div>
   <div class="wrap">
-    <div class="card"><div class="sbar" id="fbar"></div><div class="leg" id="fleg"></div></div>
+    <div class="card"><div class="sbar" id="fbar"></div><div class="leg" id="fleg"></div><div id="fcontact"></div></div>
     <div class="count">పేరు నొక్కితే వివరాలు, సరిచేయడం · Tap a name to see or fix links</div>
     <div id="ftree" class="tree"></div>
   </div>
@@ -202,6 +208,18 @@ function legHtml(f){ var c=supCounts(f); return SUP.filter(function(s){ return c
 function displayName(p){ return p ? (p.name||'') : ''; }
 function headTitle(f){ var h=P(f.head); return (h.vote?'':'') + displayName(h) + ' కుటుంబం'; }
 function surOf(f){ var h=P(f.head); return h.sur ? (tes(h.sur)||h.sur) : ''; }
+function undecided(f){ return f.support.Undecided || 0; }
+// best person to call for the family: someone with a mobile (eldest first), else the eldest voter
+function contactOf(f){
+  var vs = f.members.map(P).filter(function(p){ return p.vote; });
+  vs.sort(function(a,b){ return (!!b.mobile - !!a.mobile) || (!b.father && !b.mother) - (!a.father && !a.mother) || (b.age||0)-(a.age||0); });
+  return vs[0];
+}
+function contactHtml(f){
+  var c = contactOf(f); if (!c) return '';
+  return '<div class="contact"><span class="who">📞 సంప్రదించండి: <b>'+esc(c.name)+'</b>'+(c.age?' ('+c.age+')':'')+'</span>'+
+    (c.mobile ? '<a class="callb" href="tel:'+esc(c.mobile)+'">📞 '+esc(c.mobile)+'</a>' : '<span class="nocall">నంబర్ లేదు</span>')+'</div>';
+}
 function sdot(p){ return '<i class="d c-'+(p.vote?(p.support||'none'):'none')+'"></i>'; }
 
 /* ---------- family list ---------- */
@@ -211,36 +229,41 @@ function renderList(){
   $('lsub').textContent = multi.length+' కుటుంబాలు (2+ ఓటర్లు) · '+multi.reduce(function(a,f){return a+f.voters;},0)+' ఓటర్లు';
   var checks = fams.reduce(function(a,f){ return a+f.check; },0);
   $('sizeChips').innerHTML = [[2,'2+'],[5,'5+'],[10,'10+'],[1,'అన్నీ']].map(function(x){
-    return '<button class="chip'+(F.size===x[0]&&!F.check?' on':'')+'" data-size="'+x[0]+'">'+x[1]+' ఓటర్లు</button>'; }).join('')+
-    '<button class="chip warn'+(F.check?' on':'')+'" data-chk="1">⚠ సరిచూడాలి ('+checks+')</button>';
+    return '<button class="chip'+(F.size===x[0]&&!F.check&&!F.swing?' on':'')+'" data-size="'+x[0]+'">'+x[1]+' ఓటర్లు</button>'; }).join('')+
+    '<button class="chip warn'+(F.check?' on':'')+'" data-chk="1">⚠ సరిచూడాలి ('+checks+')</button>'+
+    '<button class="chip'+(F.swing?' on':'')+'" data-swing="1">🎯 తేల్చనివారు ('+fams.filter(function(f){return undecided(f)>0;}).length+')</button>';
   var booths={}; fams.forEach(function(f){ f.members.forEach(function(id){ var p=P(id); if(p.vote) booths[p.booth]=1; }); });
   $('boothChips').innerHTML = ['all'].concat(Object.keys(booths).sort()).map(function(b){
     return '<button class="chip'+(String(F.booth)===String(b)?' on':'')+'" data-booth="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
   var q = F.q;
   var list = fams.filter(function(f){
-    if (F.check ? !f.check : f.voters < F.size) return false;
+    if (F.swing) { if (!undecided(f)) return false; }
+    else if (F.check ? !f.check : f.voters < F.size) return false;
     var ms = f.members.map(P);
     if (F.booth!=='all' && !ms.some(function(p){ return p.vote && String(p.booth)===String(F.booth); })) return false;
     if (F.sur && !ms.some(function(p){ return p.sur===F.sur; })) return false;
     if (q) return ms.some(function(p){ return (p.name+' '+p.sur+' '+tes(p.sur)+' '+(p.house||'')+' '+(p.caste||'')+' '+cte(p.caste)).toLowerCase().indexOf(q)>=0; });
     return true;
   });
-  $('lcount').innerHTML = list.length+' కుటుంబాలు'+(F.sur?' · ఇంటిపేరు: <b>'+esc(tes(F.sur)||F.sur)+'</b> <button class="lnk" id="clrSur">✕</button>':'');
+  if (F.swing) list = list.slice().sort(function(a,b){ return undecided(b)-undecided(a) || b.voters-a.voters; });
+  $('lcount').innerHTML = list.length+' కుటుంబాలు'+(F.swing?' · ఎక్కువ తేల్చనివారు ముందు':'')+(F.sur?' · ఇంటిపేరు: <b>'+esc(tes(F.sur)||F.sur)+'</b> <button class="lnk" id="clrSur">✕</button>':'');
   if (!list.length){ $('flist').innerHTML='<div class="msg">ఏమీ లేవు · Nothing here</div>'; return; }
   $('flist').innerHTML = list.slice(0,F.limit).map(function(f){
     var h=P(f.head);
-    return '<button class="fc" data-fam="'+esc(f.head)+'"><b>'+esc(displayName(h))+'</b>'+(h.vote?'':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
-      (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+
+    return '<div class="fc" role="button" data-fam="'+esc(f.head)+'"><b>'+esc(displayName(h))+'</b>'+(h.vote?'':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
+      (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+(undecided(f)?'<span class="swing">🎯 '+undecided(f)+' తేల్చలేదు</span>':'')+
       '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
-      '<div class="sbar">'+barHtml(f)+'</div><div class="leg">'+legHtml(f)+'</div></button>';
+      '<div class="sbar">'+barHtml(f)+'</div><div class="leg">'+legHtml(f)+'</div>'+contactHtml(f)+'</div>';
   }).join('') + (list.length>F.limit?'<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>':'');
 }
 $('sizeChips').onclick=function(e){ var b=e.target.closest('button'); if(!b) return;
-  if (b.dataset.chk){ F.check=!F.check; } else { F.size=Number(b.dataset.size); F.check=false; } F.limit=40; renderList(); };
+  if (b.dataset.swing){ F.swing=!F.swing; F.check=false; }
+  else if (b.dataset.chk){ F.check=!F.check; F.swing=false; } else { F.size=Number(b.dataset.size); F.check=false; F.swing=false; } F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
 var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=40; renderList(); },180); };
 $('flist').onclick=function(e){
   if (e.target.id==='more'){ F.limit+=40; renderList(); return; }
+  if (e.target.closest('a')) return;      // call button: let the phone dial
   var b=e.target.closest('[data-fam]'); if (b) go('f='+encodeURIComponent(b.dataset.fam));
 };
 $('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=2; go(''); } };
@@ -266,7 +289,7 @@ function renderFam(head, me){
   if (!f){ go(''); return; }
   $('ftitle').textContent = displayName(P(f.head))+' కుటుంబం';
   $('fsub').textContent = (surOf(f)?surOf(f)+' · ':'')+(f.caste?cte(f.caste)+' · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు'+(f.check?' · ⚠ '+f.check+' సరిచూడాలి':'');
-  $('fbar').innerHTML = barHtml(f); $('fleg').innerHTML = legHtml(f);
+  $('fbar').innerHTML = barHtml(f); $('fleg').innerHTML = legHtml(f); $('fcontact').innerHTML = contactHtml(f);
   var seen={}, html=f.roots.map(function(r){ return treeHtml(r, seen, me); }).join('');
   f.members.forEach(function(id){ if(!seen[id]) html+=treeHtml(id, seen, me); });
   $('ftree').innerHTML = html;
@@ -281,6 +304,8 @@ function renderPerson(id, picking){
   $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.vote){
+    h += '<a class="b house" href="../#v='+encodeURIComponent(id)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';
+    if (p.mobile) h += '<div class="card" style="display:flex;align-items:center;gap:10px"><span style="flex:1">📱 '+esc(p.mobile)+'</span><a class="callb" href="tel:'+esc(p.mobile)+'">📞 కాల్</a></div>';
     var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt;
     h += '<div class="card"><h3>జాబితాలో ఉన్న సంబంధం · As on voter list</h3>'+
       '<div>'+esc(relLbl)+': <b>'+esc(p.rn||'—')+'</b></div>'+

@@ -686,12 +686,22 @@ $('surFix').onclick=function(e){
 /* ---------- misc ---------- */
 var tT; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tT); tT=setTimeout(function(){t.classList.remove('show');},1300); }
 
+// Deep link from the Families page: index.html#v=<EPIC> opens that voter's house
+function openFromLink(){
+  var m = location.hash.match(/v=([^&]+)/); if (!m || !S.rows.length) return;
+  var e = decodeURIComponent(m[1]), v = S.byId['A:'+e] || S.byId['N:'+e];
+  try { history.replaceState(null, '', location.pathname + location.search); } catch(err){ location.hash=''; }
+  if (!v) { toast('ఓటరు దొరకలేదు'); return; }
+  var h = S.houses.filter(function(x){ return x.v.indexOf(v)>=0; })[0];
+  if (h) { openHouse(h.id); setTimeout(function(){ var el=document.querySelector('[data-id="'+v.id+'"]'); if(el) el.scrollIntoView({block:'center'}); }, 50); }
+}
+window.addEventListener('hashchange', openFromLink);
 function loadData(force){
-  if (!force && S.fresh){ var fr=S.fresh; S.fresh=null; ingest(fr); renderList(); return Promise.resolve(); }
+  if (!force && S.fresh){ var fr=S.fresh; S.fresh=null; ingest(fr); renderList(); openFromLink(); return Promise.resolve(); }
   var cached = LS.get('rows');
-  if (cached && !force){ ingest(cached); renderList(); }
+  if (cached && !force){ ingest(cached); renderList(); openFromLink(); }
   return call('getVoters', S.user.name, S.user.pin).then(function(res){
-    LS.set('rows',res.rows); ingest(res.rows); renderList(); if(S.openHouse) renderHouse();
+    LS.set('rows',res.rows); ingest(res.rows); renderList(); if(S.openHouse) renderHouse(); else openFromLink();
     refreshLists();
     S.online=true; renderSync(); if (force) toast('తాజా డేటా ✓');
   }).catch(function(err){
