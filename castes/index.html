@@ -107,7 +107,7 @@ function casteOptions(cur){
 /* ---------- data ---------- */
 function load(){
   call('getSurnames',['','']).then(function(data){
-    rows = data; bySur = {}; rows.forEach(function(r){ bySur[r[1]] = r; });
+    rows = data.filter(function(r){ return r[1] && r[1].toLowerCase()!=='total'; }); bySur = {}; rows.forEach(function(r){ bySur[r[1]] = r; });
     st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved'); route();
   }).catch(function(e){
     $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'<br><button class="retry" onclick="location.reload()">మళ్ళీ · Retry</button></div>';
