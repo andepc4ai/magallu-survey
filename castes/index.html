@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ఇంటిపేరు → కులం · Magallu</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",system-ui,sans-serif;font-size:17px}
+button,input,select{font:inherit;color:inherit}
+.hide{display:none!important}
+.top{position:sticky;top:0;z-index:5;background:#6d28d9;color:#fff;padding:12px 14px}
+.top h1{margin:0;font-size:1.1rem}
+.top .p{font-size:.85rem;margin-top:6px;display:flex;gap:10px;align-items:center}
+.bar{flex:1;height:8px;background:rgba(255,255,255,.3);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#fff}
+.wrap{max-width:560px;margin:0 auto;padding:12px 12px 70px}
+.box{background:#fff;border-radius:18px;padding:22px 18px;margin-top:40px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
+label{display:block;font-weight:700;margin:14px 0 6px}
+.f{width:100%;height:54px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.1rem}
+.f:focus{outline:none;border-color:#6d28d9}
+.pin{text-align:center;letter-spacing:.5em;font-size:1.4rem}
+.go{width:100%;height:56px;border:0;border-radius:14px;background:#6d28d9;color:#fff;font-weight:700;margin-top:18px}
+.err{color:#dc2626;font-weight:700;margin-top:10px;min-height:1.2em}
+.tabs{display:flex;gap:8px;margin:10px 0}
+.tab{flex:1;height:44px;border:2px solid #e5dfd2;background:#fff;border-radius:999px;font-weight:700}
+.tab.on{background:#1d1b16;border-color:#1d1b16;color:#fff}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #ece6da;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.row.ok{border-color:#16a34a}
+.nm{flex:1;min-width:0}.nm b{display:block;font-size:1.05rem;word-break:break-word}.nm span{color:#6b665c;font-size:.82rem}
+.row select{width:48%;height:48px;border:2px solid #e5dfd2;border-radius:10px;background:#fff;padding:0 6px;font-size:.95rem}
+.row select.set{border-color:#6d28d9;background:#f5f3ff}
+.msg{text-align:center;color:#6b665c;padding:40px 10px}
+.st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem}
+.st.busy{background:#1f2937}.st.bad{background:#7c2d12}
+</style>
+</head>
+<body>
+
+<section id="vLogin" class="wrap">
+  <div class="box">
+    <h2 style="margin:0">ఇంటిపేరు → కులం</h2>
+    <div style="color:#6b665c">Surname → Caste · Magallu</div>
+    <label>మీ పేరు · Name</label>
+    <select id="who" class="f"><option value="">— Select —</option></select>
+    <label>పిన్ · PIN</label>
+    <input id="pin" class="f pin" type="password" inputmode="numeric" maxlength="6">
+    <button id="go" class="go">లోపలికి · Enter</button>
+    <div id="err" class="err"></div>
+  </div>
+</section>
+
+<section id="vList" class="hide">
+  <div class="top">
+    <h1>ఇంటిపేరు → కులం</h1>
+    <div class="p"><span id="prog">—</span><div class="bar"><i id="pbar"></i></div></div>
+  </div>
+  <div class="wrap">
+    <input id="q" class="f" type="search" placeholder="ఇంటిపేరు వెతకండి · Search">
+    <div class="tabs">
+      <button class="tab on" data-m="missing">కులం లేనివి</button>
+      <button class="tab" data-m="all">అన్నీ</button>
+      <button class="tab" data-m="done">ఉన్నవి</button>
+    </div>
+    <div id="list"><div class="msg">లోడ్ అవుతోంది…</div></div>
+  </div>
+</section>
+<div id="st" class="st hide"></div>
+
+<script>
+(function(){
+"use strict";
+var API = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
+var CASTES = [['Vaddera','వడ్డెర'],['Yadav','యాదవ్'],['Rajaka','రజక'],['Brahmin','బ్రాహ్మణ'],['Kummari','కుమ్మరి'],['Vysya','వైశ్యులు'],
+  ['Mala','మాల'],['Muslim','ముస్లిం'],['Madiga','మాదిగ'],['Nayee Brahmin','నాయి బ్రాహ్మణ'],['ST','ఎస్టీ'],['Padmashali','పద్మశాలి'],
+  ['Gouds','గౌడ్స్'],['Vadrangi','వడ్రంగి'],['Kamma','కమ్మ'],['Kapu','కాపు'],['Others','ఇతరులు']];
+var NAMES = CASTES.map(function(c){return c[0];});
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+var LS = { get:function(k){ try{ return JSON.parse(localStorage.getItem('mvc_'+k)); }catch(e){ return null; } },
+           set:function(k,v){ try{ localStorage.setItem('mvc_'+k, JSON.stringify(v)); }catch(e){} } };
+function call(fn, args){
+  return fetch(API, { method:'POST', redirect:'follow', credentials:'omit', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ fn:fn, args:args||[] }) })
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if (j && j.ok) return j.data; throw new Error(j && j.error || 'SERVER_ERROR'); });
+}
+var U = LS.get('user'), rows = [], mode = 'missing', q = '', queue = {}, busy = false;
+
+function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
+
+function login(name, pin){
+  $('err').textContent=''; $('go').disabled=true; $('go').textContent='లోడ్ అవుతోంది…';
+  call('getSurnames',[name,pin]).then(function(data){
+    U={name:name,pin:pin}; LS.set('user',U); rows=data; show();
+  }).catch(function(e){
+    var m=String(e.message);
+    $('err').textContent = m==='WRONG_PIN' ? 'పిన్ తప్పు · Wrong PIN' : m==='NOT_ADMIN' ? 'ఈ పేజీకి అనుమతి లేదు · Not allowed (ask admin)' : 'లోడ్ కాలేదు · '+m;
+    LS.set('user',null); $('vLogin').classList.remove('hide'); $('vList').classList.add('hide');
+  }).then(function(){ $('go').disabled=false; $('go').textContent='లోపలికి · Enter'; });
+}
+function show(){ $('vLogin').classList.add('hide'); $('vList').classList.remove('hide'); st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved'); render(); }
+
+function render(){
+  var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
+  var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
+  $('prog').textContent = filled.length+' / '+rows.length+' ఇంటిపేర్లు · '+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు';
+  $('pbar').style.width = (100*done/Math.max(tot,1))+'%';
+  var list = rows.filter(function(r){
+    var ok = NAMES.indexOf(r[3])>=0;
+    if (mode==='missing' && ok) return false;
+    if (mode==='done' && !ok) return false;
+    return !q || r[1].toLowerCase().indexOf(q)>=0;
+  });
+  if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
+  $('list').innerHTML = list.slice(0,200).map(function(r){
+    var cur=r[3], odd = cur && NAMES.indexOf(cur)<0;
+    return '<div class="row" data-r="'+r[0]+'"><div class="nm"><b>'+esc(r[1])+'</b><span>'+r[2]+' ఓటర్లు'+(odd?' · ⚠ '+esc(cur):'')+'</span></div>'+
+      '<select data-s="'+esc(r[1])+'" class="'+(odd||!cur?'':'set')+'"><option value="">— కులం —</option>'+
+      (odd?'<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>':'')+
+      CASTES.map(function(c){ return '<option value="'+c[0]+'"'+(c[0]===cur?' selected':'')+'>'+c[1]+' · '+c[0]+'</option>'; }).join('')+
+      '</select></div>';
+  }).join('') + (list.length>200?'<div class="msg">ఇంకా '+(list.length-200)+' — వెతకండి</div>':'');
+}
+
+function save(){
+  var items = Object.keys(queue).map(function(k){ return queue[k]; });
+  if (!items.length || busy) return;
+  busy = true; queue = {};
+  st('busy','⏳ సేవ్ అవుతోంది… · Saving');
+  call('saveSurnameCastes',[U.name,U.pin,items]).then(function(){
+    busy=false;
+    items.forEach(function(it){ var el=document.querySelector('[data-r="'+it.r+'"]'); if(el) el.classList.add('ok'); });
+    if (Object.keys(queue).length) save(); else st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved');
+  }).catch(function(e){
+    busy=false; items.forEach(function(it){ if(!queue[it.r]) queue[it.r]=it; });
+    st('bad','⚠️ సేవ్ కాలేదు, మళ్ళీ ప్రయత్నిస్తాం · Retrying ('+e.message+')');
+    setTimeout(save, 5000);
+  });
+}
+
+$('list').addEventListener('change', function(e){
+  var s=e.target; if (!s.dataset.s) return;
+  var r=Number(s.closest('[data-r]').dataset.r);
+  rows.forEach(function(x){ if(x[0]===r) x[3]=s.value; });
+  s.className = s.value ? 'set' : '';
+  queue[r] = { r:r, s:s.dataset.s, c:s.value };
+  save();
+  // keep the row visible until the user changes tab or searches
+});
+document.querySelector('.tabs').onclick=function(e){
+  var b=e.target.closest('[data-m]'); if(!b) return;
+  mode=b.dataset.m; [].forEach.call(document.querySelectorAll('.tab'),function(t){ t.classList.toggle('on', t===b); }); render();
+};
+var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); render(); },150); };
+$('go').onclick=function(){ var n=$('who').value, p=$('pin').value.trim(); if(!n||!p){ $('err').textContent='పేరు, పిన్ ఇవ్వండి'; return; } login(n,p); };
+$('pin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('go').click(); });
+window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
+
+call('listVolunteers').then(function(n){
+  $('who').innerHTML='<option value="">— Select —</option>'+n.map(function(x){return '<option>'+esc(x)+'</option>';}).join('');
+  if (U) $('who').value=U.name;
+}).catch(function(){ $('err').textContent='ఇంటర్నెట్ చెక్ చేయండి · Check internet'; });
+if (U) login(U.name, U.pin);
+})();
+</script>
+</body>
+</html>
