@@ -25,6 +25,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .top .row{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
 .top h1{font-size:1.05rem;margin:0;flex:1;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .top .who{font-size:.85rem;opacity:.9}
+.quick{display:flex;gap:8px;margin:12px 0 0}
+.quick a{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:48px;border-radius:12px;background:#fff;border:2px solid #FACC15;color:#1c1917;font-weight:700;text-decoration:none;font-size:1rem}
 @media (max-width:420px){#vList .top h1{display:none}#vList .top .who{flex:1}}
 .iconbtn{background:rgba(0,0,0,.1);border:0;color:#1c1917;border-radius:10px;min-width:44px;height:40px;padding:0 10px;font-size:.9rem}
 .prog{max-width:640px;margin:8px auto 0;display:flex;align-items:center;gap:10px;font-size:.88rem}
@@ -175,6 +177,10 @@ textarea:focus{outline:none;border-color:var(--brand)}
     <div class="prog"><span id="progTxt">—</span><div class="bar"><i id="progBar"></i></div></div>
   </div>
   <div class="wrap">
+    <div class="quick hide" id="quick">
+      <a href="family/">👪 కుటుంబాలు</a>
+      <a href="castes/" class="hide" id="quickCaste">🏷 కులాలు</a>
+    </div>
     <div class="search">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="పేరు / ఇంటి నం. / ఓటర్ ID వెతకండి">
@@ -734,6 +740,8 @@ function showApp(){
   $('who').textContent = '👤 '+S.user.name;
   $('btnSur').classList.toggle('hide', !S.user.admin);
   $('btnFam').classList.toggle('hide', !HAS_API);
+  $('quick').classList.toggle('hide', !HAS_API);
+  $('quickCaste').classList.toggle('hide', !S.user.admin);
   S.wards = S.user.wards || 14;
   var savedBooth = LS.get('booth');
   S.booth = savedBooth || (S.user.booth ? String(S.user.booth) : 'all');
