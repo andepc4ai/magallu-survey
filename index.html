@@ -156,6 +156,13 @@ textarea:focus{outline:none;border-color:var(--brand)}
 .vlist{margin-top:8px;border-top:1px dashed #d6d3d1}.vrow{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #f1ece2;font-size:.9rem}
 .vrow small{color:#6b665c}.vdel{border:1px solid #fca5a5;background:#fff;color:#b91c1c;border-radius:10px;padding:6px 10px;font-weight:700}.vdel.sure{background:#b91c1c;color:#fff}
 .badge.vc2{background:#dcfce7;color:#166534}
+.hvpick{margin-top:10px;border:2px solid #FACC15;border-radius:14px;padding:10px;background:#fffbeb}.hvq{font-weight:700;margin-bottom:8px}
+.hvp{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:10px;margin-bottom:6px;font-size:1rem}
+.hvp small{color:#6b665c;font-size:.8rem}.hvp .ck{flex:none;width:28px;height:28px;border:2px solid #a8a29e;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700}
+.hvp.on{border-color:#16a34a;background:#f0fdf4}.hvp.on .ck{background:#16a34a;border-color:#16a34a;color:#fff}
+.hvbtns{display:flex;gap:8px;margin-top:6px}.hvsave{flex:1;min-height:52px;border:0;border-radius:12px;background:#16a34a;color:#fff;font-weight:700;font-size:1rem}.hvsave small{display:block;font-weight:400;font-size:.75rem}
+.hvsave:disabled{opacity:.5}.hvcancel{border:1px solid #d6d3d1;background:#fff;border-radius:12px;padding:0 16px;font-weight:700}
+.hvh{width:100%;margin-top:8px;min-height:44px;border:1px solid #d6d3d1;background:#fff;border-radius:12px;font-weight:700}.vlist.hv{background:#fff;border-radius:12px;padding:0 10px}
 </style>
 </head>
 <body>
@@ -389,7 +396,7 @@ var S = {
   inflight: false, online: navigator.onLine !== false,
   openHouse: null, wards: 14,
   open: {},          // sections the volunteer opened again with "మార్చు"
-  vopen: {}, vis: {}, vsure: {}, vdel: null,   // visit history panels, loaded visits, double-tap guards
+  vopen: {}, vis: {}, vsure: {}, vdel: null, hpick: null, hhist: false,   // visit history panels, loaded visits, double-tap guards
 };
 function issues(v){ return String(v.issue||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }
 /* ---------- family leader (stored as "Name (EPIC)" when picked from the voter list, else just the name) ---------- */
@@ -449,6 +456,7 @@ function demoCall(fn,args){
     var mine=dv.filter(function(x){ return x.e===gone.e; }).sort(function(a,b){ return b.t-a.t; }); var rows=LS.get('demo_rows')||JSON.parse(JSON.stringify(DEMO_ROWS));
     rows.forEach(function(r){ if(r[10]===gone.e){ r[25]=mine.length; r[26]=mine.length?mine[0].t:0; r[27]=mine.length?mine[0].by:''; if(!mine.length) r[14]='Not Visited'; } }); LS.set('demo_rows',rows);
     return {e:gone.e,count:mine.length,last:mine.length?mine[0].t:0,by:mine.length?mine[0].by:''}; }
+  if (fn==='deleteVisits') { var out={}; args[2].forEach(function(id){ var r=demoCall('deleteVisit',[args[0],args[1],id]); out[r.e]=r; }); return out; }
   if (fn==='getVoters') { var saved = LS.get('demo_rows'); return {rows: saved || DEMO_ROWS, at:Date.now()}; }
   if (fn==='getSurnames') return LS.get('demo_sur') || [[2,'Gunti',87,'Madiga'],[3,'Shaik',62,'Muslim'],[4,'Tammisetti',34,'Vadrangi'],[5,'Bommineni',30,'Kamma'],[6,'Vadlamudi',25,''],[7,'Dudyala',22,'Yadava'],[8,'Challa',20,'Maala'],[9,'Pothuraju',18,'']];
   if (fn==='saveSurnameCastes'){ var sr=LS.get('demo_sur')||demoCall('getSurnames',[]); args[2].forEach(function(it){ sr.forEach(function(r){ if(r[1]===it.s) r[3]=it.c; }); }); LS.set('demo_sur',sr); return {saved:args[2].length,failed:[]}; }
@@ -632,11 +640,12 @@ $('list').onclick=function(e){
 
 /* ---------- house screen ---------- */
 function openHouse(hid){
-  S.openHouse = hid; S.open = {}; renderHouse();
+  S.openHouse = hid; S.open = {}; S.hpick=null; S.hhist=false; S.vdel=null; renderHouse();
   $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
   document.body.style.overflow='hidden';
 }
 function closeHouse(){
+  S.hpick=null; S.hhist=false; S.vdel=null;
   S.openHouse=null; $('vHouse').classList.add('hide'); document.body.style.overflow=''; renderList();
 }
 $('btnBack').onclick=closeHouse;
@@ -649,7 +658,7 @@ function renderHouse(){
   var sameWard = h.v.every(function(v){return v.ward===hw;});
   var wards=''; for(var i=1;i<=S.wards;i++) wards+='<button class="wb'+(sameWard&&hw===i?' on':'')+'" data-w="'+i+'">'+i+'</button>';
   var html = '<div class="hbox"><h3>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></h3><div class="wards">'+wards+'</div>'+
-    '<button class="allv" data-allv="1">➕ ఈ రోజు ఇంట్లో అందరినీ కలిశాం <span style="font-weight:400">· Visit for all</span></button>'+
+    houseVisitHtml(h)+
     (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
   html += houseLeaderHtml(h);
   var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
@@ -707,6 +716,38 @@ function visitListHtml(v){
     return '<div class="vrow"><span>'+esc(fmtT(x.t))+' · '+esc(x.by)+'</span>'+
       (mine?'<button class="vdel'+(ask?' sure':'')+'" data-vdel="'+esc(x.id)+'">'+(ask?'తీసేయాలా? ✓':'🗑 తప్పు')+'</button>':'')+'</div>';
   }).join('')+(!L.length&&!pend?'<div class="vrow">—</div>':'')+'</div>';
+}
+/* ---------- house visit: pick who was met, confirm, history grouped by visit, undo a whole visit ---------- */
+function groupOf(id){ id=String(id); var i=id.indexOf('.'); return i>0?id.slice(0,i):id; }
+function houseVisitHtml(h){
+  var html='';
+  if (S.hpick){
+    var n=h.v.filter(function(v){ return S.hpick[v.id]; }).length;
+    html += '<div class="hvpick"><div class="hvq">ఈ రోజు ఎవరిని కలిశారు? <span class="en">Who did you meet today?</span></div>'+
+      h.v.map(function(v){ var recent=v.lastVisit && v.lastBy===S.user.name && Date.now()-v.lastVisit<10*60000;
+        return '<button class="hvp'+(S.hpick[v.id]?' on':'')+'" data-hvp="'+esc(v.id)+'"><span class="ck">'+(S.hpick[v.id]?'✓':'')+'</span><span>'+esc(v.name)+' <small>'+esc(v.age)+' · '+(v.gen==='Female'?'స్త్రీ':'పురుషుడు')+(recent?' · ఇప్పుడే నమోదైంది':'')+'</small></span></button>'; }).join('')+
+      '<div class="hvbtns"><button class="hvsave" data-hvsave="1"'+(n?'':' disabled')+'>✓ '+n+' మందికి సందర్శన సేవ్ <small>Save visit for '+n+'</small></button>'+
+      '<button class="hvcancel" data-hvcancel="1">రద్దు</button></div></div>';
+  } else html += '<button class="allv" data-allv="1">➕ ఈ రోజు ఇంటికి వెళ్ళాం <span style="font-weight:400">· House visit</span></button>';
+  var total = h.v.reduce(function(a,v){ return a+(v.visits||0); },0) + h.v.reduce(function(a,v){ return a+pendingVisits(v).length; },0);
+  if (total) html += '<button class="hvh" data-hvh="1">'+(S.hhist?'▲':'📋')+' ఈ ఇంటి సందర్శనలు <span class="en">House visits</span></button>'+(S.hhist?houseHistHtml(h):'');
+  return html;
+}
+function houseHistHtml(h){
+  var any=false, groups={}, order=[], loading=false, err=false;
+  h.v.forEach(function(v){
+    var L=S.vis[v.e]; if (L==='loading') loading=true; else if (L==='error') err=true;
+    (L && L.forEach ? L : []).forEach(function(x){ var g=groupOf(x.id); if(!groups[g]){ groups[g]={t:x.t,by:x.by,ids:[],who:[]}; order.push(g); } groups[g].ids.push(x.id); groups[g].who.push(v.name); if (x.t>groups[g].t) groups[g].t=x.t; });
+  });
+  if (loading) return '<div class="vlist"><div class="vrow">⏳ లోడ్ అవుతోంది…</div></div>';
+  if (err) return '<div class="vlist"><div class="vrow">📵 ఇంటర్నెట్ లేదు · Needs internet</div></div>';
+  order.sort(function(a,b){ return groups[b].t-groups[a].t; });
+  var pend = h.v.filter(function(v){ return pendingVisits(v).length; });
+  return '<div class="vlist hv">'+(pend.length?'<div class="vrow"><span>⏳ ఇప్పుడే · '+pend.length+' మంది</span><small>సేవ్ అవుతోంది</small></div>':'')+
+    order.map(function(g){ var G=groups[g], mine=G.by===S.user.name||S.user.admin, ask=S.vdel==='g:'+g;
+      return '<div class="vrow"><span>'+esc(fmtT(G.t))+' · '+esc(G.by)+'<br><small>'+G.who.length+'/'+h.v.length+' మంది: '+esc(G.who.join(', '))+'</small></span>'+
+        (mine?'<button class="vdel'+(ask?' sure':'')+'" data-gdel="'+esc(g)+'">'+(ask?'మొత్తం తీసేయాలా? ✓':'🗑 తప్పు')+'</button>':'')+'</div>'; }).join('')+
+    (!order.length&&!pend.length?'<div class="vrow">—</div>':'')+'</div>';
 }
 function loadVisits(h){
   if (DEMO || HAS_API || HAS_GAS){
@@ -767,9 +808,26 @@ $('hBody').onclick=function(e){
   if (e.target.closest('[data-lclr]')){ setHouseLeader(h, ''); return; }
   var hcb=e.target.closest('[data-hcaste]');
   if (hcb){ var c=hcb.dataset.hcaste; h.v.forEach(function(v){ if(v.caste!==c) edit(v,{caste:c}); delete S.open[v.id+':caste']; }); delete S.open['house:caste']; toast('కులం: '+(CASTE_TE[c]||c)+' ✓'); renderHouse(); return; }
-  if (e.target.closest('[data-allv]')){
-    var n=0, skip=0; h.v.forEach(function(v){ var recent=v.lastVisit && v.lastBy===S.user.name && Date.now()-v.lastVisit<10*60000; if(recent) skip++; else { edit(v,{visits:[newVisitId()], visited:'Visited'}); n++; } });
-    toast(n?'👣 '+n+' మందికి సందర్శన ✓'+(skip?' · '+skip+' ఇప్పటికే':''):'ఇప్పుడే నమోదైంది · Already added'); renderHouse(); return; }
+  if (e.target.closest('[data-allv]')){ S.hpick={}; h.v.forEach(function(v){ var recent=v.lastVisit && v.lastBy===S.user.name && Date.now()-v.lastVisit<10*60000; if(!recent) S.hpick[v.id]=1; }); renderHouse(); return; }
+  var hp=e.target.closest('[data-hvp]'); if (hp){ var k=hp.dataset.hvp; if (S.hpick[k]) delete S.hpick[k]; else S.hpick[k]=1; renderHouse(); return; }
+  if (e.target.closest('[data-hvcancel]')){ S.hpick=null; renderHouse(); return; }
+  if (e.target.closest('[data-hvsave]')){
+    var g=newVisitId(), n=0; h.v.forEach(function(v,i){ if (S.hpick[v.id]){ edit(v,{visits:[g+'.'+i], visited:'Visited'}); delete S.vsure[v.id]; n++; } });
+    S.hpick=null; toast('👣 '+n+' మందికి సందర్శన ✓'); renderHouse(); return; }
+  if (e.target.closest('[data-hvh]')){ S.hhist=!S.hhist; if (S.hhist && h.v.some(function(v){ return !S.vis[v.e] || S.vis[v.e]==='error'; })) loadVisits(h); else renderHouse(); return; }
+  var gd=e.target.closest('[data-gdel]');
+  if (gd){
+    var gid=gd.dataset.gdel, ids=[];
+    if (S.vdel!=='g:'+gid){ S.vdel='g:'+gid; renderHouse(); return; }
+    S.vdel=null; h.v.forEach(function(v){ (S.vis[v.e]&&S.vis[v.e].forEach?S.vis[v.e]:[]).forEach(function(x){ if (groupOf(x.id)===gid) ids.push(x.id); }); });
+    gd.disabled=true; gd.textContent='⏳';
+    call('deleteVisits', S.user.name, S.user.pin, ids).then(function(res){
+      h.v.forEach(function(v){ var r=res[v.e]; if(!r) return; v.visits=r.count; v.lastVisit=r.last; v.lastBy=r.by; v.visited=r.count>0||pendingVisits(v).length>0;
+        if (S.vis[v.e]&&S.vis[v.e].filter) S.vis[v.e]=S.vis[v.e].filter(function(x){ return ids.indexOf(x.id)<0; }); });
+      toast('🗑 ఆ సందర్శన తీసేశాం · Visit deleted'); renderHouse(); renderList();
+    }).catch(function(err){ toast(String(err.message)==='NOT_YOURS'?'మీరు నమోదు చేసినది కాదు · Not yours':'📵 తీసేయలేదు — ఇంటర్నెట్ చూడండి'); renderHouse(); });
+    return;
+  }
   var av=e.target.closest('[data-addv]');
   if (av){ var va=S.byId[av.closest('[data-id]').dataset.id]; if (addVisit(va)){ toast('👣 సందర్శన ✓'); if(S.vis[va.e] && S.vis[va.e].push){} renderHouse(); } return; }
   var vh=e.target.closest('[data-vhist]');
