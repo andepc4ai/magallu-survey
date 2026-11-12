@@ -35,7 +35,7 @@ var FamilyEngine = (function () {
     rows.forEach(function (r) {
       var p = { id: String(r[0]), name: r[1], rt: r[2], rn: String(r[3] || '').trim(), sur: String(r[4] || '').trim(),
         house: String(r[5] || ''), booth: r[6], street: r[7] || '', age: Number(r[8]) || 0, g: r[9],
-        support: r[10] || '', visited: r[11] || '', vote: true };
+        support: r[10] || '', visited: r[11] || '', caste: String(r[12] || ''), vote: true };
       p.sc = canon(p.sur); p.k = key(p.name, p.sur); p.hk = p.booth + '|' + p.house;
       P[p.id] = p; list.push(p);
     });
@@ -121,13 +121,15 @@ var FamilyEngine = (function () {
     });
     var families = [];
     Object.keys(P).forEach(function (id) {
-      var f = families[fam[id]] || (families[fam[id]] = { id: fam[id], members: [], voters: 0, houses: {}, support: {}, check: 0 });
+      var f = families[fam[id]] || (families[fam[id]] = { id: fam[id], members: [], voters: 0, houses: {}, support: {}, castes: {}, check: 0 });
       var p = P[id]; p.fam = fam[id]; f.members.push(id);
       if (p.vote) { f.voters++; f.houses[p.hk] = 1; f.support[p.support || '-'] = (f.support[p.support || '-'] || 0) + 1;
+        if (p.caste) f.castes[p.caste] = (f.castes[p.caste] || 0) + 1;
         if (p.rel && !p.sure) f.check++; }
     });
     families.forEach(function (f) {
       f.houseCount = Object.keys(f.houses).length;
+      f.caste = Object.keys(f.castes).sort(function (a, b) { return f.castes[b] - f.castes[a]; })[0] || '';
       // head: top generation, prefer male, then oldest; no-vote elders count
       var roots = f.members.map(function (id) { return P[id]; }).filter(function (p) { return !p.father && !p.mother && !(p.g === 'Female' && p.spouses.some(function (s) { return P[s].father || P[s].mother || P[s].g === 'Male'; })); });
       roots.sort(function (a, b) { return (b.g === 'Male') - (a.g === 'Male') || (b.kids.length - a.kids.length) || (b.age - a.age); });

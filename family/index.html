@@ -130,6 +130,9 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 "use strict";
 var API = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
 var SUP = [['Strong','పూర్తి మద్దతు'],['Leaning','మొగ్గు'],['Undecided','తేల్చలేదు'],['Opposed','వ్యతిరేకం'],['none','అడగలేదు']];
+var CASTE_TE = {Madiga:'మాదిగ',Kamma:'కమ్మ',Kapu:'కాపు',Vaddera:'వడ్డెర',Muslim:'ముస్లిం',Mala:'మాల',Yadav:'యాదవ్',Rajaka:'రజక',
+  'Nayee Brahmin':'నాయి బ్రాహ్మణ',Vysya:'వైశ్యులు',Kummari:'కుమ్మరి',Vadrangi:'వడ్రంగి',ST:'ఎస్టీ',Brahmin:'బ్రాహ్మణ',Padmashali:'పద్మశాలి',Gouds:'గౌడ్స్',Others:'ఇతరులు'};
+function cte(c){ return c ? (CASTE_TE[c]||c) : ''; }
 var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్లి',Wife:'భార్య',Other:'భార్య/భర్త'};
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -219,7 +222,7 @@ function renderList(){
     var ms = f.members.map(P);
     if (F.booth!=='all' && !ms.some(function(p){ return p.vote && String(p.booth)===String(F.booth); })) return false;
     if (F.sur && !ms.some(function(p){ return p.sur===F.sur; })) return false;
-    if (q) return ms.some(function(p){ return (p.name+' '+p.sur+' '+tes(p.sur)+' '+(p.house||'')).toLowerCase().indexOf(q)>=0; });
+    if (q) return ms.some(function(p){ return (p.name+' '+p.sur+' '+tes(p.sur)+' '+(p.house||'')+' '+(p.caste||'')+' '+cte(p.caste)).toLowerCase().indexOf(q)>=0; });
     return true;
   });
   $('lcount').innerHTML = list.length+' కుటుంబాలు'+(F.sur?' · ఇంటిపేరు: <b>'+esc(tes(F.sur)||F.sur)+'</b> <button class="lnk" id="clrSur">✕</button>':'');
@@ -228,7 +231,7 @@ function renderList(){
     var h=P(f.head);
     return '<button class="fc" data-fam="'+esc(f.head)+'"><b>'+esc(displayName(h))+'</b>'+(h.vote?'':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
       (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+
-      '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
+      '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
       '<div class="sbar">'+barHtml(f)+'</div><div class="leg">'+legHtml(f)+'</div></button>';
   }).join('') + (list.length>F.limit?'<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>':'');
 }
@@ -262,7 +265,7 @@ function renderFam(head, me){
   var f = M.byHead[head] || famOf(head);
   if (!f){ go(''); return; }
   $('ftitle').textContent = displayName(P(f.head))+' కుటుంబం';
-  $('fsub').textContent = (surOf(f)?surOf(f)+' · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు'+(f.check?' · ⚠ '+f.check+' సరిచూడాలి':'');
+  $('fsub').textContent = (surOf(f)?surOf(f)+' · ':'')+(f.caste?cte(f.caste)+' · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు'+(f.check?' · ⚠ '+f.check+' సరిచూడాలి':'');
   $('fbar').innerHTML = barHtml(f); $('fleg').innerHTML = legHtml(f);
   var seen={}, html=f.roots.map(function(r){ return treeHtml(r, seen, me); }).join('');
   f.members.forEach(function(id){ if(!seen[id]) html+=treeHtml(id, seen, me); });
@@ -275,7 +278,7 @@ function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)
 function renderPerson(id, picking){
   var p=P(id); if(!p){ go(''); return; }
   $('ptitle').textContent = displayName(p);
-  $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
+  $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.vote){
     var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt;
