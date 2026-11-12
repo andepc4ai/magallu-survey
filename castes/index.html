@@ -11,48 +11,45 @@ body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",sy
 button,input,select{font:inherit;color:inherit}
 .hide{display:none!important}
 .top{position:sticky;top:0;z-index:5;background:#6d28d9;color:#fff;padding:12px 14px}
-.top h1{margin:0;font-size:1.1rem}
-.top .p{font-size:.85rem;margin-top:6px;display:flex;gap:10px;align-items:center}
+.top .r{display:flex;align-items:center;gap:10px;max-width:560px;margin:0 auto}
+.top h1{margin:0;font-size:1.1rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .p{font-size:.85rem;margin:6px auto 0;display:flex;gap:10px;align-items:center;max-width:560px}
+.back{border:0;background:rgba(255,255,255,.2);color:#fff;border-radius:10px;height:40px;padding:0 12px;font-weight:700}
 .bar{flex:1;height:8px;background:rgba(255,255,255,.3);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#fff}
 .wrap{max-width:560px;margin:0 auto;padding:12px 12px 70px}
-.box{background:#fff;border-radius:18px;padding:22px 18px;margin-top:40px;box-shadow:0 6px 24px rgba(0,0,0,.07)}
-label{display:block;font-weight:700;margin:14px 0 6px}
-.f{width:100%;height:54px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.1rem}
+.f{width:100%;height:52px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.05rem}
 .f:focus{outline:none;border-color:#6d28d9}
-.pin{text-align:center;letter-spacing:.5em;font-size:1.4rem}
-.go{width:100%;height:56px;border:0;border-radius:14px;background:#6d28d9;color:#fff;font-weight:700;margin-top:18px}
-.err{color:#dc2626;font-weight:700;margin-top:10px;min-height:1.2em}
 .tabs{display:flex;gap:8px;margin:10px 0}
 .tab{flex:1;height:44px;border:2px solid #e5dfd2;background:#fff;border-radius:999px;font-weight:700}
 .tab.on{background:#1d1b16;border-color:#1d1b16;color:#fff}
-.row{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #ece6da;border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.row{display:flex;align-items:center;gap:10px;background:#fff;border:2px solid #ece6da;border-radius:12px;padding:8px 10px;margin-bottom:8px}
 .row.ok{border-color:#16a34a}
-.nm{flex:1;min-width:0}.nm b{display:block;font-size:1.05rem;word-break:break-word}.nm span{color:#6b665c;font-size:.82rem}
-.row select{width:48%;height:48px;border:2px solid #e5dfd2;border-radius:10px;background:#fff;padding:0 6px;font-size:.95rem}
-.row select.set{border-color:#6d28d9;background:#f5f3ff}
+.nm{flex:1;min-width:0;border:0;background:none;text-align:left;padding:4px 2px;cursor:pointer}
+.nm b{display:block;font-size:1.1rem;line-height:1.3}
+.nm span{color:#6b665c;font-size:.8rem}
+.nm .go{color:#6d28d9;font-weight:700}
+select.cs{width:46%;height:48px;border:2px solid #e5dfd2;border-radius:10px;background:#fff;padding:0 6px;font-size:.95rem}
+select.cs.set{border-color:#6d28d9;background:#f5f3ff}
 .msg{text-align:center;color:#6b665c;padding:40px 10px}
-.st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem}
+.st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
 .st.busy{background:#1f2937}.st.bad{background:#7c2d12}
+.card{background:#fff;border:2px solid #ece6da;border-radius:14px;padding:14px;margin-bottom:12px}
+.card h3{margin:0 0 8px;font-size:1rem}
+select.cs.big{width:100%;height:52px;font-size:1.05rem}
+.hh{background:#fff;border:1px solid #ece6da;border-radius:12px;margin-bottom:10px;overflow:hidden}
+.hh .hd{background:#f3eefc;padding:8px 12px;font-weight:700;font-size:.92rem;display:flex;gap:8px}
+.hh .hd span{color:#6b665c;font-weight:400}
+.pp{padding:10px 12px;border-top:1px solid #f0ebe1}
+.pp b{display:block}.pp span{color:#6b665c;font-size:.85rem}
+.retry{margin-top:12px;height:46px;border:0;border-radius:10px;background:#6d28d9;color:#fff;padding:0 18px;font-weight:700}
 </style>
 </head>
 <body>
 
-<section id="vLogin" class="wrap">
-  <div class="box">
-    <h2 style="margin:0">ఇంటిపేరు → కులం</h2>
-    <div style="color:#6b665c">Surname → Caste · Magallu</div>
-    <label>మీ పేరు · Name</label>
-    <select id="who" class="f"><option value="">— Select —</option></select>
-    <label>పిన్ · PIN</label>
-    <input id="pin" class="f pin" type="password" inputmode="numeric" maxlength="6">
-    <button id="go" class="go">లోపలికి · Enter</button>
-    <div id="err" class="err"></div>
-  </div>
-</section>
-
-<section id="vList" class="hide">
+<!-- LIST -->
+<section id="vList">
   <div class="top">
-    <h1>ఇంటిపేరు → కులం</h1>
+    <div class="r"><h1>ఇంటిపేరు → కులం</h1></div>
     <div class="p"><span id="prog">—</span><div class="bar"><i id="pbar"></i></div></div>
   </div>
   <div class="wrap">
@@ -62,46 +59,69 @@ label{display:block;font-weight:700;margin:14px 0 6px}
       <button class="tab" data-m="all">అన్నీ</button>
       <button class="tab" data-m="done">ఉన్నవి</button>
     </div>
-    <div id="list"><div class="msg">లోడ్ అవుతోంది…</div></div>
+    <div id="list"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
 </section>
+
+<!-- ONE SURNAME -->
+<section id="vOne" class="hide">
+  <div class="top">
+    <div class="r"><button class="back" id="back">← వెనక్కి</button><h1 id="oneTitle"></h1></div>
+    <div class="p" id="oneSub"></div>
+  </div>
+  <div class="wrap">
+    <div class="card"><h3>కులం · Caste</h3><select id="oneCaste" class="cs big"></select></div>
+    <div id="people"></div>
+  </div>
+</section>
+
 <div id="st" class="st hide"></div>
 
 <script>
 (function(){
 "use strict";
 var API = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
+var TE = {"Gunti":"గుంటి","Shaik":"షేక్","Tammisetti":"తమ్మిశెట్టి","Orsu":"ఓర్సు","Cherukumalli":"చెరుకుమల్లి","Desapogu":"దేశపోగు","Yalamandala":"యలమందల","Aavula":"ఆవుల","Gundepogu":"గుండెపోగు","Kota":"కోట","Pathan":"పఠాన్","Kolli":"కొల్లి","Mukku":"ముక్కు","Yandrapalli":"యండ్రపల్లి","Thota":"తోట","Konakalla":"కొనకళ్ల","Sankarasetty":"శంకరశెట్టి","Pavuluri":"పావులూరి","Perikala":"పేరికల","Bommu":"బొమ్ము","Darla":"దార్ల","Kalaka":"కలక","Koppula":"కొప్పుల","Kastala":"కాస్తల","Polisetti":"పోలిశెట్టి","Katarapu":"కాటరపు","Kommu":"కొమ్ము","Pothuraju":"పోతురాజు","Ananthula":"అనంతుల","Talluri":"తాళ్లూరి","Billa":"బిల్ల","Upputolla":"ఉప్పుటోల్ల","Kanaparthi":"కనపర్తి","Palapati":"పాలపాటి","Nidumolu":"నిడుమోలు","Kongala":"కొంగల","Battula":"బత్తుల","Bandaru":"బండారు","Idupula":"ఇడుపుల","Bojjagani":"బొజ్జగాని","Vangala":"వంగల","Gariganti":"గరిగంటి","Naganaboina":"నాగనబోయిన","Parimi":"పరిమి","Velpula":"వేల్పుల","Chintala":"చింతల","Anthoti":"అంతోటి","Dendukuri":"దెందుకూరి","Medi":"మేడి","Vaddepalli":"వడ్డేపల్లి","Challapalli":"చల్లపల్లి","Chilaka":"చిలక","Gunji":"గుంజి","Pathuri":"పాతూరి","Kothapalli":"కొత్తపల్లి","Budigelli":"బుడిగెల్లి","Madugula":"మాడుగుల","Tirumalasetti":"తిరుమలశెట్టి","Vallamsetty":"వల్లంశెట్టి","Vemula":"వేముల","Pogu":"పోగు","Kotte":"కొట్టె","Pesaramalli":"పెసరమల్లి","Kukkamudi":"కుక్కముడి","Marri":"మర్రి","Chalamala":"చలమల","Challa":"చల్ల","Chinaboina":"చినబోయిన","Kambhampati":"కంభంపాటి","Moguluri":"మొగులూరి","Surapalli":"సూరపల్లి","Aavunuri":"ఆవునూరి","Chilakala":"చిలకల","Annavarapu":"అన్నవరపు","Gochi":"గోచి","Jillepalli":"జిల్లేపల్లి","Mannem":"మన్నెం","Ponnapalli":"పొన్నపల్లి","Thotapalli":"తోటపల్లి","Sadineni":"సాదినేని","Jonnalagadda":"జొన్నలగడ్డ","Devanakonda":"దేవనకొండ","Kanakapudi":"కనకపూడి","Kancharla":"కంచర్ల","Bokkinala":"బొక్కినాల","Kuncham":"కుంచం","Meesala":"మీసాల","Tallapalli":"తాళ్లపల్లి","Angara":"అంగర","Bobbillapati":"బొబ్బిల్లపాటి","Cherukuri":"చెరుకూరి","Gangisetty":"గంగిశెట్టి","Markapudi":"మార్కపూడి","Ramala":"రామల","Ravuri":"రావూరి","Surepalli":"సూరేపల్లి","Goda":"గోడ","Kommineni":"కొమ్మినేని","Bethapudi":"బేతపూడి","Gaddala":"గద్దల","Maddineni":"మద్దినేని","Repakula":"రేపాకుల","Andukuri":"అందుకూరి","Bachalakura":"బచ్చలకూర","Katta":"కట్ట","Mallempudi":"మల్లెంపూడి","Manda":"మంద","Yepuri":"ఏపూరి","Bachineni":"బాచినేని","Vallamkonda":"వల్లంకొండ","Dantala":"దంతాల","Matangi":"మాతంగి","Vaddelli":"వడ్డెల్లి","Aare":"ఆరె","Chekuri":"చేకూరి","Irugu":"ఇరుగు","Kalyanam":"కళ్యాణం","Kancham":"కంచం","Kunapaneni":"కూనపనేని","Lanjapalli":"లంజపల్లి","Madipalli":"మడిపల్లి","Mugunda":"ముగుండ","Pallepogu":"పల్లెపోగు","Penumarthi":"పెనుమర్తి","Siripurapu":"సిరిపురపు","Talmala":"తాల్మల","Pagadala":"పగడాల","Bellamkonda":"బెల్లంకొండ","Bikki":"బిక్కి","Muvva":"మువ్వ","Perumalla":"పెరుమాళ్ల","Setti":"శెట్టి","Vadlamudi":"వడ్లమూడి","Alla":"అల్ల","Chatari":"చాతరి","Daramalla":"దారమల్ల","Rangisetti":"రంగిశెట్టి","Sabbineni":"సబ్బినేని","Surampalli":"సూరంపల్లి","Yarramreddy":"యర్రంరెడ్డి","Bandi":"బండి","Nandigama":"నందిగామ","Padala":"పాదాల","Ramisetty":"రామిశెట్టి","Rayala":"రాయల","Bommineni":"బొమ్మినేని","Chadalavada":"చదలవాడ","Chalasani":"చలసాని","Darsi":"దర్శి","Dasu":"దాసు","Golla":"గొల్ల","Goppu":"గొప్పు","Gosi":"గోసి","Javvaji":"జవ్వాజి","Kalapala":"కలపాల","Kavati":"కావటి","Kunusothu":"కునుసోతు","Macharapu":"మాచరపు","Makkena":"మక్కెన","Marrela":"మర్రెల","Mondithoka":"మొండితోక","Mukkapati":"ముక్కపాటి","Nelapati":"నేలపాటి","Pallenti":"పల్లెంటి","Sakhamuri":"సాఖమూరి","Sathupati":"సత్తుపాటి","Velishala":"వెలిశాల","Durisetti":"దూరిశెట్టి","Dasari":"దాసరి","Manduri":"మందూరి","Mere":"మేరె","Nagavarapu":"నాగవరపు","Surpalli":"సూర్పల్లి","Akula":"ఆకుల","Angadala":"అంగడాల","Bomma":"బొమ్మ","Chilukuri":"చిలుకూరి","Chintalacheruvu":"చింతలచెరువు","Gabbita":"గబ్బిట","Gonuguntla":"గోనుగుంట్ల","Indlamuri":"ఇండ్లమూరి","Jarabana":"జరబాన","Jilakara":"జిలకర","Karupati":"కరుపాటి","Kommirisetti":"కొమ్మిరిశెట్టి","Kompalli":"కొంపల్లి","Madanapalli":"మదనపల్లి","Nelakurthi":"నేలకుర్తి","Nimmagadda":"నిమ్మగడ్డ","Paritala":"పరిటాల","Parupalli":"పారుపల్లి","Polepalli":"పోలేపల్లి","Recharla":"రేచర్ల","Songa":"సొంగ","Sravanam":"శ్రావణం","Yerragunta":"ఎర్రగుంట","Chinthoti":"చింతోటి","Kuchi":"కూచి","Mutchintala":"ముచ్చింతల","Nandru":"నంద్రు","Addanki":"అద్దంకి","Bolla":"బొల్ల","Bunga":"బుంగ","Chitluri":"చిట్లూరి","Dudyala":"దూడ్యాల","Edupula":"ఏడుపుల","Gudapati":"గూడపాటి","Gudeti":"గూడేటి","Gudimalla":"గుడిమళ్ల","Gunta":"గుంట","Jarugumalli":"జరుగుమల్లి","Kalakatla":"కలకట్ల","Kandukuri":"కందుకూరి","Khammampati":"ఖమ్మంపాటి","Madapati":"మాదాపాటి","Malladi":"మల్లాది","Mecherla":"మేచర్ల","Meduri":"మేడూరి","Mukka":"ముక్క","Nallamothu":"నల్లమోతు","Oggu":"ఒగ్గు","Ontipuli":"ఒంటిపులి","Relangi":"రేలంగి","Samineni":"సామినేని","Shakhamudi":"శాఖమూడి","Somisetty":"సోమిశెట్టి","Voggu":"ఒగ్గు","Yanarathi":"యనారతి","Yendlamuri":"యెండ్లమూరి","Gurram":"గుర్రం","Gokarla":"గోకర్ల","Amdukuri":"అందుకూరి","Avuluri":"ఆవులూరి","Baalasani":"బాలసాని","Bachikani":"బచ్చికాని","Balavantula":"బలవంతుల","Balla":"బల్ల","Bandaripalli":"బండారిపల్లి","Battina":"బత్తిన","Darelli":"దారెల్లి","Ekula":"ఏకుల","Gadde":"గద్దె","Gali":"గాలి","Ghattamaneni":"ఘట్టమనేని","Gopu":"గోపు","Gudikandula":"గుడికందుల","Gudisa":"గుడిసె","Gundala":"గుండాల","Idugula":"ఇడుగుల","Indumuri":"ఇందుమూరి","Jangala":"జంగాల","Kakkadi":"కక్కడి","Kambala":"కంబాల","Kambham":"కంభం","Kanagala":"కనగాల","Kancheti":"కంచేటి","Kasthuri":"కస్తూరి","Kattula":"కట్టుల","Komarraju":"కొమర్రాజు","Kommupati":"కొమ్ముపాటి","Korivi":"కొరివి","Kumacham":"కుమచం","Kunchapu":"కుంచపు","Kurarpu":"కురార్పు","Lingala":"లింగాల","Madampalli":"మాదంపల్లి","Maganti":"మాగంటి","Mallikharjunrao":"మల్లికార్జునరావు","Malneedi":"మల్నీడి","Nallabotula":"నల్లబోతుల","Nujiviti":"నూజివీటి","Orpu":"ఓర్పు","Paluri":"పాలూరి","Panakala":"పానకాల","Pasam":"పాశం","Puli":"పులి","Raamkoteswararao":"రామకోటేశ్వరరావు","Ramakuru":"రామకూరు","Ravulapati":"రావులపాటి","Rudravaram":"రుద్రవరం","Rudravarapu":"రుద్రవరపు","Uppalli":"ఉప్పల్లి","Uppara":"ఉప్పర","Uppukonda":"ఉప్పుకొండ","Varikuti":"వరికూటి","Yandrathi":"యండ్రాతి","Yarlagadda":"యార్లగడ్డ","Mahammad":"మహమ్మద్","Chava":"చావ","Chevuri":"చేవూరి","Gunia":"గునియ","Gunja":"గుంజ","Kongara":"కొంగర","Kukkamalla":"కుక్కమల్ల","Lingamgunta":"లింగంగుంట","Mallarpu":"మల్లార్పు","Nelluri":"నెల్లూరి","Pandula":"పండుల","Rachakonda":"రాచకొండ","Thelukondi":"తేలుకొండి","Yenuganti":"యేనుగంటి","Bachalapudi":"బచ్చలపూడి","Bokka":"బొక్క","Korada":"కోరాడ"};
 var CASTES = [['Vaddera','వడ్డెర'],['Yadav','యాదవ్'],['Rajaka','రజక'],['Brahmin','బ్రాహ్మణ'],['Kummari','కుమ్మరి'],['Vysya','వైశ్యులు'],
   ['Mala','మాల'],['Muslim','ముస్లిం'],['Madiga','మాదిగ'],['Nayee Brahmin','నాయి బ్రాహ్మణ'],['ST','ఎస్టీ'],['Padmashali','పద్మశాలి'],
   ['Gouds','గౌడ్స్'],['Vadrangi','వడ్రంగి'],['Kamma','కమ్మ'],['Kapu','కాపు'],['Others','ఇతరులు']];
 var NAMES = CASTES.map(function(c){return c[0];});
+var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్లి',Wife:'భార్య',Other:'సంబంధి'};
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
-var LS = { get:function(k){ try{ return JSON.parse(localStorage.getItem('mvc_'+k)); }catch(e){ return null; } },
-           set:function(k,v){ try{ localStorage.setItem('mvc_'+k, JSON.stringify(v)); }catch(e){} } };
 function call(fn, args){
   return fetch(API, { method:'POST', redirect:'follow', credentials:'omit', headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({ fn:fn, args:args||[] }) })
     .then(function(r){ return r.json(); })
     .then(function(j){ if (j && j.ok) return j.data; throw new Error(j && j.error || 'SERVER_ERROR'); });
 }
-var U = LS.get('user'), rows = [], mode = 'missing', q = '', queue = {}, busy = false;
-
+var rows = [], bySur = {}, voters = null, votersP = null, mode = 'missing', q = '', queue = {}, busy = false, listScroll = 0;
+function te(s){ return TE[s] || ''; }
 function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
-
-function login(name, pin){
-  $('err').textContent=''; $('go').disabled=true; $('go').textContent='లోడ్ అవుతోంది…';
-  call('getSurnames',[name,pin]).then(function(data){
-    U={name:name,pin:pin}; LS.set('user',U); rows=data; show();
-  }).catch(function(e){
-    var m=String(e.message);
-    $('err').textContent = m==='WRONG_PIN' ? 'పిన్ తప్పు · Wrong PIN' : m==='NOT_ADMIN' ? 'ఈ పేజీకి అనుమతి లేదు · Not allowed (ask admin)' : 'లోడ్ కాలేదు · '+m;
-    LS.set('user',null); $('vLogin').classList.remove('hide'); $('vList').classList.add('hide');
-  }).then(function(){ $('go').disabled=false; $('go').textContent='లోపలికి · Enter'; });
+function casteOptions(cur){
+  var odd = cur && NAMES.indexOf(cur)<0;
+  return '<option value="">— కులం —</option>'+(odd?'<option value="'+esc(cur)+'" selected>⚠ '+esc(cur)+'</option>':'')+
+    CASTES.map(function(c){ return '<option value="'+c[0]+'"'+(c[0]===cur?' selected':'')+'>'+c[1]+' · '+c[0]+'</option>'; }).join('');
 }
-function show(){ $('vLogin').classList.add('hide'); $('vList').classList.remove('hide'); st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved'); render(); }
 
-function render(){
+/* ---------- data ---------- */
+function load(){
+  call('getSurnames',['','']).then(function(data){
+    rows = data; bySur = {}; rows.forEach(function(r){ bySur[r[1]] = r; });
+    st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved'); route();
+  }).catch(function(e){
+    $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'<br><button class="retry" onclick="location.reload()">మళ్ళీ · Retry</button></div>';
+  });
+  loadVoters();
+}
+function loadVoters(){
+  if (!votersP) votersP = call('getSurnameVoters',['','']).then(function(v){ voters = v; return v; })
+    .catch(function(e){ votersP = null; throw e; });
+  return votersP;
+}
+
+/* ---------- list view ---------- */
+function renderList(){
   var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
   var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
   $('prog').textContent = filled.length+' / '+rows.length+' ఇంటిపేర్లు · '+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు';
@@ -110,25 +130,77 @@ function render(){
     var ok = NAMES.indexOf(r[3])>=0;
     if (mode==='missing' && ok) return false;
     if (mode==='done' && !ok) return false;
-    return !q || r[1].toLowerCase().indexOf(q)>=0;
+    return !q || r[1].toLowerCase().indexOf(q)>=0 || te(r[1]).indexOf(q)>=0;
   });
-  if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
+  if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'&&!q?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
   $('list').innerHTML = list.slice(0,200).map(function(r){
-    var cur=r[3], odd = cur && NAMES.indexOf(cur)<0;
-    return '<div class="row" data-r="'+r[0]+'"><div class="nm"><b>'+esc(r[1])+'</b><span>'+r[2]+' ఓటర్లు'+(odd?' · ⚠ '+esc(cur):'')+'</span></div>'+
-      '<select data-s="'+esc(r[1])+'" class="'+(odd||!cur?'':'set')+'"><option value="">— కులం —</option>'+
-      (odd?'<option value="'+esc(cur)+'" selected>'+esc(cur)+'</option>':'')+
-      CASTES.map(function(c){ return '<option value="'+c[0]+'"'+(c[0]===cur?' selected':'')+'>'+c[1]+' · '+c[0]+'</option>'; }).join('')+
-      '</select></div>';
+    var cur=r[3], ok=NAMES.indexOf(cur)>=0;
+    return '<div class="row" data-r="'+r[0]+'"><button class="nm" data-open="'+esc(r[1])+'"><b>'+esc(te(r[1])||r[1])+'</b>'+
+      '<span>'+esc(r[1])+' · '+r[2]+' ఓటర్లు · <span class="go">చూడండి ›</span></span></button>'+
+      '<select class="cs'+(ok?' set':'')+'" data-s="'+esc(r[1])+'">'+casteOptions(cur)+'</select></div>';
   }).join('') + (list.length>200?'<div class="msg">ఇంకా '+(list.length-200)+' — వెతకండి</div>':'');
 }
 
+/* ---------- one surname view ---------- */
+function renderOne(s){
+  var r = bySur[s];
+  if (!r){ location.hash=''; return; }
+  $('oneTitle').textContent = (te(s)||s);
+  $('oneSub').textContent = s+' · '+r[2]+' ఓటర్లు';
+  $('oneCaste').innerHTML = casteOptions(r[3]);
+  $('oneCaste').className = 'cs big'+(NAMES.indexOf(r[3])>=0?' set':'');
+  $('oneCaste').dataset.s = s;
+  if (!voters){
+    $('people').innerHTML='<div class="msg">ఓటర్ల జాబితా లోడ్ అవుతోంది… · Loading people…</div>';
+    loadVoters().then(function(){ if (current()===s) renderOne(s); })
+      .catch(function(e){ $('people').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'<br><button class="retry" id="vr">మళ్ళీ · Retry</button></div>';
+        $('vr').onclick=function(){ renderOne(s); }; });
+    return;
+  }
+  var mine = voters.filter(function(v){ return v[0]===s; });
+  var houses = {}, order = [];
+  mine.forEach(function(v){ var k=v[7]+'|'+v[6]; if(!houses[k]){ houses[k]=[]; order.push(k); } houses[k].push(v); });
+  if (!order.length){ $('people').innerHTML='<div class="msg">ఈ ఇంటిపేరుతో ఓటర్లు లేరు</div>'; return; }
+  $('people').innerHTML = '<h3 style="margin:4px 2px 10px">'+mine.length+' ఓటర్లు · '+order.length+' ఇళ్ళు</h3>' + order.map(function(k){
+    var hv = houses[k], h = hv[0];
+    return '<div class="hh"><div class="hd">🏠 '+esc(h[6]||'—')+' <span>'+esc(h[8])+' · బూత్ '+esc(h[7])+'</span></div>'+
+      hv.map(function(v){
+        return '<div class="pp"><b>'+esc(v[1])+'</b><span>'+(v[5]==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+esc(v[4])+' ఏళ్ళు · '+(REL[v[2]]||esc(v[2]))+': '+esc(v[3])+'</span></div>';
+      }).join('')+'</div>';
+  }).join('');
+}
+
+/* ---------- routing (phone back button works) ---------- */
+function current(){ var h=decodeURIComponent(location.hash.slice(1)); return h.indexOf('s=')===0 ? h.slice(2) : ''; }
+function route(){
+  if (!rows.length) return;
+  var s = current();
+  if (s){
+    $('vList').classList.add('hide'); $('vOne').classList.remove('hide'); window.scrollTo(0,0); renderOne(s);
+  } else {
+    $('vOne').classList.add('hide'); $('vList').classList.remove('hide'); renderList(); window.scrollTo(0, listScroll);
+  }
+}
+window.addEventListener('hashchange', route);
+$('list').addEventListener('click', function(e){
+  var b=e.target.closest('[data-open]'); if(!b) return;
+  listScroll = window.scrollY; location.hash = 's='+encodeURIComponent(b.dataset.open);
+});
+$('back').onclick = function(){ if (history.length>1 && document.referrer!==location.href) history.back(); else location.hash=''; };
+
+/* ---------- saving ---------- */
+function setCaste(s, c){
+  var r = bySur[s]; if (!r) return;
+  r[3] = c;
+  queue[r[0]] = { r:r[0], s:s, c:c };
+  save();
+}
 function save(){
   var items = Object.keys(queue).map(function(k){ return queue[k]; });
   if (!items.length || busy) return;
   busy = true; queue = {};
   st('busy','⏳ సేవ్ అవుతోంది… · Saving');
-  call('saveSurnameCastes',[U.name,U.pin,items]).then(function(){
+  call('saveSurnameCastes',['','',items]).then(function(){
     busy=false;
     items.forEach(function(it){ var el=document.querySelector('[data-r="'+it.r+'"]'); if(el) el.classList.add('ok'); });
     if (Object.keys(queue).length) save(); else st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved');
@@ -138,30 +210,21 @@ function save(){
     setTimeout(save, 5000);
   });
 }
-
 $('list').addEventListener('change', function(e){
   var s=e.target; if (!s.dataset.s) return;
-  var r=Number(s.closest('[data-r]').dataset.r);
-  rows.forEach(function(x){ if(x[0]===r) x[3]=s.value; });
-  s.className = s.value ? 'set' : '';
-  queue[r] = { r:r, s:s.dataset.s, c:s.value };
-  save();
-  // keep the row visible until the user changes tab or searches
+  s.className = 'cs'+(s.value?' set':''); setCaste(s.dataset.s, s.value);
+});
+$('oneCaste').addEventListener('change', function(){
+  this.className = 'cs big'+(this.value?' set':''); setCaste(this.dataset.s, this.value);
 });
 document.querySelector('.tabs').onclick=function(e){
   var b=e.target.closest('[data-m]'); if(!b) return;
-  mode=b.dataset.m; [].forEach.call(document.querySelectorAll('.tab'),function(t){ t.classList.toggle('on', t===b); }); render();
+  mode=b.dataset.m; [].forEach.call(document.querySelectorAll('.tab'),function(t){ t.classList.toggle('on', t===b); }); renderList();
 };
-var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); render(); },150); };
-$('go').onclick=function(){ var n=$('who').value, p=$('pin').value.trim(); if(!n||!p){ $('err').textContent='పేరు, పిన్ ఇవ్వండి'; return; } login(n,p); };
-$('pin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('go').click(); });
+var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); renderList(); },150); };
 window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
 
-call('listVolunteers').then(function(n){
-  $('who').innerHTML='<option value="">— Select —</option>'+n.map(function(x){return '<option>'+esc(x)+'</option>';}).join('');
-  if (U) $('who').value=U.name;
-}).catch(function(){ $('err').textContent='ఇంటర్నెట్ చెక్ చేయండి · Check internet'; });
-if (U) login(U.name, U.pin);
+load();
 })();
 </script>
 </body>
