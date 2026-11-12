@@ -35,15 +35,15 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* login */
 .login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.login .box{background:var(--card);border-radius:20px;padding:26px 22px;width:100%;max-width:420px;box-shadow:0 6px 30px rgba(0,0,0,.08)}
+.login .box{background:var(--card);border-top:8px solid #FACC15;border-radius:20px;padding:26px 22px;width:100%;max-width:420px;box-shadow:0 6px 30px rgba(0,0,0,.08)}
 .login h2{margin:0 0 4px;font-size:1.4rem}
 .login p{margin:0 0 18px;color:var(--muted)}
 label.lb{display:block;font-weight:600;margin:14px 0 6px}
 .field{width:100%;height:54px;border:2px solid var(--line);border-radius:12px;padding:0 14px;background:#fff;font-size:1.1rem}
 .field:focus{outline:none;border-color:var(--brand)}
 .pin{letter-spacing:.6em;text-align:center;font-size:1.5rem}
-.big{width:100%;height:58px;border:0;border-radius:14px;background:var(--brand);color:#fff;font-weight:700;font-size:1.15rem;margin-top:20px}
-.big:active{transform:scale(.99)}
+.big{width:100%;height:58px;border:0;border-radius:14px;background:#FACC15;color:#1c1917;box-shadow:0 2px 0 #CA8A04;font-weight:700;font-size:1.15rem;margin-top:20px}
+.big:active{transform:scale(.99)}.big:disabled{opacity:.85;font-size:.98rem;white-space:nowrap}
 .err{color:var(--opposed);margin-top:10px;min-height:1.2em;font-weight:600}
 
 /* filters */
@@ -140,7 +140,7 @@ textarea:focus{outline:none;border-color:var(--brand)}
 .toast.show{opacity:1}
 .demo{background:#fef3c7;color:#78350f;text-align:center;font-size:.85rem;padding:6px 10px}
 .loading{text-align:center;padding:60px 20px;color:var(--muted)}
-.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}
+.spin{width:36px;height:36px;border:4px solid var(--line);border-top-color:#EAB308;border-radius:50%;animation:s 1s linear infinite;margin:0 auto 14px}
 @keyframes s{to{transform:rotate(360deg)}}
 .empty{text-align:center;color:var(--muted);padding:40px 10px}
 .lq{width:100%;font-size:1.05rem;padding:12px;border:2px solid #e5dfd2;border-radius:12px;box-sizing:border-box}
