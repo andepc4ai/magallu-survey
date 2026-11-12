@@ -178,6 +178,11 @@ select.chip{appearance:auto;font-weight:700}
 .bc i{display:block;width:100%;max-width:18px;background:#CA8A04;border-radius:4px 4px 0 0}.bv{font-size:.7rem;color:#44403c;margin-bottom:2px}.bl{font-size:.68rem;color:var(--muted);margin-top:3px}
 .dt{width:100%;border-collapse:collapse;font-size:.85rem}.dt th{text-align:left;color:var(--muted);font-weight:600;padding:4px 4px;border-bottom:1px solid #e7e5e4}.dt td{padding:7px 4px;border-bottom:1px solid #f5f5f4;vertical-align:top}
 .dt small{color:var(--muted)}.mini{height:4px;background:#f1f5f9;border-radius:2px;margin-top:3px}.mini i{display:block;height:100%;background:var(--strong);border-radius:2px}
+.pv{display:flex;gap:10px;align-items:center;background:#fff;border-radius:14px;padding:10px 10px 10px 14px;margin-bottom:8px;box-shadow:0 1px 3px rgba(0,0,0,.06);border-left:6px solid #e7e5e4}
+.pv.on{border-left-color:#16a34a;background:#f0fdf4}.pi{flex:1;min-width:0}.pi b{font-size:1.02rem}.pi .dot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle}
+.pm{font-size:.82rem;color:var(--muted);margin-top:2px}.pm b{color:#1c1917;font-size:.95rem}.pcall{display:inline-block;margin-top:4px;color:#0f766e;font-weight:700;text-decoration:none}
+.pvb{flex:none;width:88px;min-height:64px;border:2px solid #d6d3d1;background:#fff;border-radius:14px;font-weight:700;font-size:.95rem;line-height:1.2}
+.pvb.on{background:#16a34a;border-color:#16a34a;color:#fff}.pvb.ask{background:#b91c1c;border-color:#b91c1c;color:#fff}
 </style>
 </head>
 <body>
@@ -204,6 +209,7 @@ select.chip{appearance:auto;font-weight:700}
     <div class="row">
       <h1>ఓటర్ సర్వే</h1>
       <span class="who" id="who"></span>
+      <button class="iconbtn" id="btnPoll" title="Polling day">🗳️</button>
       <button class="iconbtn" id="btnDash" title="Dashboard">📊</button>
       <button class="iconbtn hide" id="btnFam" title="Families">👪</button>
       <button class="iconbtn hide" id="btnSur" title="Surname to caste">🏷</button>
@@ -214,6 +220,7 @@ select.chip{appearance:auto;font-weight:700}
   </div>
   <div class="wrap">
     <div class="quick hide" id="quick">
+      <a href="#" id="quickPoll">🗳️ పోలింగ్ రోజు</a>
       <a href="#" id="quickDash">📊 డాష్‌బోర్డ్</a>
       <a href="family/">👪 కుటుంబాలు</a>
       <a href="castes/" class="hide" id="quickCaste">🏷 కులాలు</a>
@@ -240,6 +247,26 @@ select.chip{appearance:auto;font-weight:700}
     <div class="prog" id="hSub"></div>
   </div>
   <div class="wrap" id="hBody"></div>
+</section>
+
+<!-- POLLING DAY -->
+<section id="vPoll" class="sheet hide">
+  <div class="top">
+    <div class="row">
+      <button class="iconbtn" id="btnPollBack">← వెనక్కి</button>
+      <h1>🗳️ పోలింగ్ రోజు</h1>
+      <button class="iconbtn" id="btnPollRef" title="Refresh">⟳</button>
+    </div>
+    <div class="prog"><span id="pTxt">—</span><div class="bar"><i id="pBar"></i></div></div>
+  </div>
+  <div class="wrap">
+    <div class="chips" id="pBooth"></div>
+    <div class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="pq" type="search" inputmode="search" placeholder="క్రమ సంఖ్య / పేరు / ఇంటి నం. · Serial no. or name"></div>
+    <div class="chips" id="pTabs"></div>
+    <div class="count" id="pCount"></div>
+    <div id="pList"></div>
+  </div>
 </section>
 
 <!-- DASHBOARD -->
@@ -494,7 +521,7 @@ function demoCall(fn,args){
     var rows = LS.get('demo_rows') || JSON.parse(JSON.stringify(DEMO_ROWS));
     args[2].forEach(function(u){ rows.forEach(function(r){ if(r[10]===u.e){
       var f=u.f; if('ward' in f) r[13]=f.ward; if('visited' in f) r[14]=f.visited; if('support' in f) r[15]=f.support;
-      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; if('issueStatus' in f) r[28]=f.issueStatus;
+      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; if('issueStatus' in f) r[28]=f.issueStatus; if('voted' in f) r[29]=f.voted;
       if(f.visits){ var dv=LS.get('demo_visits')||[]; f.visits.forEach(function(id){ dv.push({id:id,t:Date.now(),by:args[0],e:r[10]}); }); LS.set('demo_visits',dv); r[25]=(r[25]||0)+f.visits.length; r[26]=Date.now(); r[27]=args[0]; }
       r[18]=args[0]; }});});
     LS.set('demo_rows',rows);
@@ -506,7 +533,7 @@ function demoCall(fn,args){
 function toObj(a){
   return {s:a[0],r:a[1],booth:a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
@@ -536,6 +563,7 @@ function applyLocal(v,f){
   if('occupation' in f) v.occupation = f.occupation;
   if('leader' in f) v.leader = f.leader;
   if('issueStatus' in f) v.issueStatus = f.issueStatus;
+  if('voted' in f) v.voted = f.voted==='Yes';
   if(f.visits && f.visits.length){ v.visits=(v.visits||0)+f.visits.length; v.lastVisit=Date.now(); v.lastBy=S.user?S.user.name:''; v.visited=true; }
 }
 function cleanMobile(s){
@@ -568,7 +596,7 @@ function edit(v, f){
   // answering a question for someone never visited counts as a visit
   if (f.visited==='Visited' && !f.visits && !v.visited) f.visits=[newVisitId()];
   if (f.visits && S.geo && Date.now()-S.geo.t < 5*60000) f.geo = S.geo.lat.toFixed(6)+','+S.geo.lng.toFixed(6)+','+Math.round(S.geo.acc);
-  applyLocal(v,f); v.vol = S.user.name;
+  applyLocal(v,f); if (!('voted' in f && Object.keys(f).length===1)) v.vol = S.user.name;
   var p = S.pending[v.id] || (S.pending[v.id] = {s:v.s,r:v.r,e:v.e,f:{}});
   for (var k in f) p.f[k] = k==='visits' ? (p.f.visits||[]).concat(f.visits) : f[k];
   LS.set('pending',S.pending);
@@ -1034,6 +1062,63 @@ function surFlush(){
 // One shared screen: on the live app the 🏷 button opens the /castes/ page
 $('btnFam').onclick=function(){ location.href='family/'; };
 $('btnDash').onclick=function(){ openDash(); };
+/* ---------- polling day: tick who has voted; chase supporters who haven't ---------- */
+var P = { booth:null, tab:'sup', q:'', limit:60, ask:null, timer:null };
+$('btnPoll').onclick=function(){ openPoll(); };
+$('quickPoll').onclick=function(e){ e.preventDefault(); openPoll(); };
+$('btnPollBack').onclick=function(){ $('vPoll').classList.add('hide'); document.body.style.overflow=''; clearInterval(P.timer); renderList(); };
+$('btnPollRef').onclick=function(){ pollRefresh(true); };
+function openPoll(){
+  $('vPoll').classList.remove('hide'); $('vPoll').scrollTop=0; document.body.style.overflow='hidden';
+  if (!P.booth) P.booth = S.booth!=='all' ? String(S.booth) : 'all';
+  renderPoll(); clearInterval(P.timer); P.timer=setInterval(function(){ pollRefresh(false); }, 60000);   // see other agents' ticks every minute
+}
+function pollRefresh(loud){
+  if (DEMO) return;
+  flush();
+  call('getVoters', S.user.name, S.user.pin).then(function(res){ LS.set('rows',res.rows); ingest(res.rows); if (!$('vPoll').classList.contains('hide')) renderPoll(); if (loud) toast('తాజా ✓'); }).catch(function(){ if (loud) toast('📵 ఇంటర్నెట్ లేదు'); });
+}
+function isSup(v){ return v.support==='Strong' || v.support==='Leaning'; }
+function renderPoll(){
+  var booths={}; S.rows.forEach(function(v){ booths[v.booth]=1; });
+  $('pBooth').innerHTML=['all'].concat(Object.keys(booths).sort()).map(function(b){ return '<button class="chip'+(String(P.booth)===String(b)?' on':'')+'" data-pb="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
+  var inB=S.rows.filter(function(v){ return P.booth==='all' || String(v.booth)===String(P.booth); });
+  var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(isSup), supV=sup.filter(function(v){ return v.voted; }).length;
+  $('pTxt').innerHTML='ఓటు వేశారు <b>'+voted+' / '+inB.length+'</b> ('+pct(voted,inB.length)+'%) · మన వాళ్ళు <b>'+supV+' / '+sup.length+'</b>';
+  $('pBar').style.width=pct(voted,inB.length)+'%';
+  var tabs=[['sup','🎯 మనవాళ్ళు — ఇంకా వేయలేదు', sup.length-supV],['not','ఇంకా వేయనివారు', inB.length-voted],['voted','✓ వేశారు', voted],['all','అందరూ', inB.length]];
+  $('pTabs').innerHTML=tabs.map(function(t){ return '<button class="chip'+(P.tab===t[0]?' on':'')+'" data-pt="'+t[0]+'">'+t[1]+' <b>'+t[2]+'</b></button>'; }).join('');
+  var list=inB.filter(function(v){ return P.tab==='sup' ? isSup(v)&&!v.voted : P.tab==='not' ? !v.voted : P.tab==='voted' ? v.voted : true; });
+  var q=P.q;
+  if (q){
+    var num=/^\d+$/.test(q), Q=Fuzzy.query(q);
+    list=list.map(function(v){ var sc=0;
+      if (num && String(v.sr)===q) sc=100; else if (num && String(v.house).indexOf(q)===0) sc=30; else if (String(v.e).toLowerCase().indexOf(q)>=0) sc=50; else if (String(v.house).toLowerCase().indexOf(q)===0) sc=30; else sc=Fuzzy.score(v.name+' '+v.relN, Q);
+      v._ps=sc; return v; }).filter(function(v){ return v._ps>0; }).sort(function(a,b){ return b._ps-a._ps; });
+  } else list=list.slice().sort(function(a,b){ return String(a.booth).localeCompare(String(b.booth)) || (Number(a.sr)||0)-(Number(b.sr)||0); });
+  $('pCount').textContent=list.length+' ఓటర్లు';
+  $('pList').innerHTML = list.slice(0,P.limit).map(function(v){
+    var ask=P.ask===v.id, lv=leaderName(v.leader);
+    return '<div class="pv'+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+esc(v.name)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
+      '<div class="pm">క్ర.సం. <b>'+esc(v.sr)+'</b> · బూత్ '+esc(v.booth)+' · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
+      (v.mobile&&!v.voted?'<a class="pcall" href="tel:'+esc(v.mobile)+'">📞 '+esc(v.mobile)+'</a>':'')+'</div>'+
+      '<button class="pvb'+(v.voted?' on':'')+(ask?' ask':'')+'" data-pvote="1">'+(ask?'తీసేయాలా? ✓':v.voted?'✓ వేశారు':'ఓటు<br>వేశారు')+'</button></div>';
+  }).join('') + (list.length>P.limit?'<button class="more" data-pmore="1">ఇంకా చూపించు ('+(list.length-P.limit)+')</button>':'') + (!list.length?'<div class="empty">ఎవరూ లేరు 🙂</div>':'');
+}
+$('vPoll').addEventListener('click',function(e){
+  var t;
+  if ((t=e.target.closest('[data-pb]'))){ P.booth=t.dataset.pb; P.limit=60; renderPoll(); return; }
+  if ((t=e.target.closest('[data-pt]'))){ P.tab=t.dataset.pt; P.limit=60; renderPoll(); return; }
+  if (e.target.closest('[data-pmore]')){ P.limit+=60; renderPoll(); return; }
+  if ((t=e.target.closest('[data-pvote]'))){
+    var v=S.byId[t.closest('[data-pid]').dataset.pid];
+    if (v.voted && P.ask!==v.id){ P.ask=v.id; renderPoll(); return; }      // undo needs a second tap
+    P.ask=null; edit(v,{voted: v.voted?'':'Yes'}); toast(v.voted?'✓ '+v.name+' ఓటు వేశారు':'తీసేశాం'); renderPoll();
+    var pq=$('pq'); if (pq.value && v.voted){ pq.value=''; P.q=''; renderPoll(); pq.focus(); }   // ready for the next serial number
+    return;
+  }
+});
+var pT; $('pq').oninput=function(){ clearTimeout(pT); var x=this; pT=setTimeout(function(){ P.q=x.value.trim().toLowerCase(); P.limit=60; renderPoll(); },150); };
 $('quickDash').onclick=function(e){ e.preventDefault(); openDash(); };
 $('btnDashBack').onclick=function(){ $('vDash').classList.add('hide'); document.body.style.overflow=''; };
 
@@ -1057,6 +1142,9 @@ function renderDash(){
   h += '<div class="tiles">'+
     tile(total,'ఓటర్లు','Voters')+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited)+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
+  var nv=rows.filter(function(v){ return v.voted; }).length;
+  if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;
+    h += '<div class="dcard"><h3>🗳️ పోలింగ్ <span class="en">Turnout</span></h3><div class="tiles" style="margin:0">'+tile(pct(nv,total)+'%','ఓటు వేశారు','Voted · '+nv+' / '+total)+tile(pct(spv,sp.length)+'%','మనవాళ్ళు వేశారు','Supporters · '+spv+' / '+sp.length)+'</div></div>'; }
   // support
   var sc={}; rows.forEach(function(v){ sc[v.support||'']=(sc[v.support||'']||0)+1; });
   h += '<div class="dcard"><h3>మద్దతు <span class="en">Support</span></h3><div class="sbarD">'+SUPC.map(function(x){ var n=sc[x[0]]||0; return n?'<i title="'+x[1]+': '+n+'" style="flex:'+n+';background:'+x[2]+'"></i>':''; }).join('')+'</div>'+
