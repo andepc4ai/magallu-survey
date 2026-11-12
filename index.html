@@ -611,7 +611,8 @@ function surFlush(){
     setTimeout(surFlush, 6000);
   });
 }
-$('btnSur').onclick=surOpen;
+// One shared screen: on the live app the 🏷 button opens the /castes/ page
+$('btnSur').onclick=function(){ if (HAS_API) location.href='castes/'; else surOpen(); };
 $('btnSurBack').onclick=function(){ surClose(); if(S.openHouse) renderHouse(); };
 $('surChips').onclick=function(e){ var b=e.target.closest('[data-sm]'); if(!b) return; SU.mode=b.dataset.sm; surRender(); };
 var sqT; $('sq').oninput=function(){ clearTimeout(sqT); var t=this; sqT=setTimeout(function(){ SU.q=t.value.trim().toLowerCase(); surRender(); },150); };
@@ -637,6 +638,7 @@ function loadData(force){
   if (cached && !force){ ingest(cached); renderList(); }
   return call('getVoters', S.user.name, S.user.pin).then(function(res){
     LS.set('rows',res.rows); ingest(res.rows); renderList(); if(S.openHouse) renderHouse();
+    refreshLists();
     S.online=true; renderSync(); if (force) toast('తాజా డేటా ✓');
   }).catch(function(err){
     if (String(err && err.message).indexOf('WRONG_PIN')>=0){ logout('పిన్ మారింది. మళ్ళీ లాగిన్ అవ్వండి'); return; }
@@ -644,6 +646,16 @@ function loadData(force){
     if (!cached) $('list').innerHTML='<div class="empty">ఇంటర్నెట్ లేదు. నెట్ వచ్చాక ⟳ నొక్కండి<br><span class="en">No internet — tap ⟳ to retry</span></div>';
   });
 }
+// Pick up caste lists / surname castes edited elsewhere (e.g. the /castes/ page) without re-login
+function refreshLists(){
+  if (DEMO || !S.user) return;
+  call('login', S.user.name, S.user.pin).then(function(u){
+    S.user.lists = u.lists; S.user.admin = !!u.admin; LS.set('user', S.user);
+    $('btnSur').classList.toggle('hide', !S.user.admin);
+    if (S.openHouse) renderHouse();
+  }).catch(function(){});
+}
+window.addEventListener('pageshow', function(e){ if (e.persisted) refreshLists(); });
 $('btnRefresh').onclick=function(){ flush(); loadData(true); };
 $('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); };
 
