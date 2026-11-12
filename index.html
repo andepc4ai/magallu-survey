@@ -120,6 +120,13 @@ textarea:focus{outline:none;border-color:var(--brand)}
 .srow select.set{border-color:#6d28d9;background:#f5f3ff}
 .srow.saved{border-color:var(--ok)}
 .fixbtn{width:100%;min-height:48px;border:0;border-radius:12px;background:#6d28d9;color:#fff;font-weight:700;margin:4px 0 10px}
+.fold{display:flex;align-items:center;gap:10px;background:#faf8f3;border:2px solid var(--line);border-radius:12px;padding:8px 10px;margin-top:10px;width:100%;text-align:left;cursor:pointer}
+.fold .fl{color:var(--muted);font-size:.85rem;min-width:62px}
+.fold .fv{flex:1;font-weight:700;font-size:1rem}
+.fold .fc{color:var(--brand);font-weight:700;font-size:.88rem;white-space:nowrap}
+.fold.f-Strong{border-color:var(--strong)}.fold.f-Leaning{border-color:var(--leaning)}.fold.f-Undecided{border-color:var(--undecided)}.fold.f-Opposed{border-color:var(--opposed)}
+.qh{display:flex;justify-content:space-between;align-items:center}
+.done{border:0;background:var(--ink);color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:.8rem}
 .csel{width:100%;height:46px;border:2px solid var(--line);border-radius:10px;background:#fff;padding:0 8px}
 .next{width:100%;height:56px;border:0;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;font-size:1.05rem;margin:4px 0 20px}
 
@@ -269,8 +276,13 @@ var S = {
   booth: 'all', sec: 'all', stat: 'todo', q: '', limit: 40,
   pending: LS.get('pending') || {}, // id -> {s,r,e,f}
   inflight: false, online: navigator.onLine !== false,
-  openHouse: null, wards: 14
+  openHouse: null, wards: 14,
+  open: {}           // sections the volunteer opened again with "మార్చు"
 };
+function issues(v){ return String(v.issue||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }
+function foldRow(key, label, valueHtml, cls){
+  return '<button class="fold '+(cls||'')+'" data-unfold="'+esc(key)+'"><span class="fl">'+label+'</span><span class="fv">'+valueHtml+'</span><span class="fc">✓ మార్చు</span></button>';
+}
 
 /* ---------- server calls ---------- */
 function call(fn){
@@ -457,7 +469,7 @@ $('list').onclick=function(e){
 
 /* ---------- house screen ---------- */
 function openHouse(hid){
-  S.openHouse = hid; renderHouse();
+  S.openHouse = hid; S.open = {}; renderHouse();
   $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
   document.body.style.overflow='hidden';
 }
@@ -478,7 +490,9 @@ function renderHouse(){
     (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
   var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
   var sug = suggestCaste(h.v[0].surname);
-  html += '<div class="hbox"><h3>కులం <span class="en">Caste — whole house</span></h3>'+
+  if (sameCaste && hc && !S.open['house:caste'])
+    html += '<div class="hbox" style="padding:8px 14px">'+foldRow('house:caste','కులం · ఇల్లు', esc(CASTE_TE[hc]||hc)+(CASTE_TE[hc]?' <span class="en">'+esc(hc)+'</span>':''))+'</div>';
+  else html += '<div class="hbox"><h3>కులం <span class="en">Caste — whole house</span></h3>'+
     (sug && !(sameCaste && hc===sug) ? '<button class="sugg" data-hcaste="'+esc(sug)+'">💡 ఇంటిపేరు ప్రకారం: '+esc(CASTE_TE[sug]||sug)+' ('+esc(sug)+') — సరైతే నొక్కండి</button>' : '')+
     '<div class="cgrid">'+lists().castes.map(function(c){
       return '<button class="cb'+(sameCaste&&hc===c?' on':'')+'" data-hcaste="'+esc(c)+'">'+esc(CASTE_TE[c]||c)+(CASTE_TE[c]?'<small>'+esc(c)+'</small>':'')+'</button>';
@@ -489,20 +503,12 @@ function renderHouse(){
       '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(v.relN)+'<br>'+esc(v.e)+' · క్ర.సం. '+esc(v.sr)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
       '<div class="tog"><button class="tb vis'+(v.visited?' on':'')+'" data-f="visited" data-v="Visited">✓ కలిశాం<small>Visited</small></button>'+
       '<button class="tb nv'+(!v.visited?' on':'')+'" data-f="visited" data-v="Not Visited">✗ కలవలేదు<small>Not visited</small></button></div>'+
-      '<div class="q">మద్దతు <span class="en">Support</span></div><div class="sup">'+
-        SUP.map(function(s){return '<button class="tb'+(v.support===s.v?' on':'')+'" data-f="support" data-v="'+s.v+'">'+s.te+'<small>'+s.en+'</small></button>';}).join('')+'</div>'+
-      '<div class="q">వృత్తి <span class="en">Occupation</span></div><div class="iss occ">'+
-        lists().occupations.map(function(o){return '<button class="tb'+(v.occupation===o?' on':'')+'" data-f="occupation" data-v="'+esc(o)+'">'+esc(OCC_TE[o]||o)+(OCC_TE[o]?'<small>'+esc(o)+'</small>':'')+'</button>';}).join('')+'</div>'+
-      '<div class="q">కులం <span class="en">Caste (if different from house)</span></div>'+
-      '<select class="csel" data-pcaste="1"><option value="">—</option>'+
-        lists().castes.concat(v.caste && lists().castes.indexOf(v.caste)<0 ? [v.caste] : []).map(function(c){return '<option value="'+esc(c)+'"'+(v.caste===c?' selected':'')+'>'+esc((CASTE_TE[c]?CASTE_TE[c]+' · ':'')+c)+'</option>';}).join('')+
-      '</select>'+
+      supportHtml(v)+occupationHtml(v)+personCasteHtml(v, hc, sameCaste)+
       '<div class="q">మొబైల్ నంబర్ <span class="en">Mobile number</span></div>'+
       '<div class="mob"><input data-mobile="1" type="tel" inputmode="numeric" maxlength="14" placeholder="10 అంకెలు" value="'+esc(v.mobile)+'" class="'+(v.mobile?'good':'')+'">'+
       (v.mobile?'<a class="call" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'</div>'+
       '<div class="mhint" data-mhint="1">'+(v.mobile?'✓ సేవ్ అయింది':'')+'</div>'+
-      '<div class="q">ముఖ్య సమస్య <span class="en">Main issue</span></div><div class="iss">'+
-        ISS.map(function(s){return '<button class="tb'+(v.issue===s.v?' on':'')+'" data-f="issue" data-v="'+s.v+'">'+s.te+'<small>'+s.en+'</small></button>';}).join('')+'</div>'+
+      issueHtml(v)+
       '<div class="q">వివరాలు <span class="en">Notes (optional)</span></div>'+
       '<textarea data-notes="1" placeholder="ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు">'+esc(v.notes)+'</textarea>'+
     '</div>';
@@ -510,6 +516,36 @@ function renderHouse(){
   var idx = nextHouseIndex(h);
   html += '<button class="next" data-next="1">'+(idx>=0?'తర్వాతి ఇల్లు → <span style="font-weight:400">Next house</span>':'← జాబితాకు వెళ్ళండి · Back to list')+'</button>';
   $('hBody').innerHTML = html;
+}
+function supportHtml(v){
+  var k=v.id+':support', s=SUP.filter(function(x){return x.v===v.support;})[0];
+  if (s && !S.open[k]) return foldRow(k,'మద్దతు', esc(s.te)+' <span class="en">'+s.en+'</span>', 'f-'+s.v);
+  return '<div class="q">మద్దతు <span class="en">Support</span></div><div class="sup">'+
+    SUP.map(function(x){return '<button class="tb'+(v.support===x.v?' on':'')+'" data-f="support" data-v="'+x.v+'">'+x.te+'<small>'+x.en+'</small></button>';}).join('')+'</div>';
+}
+function occupationHtml(v){
+  var k=v.id+':occupation';
+  if (v.occupation && !S.open[k]) return foldRow(k,'వృత్తి', esc(OCC_TE[v.occupation]||v.occupation)+(OCC_TE[v.occupation]?' <span class="en">'+esc(v.occupation)+'</span>':''));
+  return '<div class="q">వృత్తి <span class="en">Occupation</span></div><div class="iss occ">'+
+    lists().occupations.map(function(o){return '<button class="tb'+(v.occupation===o?' on':'')+'" data-f="occupation" data-v="'+esc(o)+'">'+esc(OCC_TE[o]||o)+(OCC_TE[o]?'<small>'+esc(o)+'</small>':'')+'</button>';}).join('')+'</div>';
+}
+function personCasteHtml(v, hc, sameCaste){
+  var k=v.id+':caste';
+  if (!S.open[k]){
+    if (!v.caste) return foldRow(k,'కులం','<span class="en">ఎంచుకోలేదు · not set</span>');
+    return foldRow(k,'కులం', esc(CASTE_TE[v.caste]||v.caste)+(sameCaste?' <span class="en">ఇంటిలాగే</span>':' <span class="en">'+esc(v.caste)+'</span>'));
+  }
+  return '<div class="q">కులం <span class="en">Caste — this person</span></div><div class="cgrid">'+
+    lists().castes.map(function(c){ return '<button class="cb'+(v.caste===c?' on':'')+'" data-pc="'+esc(c)+'">'+esc(CASTE_TE[c]||c)+(CASTE_TE[c]?'<small>'+esc(c)+'</small>':'')+'</button>'; }).join('')+'</div>';
+}
+function issueHtml(v){
+  var k=v.id+':issue', cur=issues(v);
+  if (cur.length && !S.open[k]){
+    return foldRow(k,'సమస్యలు', cur.map(function(x){ var i=ISS.filter(function(y){return y.v===x;})[0]; return esc(i?i.te:x); }).join(', '));
+  }
+  return '<div class="q qh"><span>ముఖ్య సమస్యలు <span class="en">Main issues — tap all that apply</span></span>'+
+    (cur.length?'<button class="done" data-fold="'+esc(k)+'">✓ అయింది</button>':'')+'</div><div class="iss">'+
+    ISS.map(function(x){return '<button class="tb'+(cur.indexOf(x.v)>=0?' on':'')+'" data-issue="'+x.v+'">'+x.te+'<small>'+x.en+'</small></button>';}).join('')+'</div>';
 }
 function nextHouseIndex(h){
   var list = S.houses.filter(function(x){ return (S.booth==='all'||String(x.booth)===String(S.booth)) && (S.sec==='all'||x.sec===S.sec); });
@@ -520,8 +556,21 @@ $('hBody').onclick=function(e){
   var w=e.target.closest('[data-w]');
   if (w){ var n=Number(w.dataset.w); h.v.forEach(function(v){ if(v.ward!==n) edit(v,{ward:n}); }); toast('వార్డు '+n+' ✓'); renderHouse(); return; }
   var hcb=e.target.closest('[data-hcaste]');
-  if (hcb){ var c=hcb.dataset.hcaste; h.v.forEach(function(v){ if(v.caste!==c) edit(v,{caste:c}); }); toast('కులం: '+(CASTE_TE[c]||c)+' ✓'); renderHouse(); return; }
+  if (hcb){ var c=hcb.dataset.hcaste; h.v.forEach(function(v){ if(v.caste!==c) edit(v,{caste:c}); delete S.open[v.id+':caste']; }); delete S.open['house:caste']; toast('కులం: '+(CASTE_TE[c]||c)+' ✓'); renderHouse(); return; }
   if (e.target.closest('[data-allv]')){ h.v.forEach(function(v){ if(!v.visited) edit(v,{visited:'Visited'}); }); toast('అందరినీ కలిశాం ✓'); renderHouse(); return; }
+  var uf=e.target.closest('[data-unfold]');
+  if (uf){ S.open[uf.dataset.unfold]=true; renderHouse(); return; }
+  var fd=e.target.closest('[data-fold]');
+  if (fd){ delete S.open[fd.dataset.fold]; renderHouse(); return; }
+  var isb=e.target.closest('[data-issue]');
+  if (isb){
+    var vi=S.byId[isb.closest('[data-id]').dataset.id], cur=issues(vi), x=isb.dataset.issue, at=cur.indexOf(x);
+    if (at>=0) cur.splice(at,1); else cur.push(x);
+    var chi={issue:cur.join(', ')}; if (cur.length && !vi.visited) chi.visited='Visited';
+    S.open[vi.id+':issue']=true; edit(vi,chi); renderHouse(); return;
+  }
+  var pcb=e.target.closest('[data-pc]');
+  if (pcb){ var vp=S.byId[pcb.closest('[data-id]').dataset.id]; edit(vp,{caste:pcb.dataset.pc}); delete S.open[vp.id+':caste']; toast('కులం ✓'); renderHouse(); return; }
   if (e.target.closest('[data-next]')){ var i=nextHouseIndex(h); if(i>=0) openHouse(S.houses[i].id); else closeHouse(); return; }
   var b=e.target.closest('[data-f]'); if(!b) return;
   var v=S.byId[b.closest('[data-id]').dataset.id], f=b.dataset.f, val=b.dataset.v, ch={};
@@ -529,6 +578,7 @@ $('hBody').onclick=function(e){
   else { ch[f] = (v[f]===val) ? '' : val; if (ch[f] && !v.visited) ch.visited='Visited'; }
   edit(v,ch);
   if (f==='support' && ch.support) toast('✓ సేవ్');
+  if (ch[f]) delete S.open[v.id+':'+f];   // fold the section once answered
   renderHouse();
 };
 var nT={};
