@@ -575,8 +575,9 @@ function demoCall(fn,args){
 }
 
 /* ---------- data shaping ---------- */
+var BOOTH_2025 = {207:204, 208:205, 209:206};   // show booths as on the 2025 roll
 function toObj(a){
-  return {s:a[0],r:a[1],booth:a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
+  return {s:a[0],r:a[1],booth:BOOTH_2025[a[2]]||a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
     visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',id:a[0]+':'+a[10]};
 }
@@ -1271,7 +1272,7 @@ function renderDash(){
     '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
     '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th></tr>'+
     Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td></tr>'; }).join('')+'</table>'+
-    '<div class="dleg">జాబితా నుండి తొలగించిన (Removed) వారు లెక్కలో లేరు. పాత బూత్‌లు 204/205/206 = కొత్త 207/208/209.'+
+    '<div class="dleg">జాబితా నుండి తొలగించిన (Removed) వారు లెక్కలో లేరు. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
     (S.user.admin||S.user.reader?'':' మీ వార్డుల ఓటర్లు మాత్రమే · your wards only')+'</div></details>';
   var nv=rows.filter(function(v){ return v.voted; }).length;
   if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;

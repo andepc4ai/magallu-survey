@@ -64,6 +64,7 @@ button,input,select{font:inherit;color:inherit}
 "use strict";
 var API = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
 var WARDS = 12;
+var B25 = {207:204, 208:205, 209:206}; function bd(b){ return B25[b]||b; }   // show 2025-roll booth numbers
 var $ = function(id){ return document.getElementById(id); };
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
 var LS = { get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
@@ -100,7 +101,7 @@ function buildWG(){
 }
 function buildSelects(){
   var b={}, s={}; H.forEach(function(h){ b[h.booth]=1; if (F.booth==='all'||String(h.booth)===String(F.booth)) s[h.sec]=(s[h.sec]||0)+1; });
-  $('booth').innerHTML = ['all'].concat(Object.keys(b).sort()).map(function(x){ return '<option value="'+esc(x)+'"'+(String(F.booth)===String(x)?' selected':'')+'>'+(x==='all'?'అన్ని బూత్‌లు':'బూత్ '+esc(x))+'</option>'; }).join('');
+  $('booth').innerHTML = ['all'].concat(Object.keys(b).sort()).map(function(x){ return '<option value="'+esc(x)+'"'+(String(F.booth)===String(x)?' selected':'')+'>'+(x==='all'?'అన్ని బూత్‌లు':'బూత్ '+esc(bd(x)))+'</option>'; }).join('');
   if (F.street!=='all' && !s[F.street]) F.street='all';
   $('street').innerHTML = '<option value="all">అన్ని వీధులు · All streets</option>'+Object.keys(s).sort().map(function(x){ return '<option value="'+esc(x)+'"'+(F.street===x?' selected':'')+'>'+esc(x)+' ('+s[x]+')</option>'; }).join('');
 }
@@ -130,7 +131,7 @@ function render(){
     return '<div class="sec"><div class="sh"><b>'+esc(g.sec||'—')+' <span>· '+all.length+' ఇళ్ళు</span></b>'+
       (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
       g.hs.map(function(h){ var w=hWard(h);
-        return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(h.booth)+' · '+h.n+' ఓటర్లు</span></b>'+
+        return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(bd(h.booth))+' · '+h.n+' ఓటర్లు</span></b>'+
           '<span>'+esc(h.names)+'</span></span>'+
           '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span></button>'; }).join('')+'</div>';
   }).join('') + (list.length>F.limit ? '<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>' : '');
