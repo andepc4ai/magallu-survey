@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ఇళ్ళు → వార్డులు · Magallu</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",system-ui,sans-serif;font-size:17px}
+button,input,select{font:inherit;color:inherit}
+.hide{display:none!important}
+.top{position:sticky;top:0;z-index:5;background:#FACC15;color:#1c1917;padding:10px 14px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.top .r{display:flex;align-items:center;gap:10px;max-width:560px;margin:0 auto}
+.top h1{margin:0;font-size:1.1rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .p{font-size:.85rem;margin:6px auto 0;display:flex;gap:10px;align-items:center;max-width:560px}
+.back{border:0;background:rgba(0,0,0,.1);color:#1c1917;border-radius:10px;height:40px;padding:0 12px;font-weight:700;display:flex;align-items:center;text-decoration:none}
+.bar{flex:1;height:8px;background:rgba(0,0,0,.15);border-radius:6px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:#1c1917}
+.pick{max-width:560px;margin:8px auto 0}
+.pick .l{font-size:.85rem;font-weight:700;margin-bottom:4px}
+.wg{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+.wg button{height:42px;border:2px solid rgba(0,0,0,.18);background:#fff;border-radius:10px;font-weight:700;font-size:1.05rem}
+.wg button.on{background:#1c1917;color:#FACC15;border-color:#1c1917}
+.wrap{max-width:560px;margin:0 auto;padding:10px 12px 80px}
+.f{width:100%;height:50px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;background:#fff;font-size:1.02rem}
+.f:focus{outline:none;border-color:#ca8a04}
+.sr{display:flex;gap:8px;margin-top:8px}.sr select{flex:1;min-width:0}
+.tabs{display:flex;gap:6px;margin:10px 0;overflow-x:auto}
+.tab{flex:none;height:40px;font-size:.9rem;padding:0 12px;border:2px solid #e5dfd2;background:#fff;border-radius:999px;font-weight:700;white-space:nowrap}
+.tab.on{background:#1d1b16;border-color:#1d1b16;color:#fff}
+.sec{background:#fff;border:1px solid #ece6da;border-radius:14px;margin-bottom:12px;overflow:hidden}
+.sh{display:flex;align-items:center;gap:8px;background:#fef9c3;padding:8px 10px}
+.sh b{flex:1;font-size:.95rem}.sh span{color:#6b665c;font-weight:400;font-size:.8rem}
+.all{border:0;background:#1c1917;color:#fff;border-radius:8px;padding:6px 10px;font-weight:700;font-size:.82rem;white-space:nowrap}
+.hs{display:flex;align-items:center;gap:10px;width:100%;border:0;border-top:1px solid #f0ebe1;background:#fff;text-align:left;padding:9px 10px;cursor:pointer}
+.hs .hn{flex:1;min-width:0}.hs .hn b{display:block;font-size:1.02rem}.hs .hn span{display:block;color:#6b665c;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb{flex:none;min-width:58px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;border:2px dashed #d6d0c2;color:#a8a29e;font-size:.85rem}
+.wb.set{border:2px solid #16a34a;background:#dcfce7;color:#14532d;font-size:1.05rem}
+.wb.mix{border:2px solid #d97706;background:#fef3c7;color:#92400e;font-size:.8rem}
+.hs.flash{background:#dcfce7}
+.msg{text-align:center;color:#6b665c;padding:40px 10px}
+.more{width:100%;height:48px;border:2px dashed #e5dfd2;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
+.st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
+.st.busy{background:#1f2937}.st.bad{background:#7c2d12}
+.tip{background:#fff;border:1px dashed #ca8a04;border-radius:12px;padding:8px 12px;font-size:.85rem;color:#57534e}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="r"><a class="back" href="../">🏠 యాప్</a><h1>🗺️ ఇళ్ళు → వార్డులు</h1></div>
+  <div class="p"><span id="prog">—</span><div class="bar"><i id="pbar"></i></div></div>
+  <div class="pick"><div class="l">1. వార్డు ఎంచుకోండి <span style="font-weight:400">· Pick the ward</span></div><div class="wg" id="wg"></div></div>
+</div>
+<div class="wrap">
+  <div class="tip" id="tip">2. ఇంటి మీద నొక్కితే ఆ వార్డు పడుతుంది. మళ్ళీ నొక్కితే తీసేస్తుంది. <span style="color:#a8a29e">Tap a house to put it in the picked ward; tap again to clear.</span></div>
+  <div class="sr"><select id="booth" class="f"></select><select id="street" class="f"></select></div>
+  <input id="q" class="f" style="margin-top:8px" type="search" placeholder="ఇంటి నం. / పేరు వెతకండి · Search house or name">
+  <div class="tabs" id="tabs"></div>
+  <div id="list"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
+</div>
+<div class="st" id="st">—</div>
+<script>
+(function(){
+"use strict";
+var API = 'https://script.google.com/macros/s/AKfycbyHaqynbw5_hGhpKyCxiLweTcQyurqLkb9h1My0TTGEO-CVzK3-fQZiCCxX6Jfl7-F-6g/exec';
+var WARDS = 12;
+var $ = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+var LS = { get:function(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set:function(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} } };
+function call(fn, args){
+  return fetch(API, { method:'POST', redirect:'follow', credentials:'omit', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ fn:fn, args:args||[] }) })
+    .then(function(r){ return r.json(); }).then(function(j){ if (j && j.ok) return j.data; throw new Error(j && j.error || 'SERVER_ERROR'); });
+}
+function st(cls, t){ var e=$('st'); e.className='st '+cls; e.textContent=t; }
+var U = LS.get('mvs_user');
+var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:'all', street:'all', q:'', limit:60 }, queue = {}, busy = false;
+
+if (!U || !U.name || !U.pin){
+  $('list').innerHTML = '<div class="msg">ముందు యాప్‌లో లాగిన్ అవ్వండి<br><span style="font-size:.85rem">Please log in to the app first</span><br><br><a class="back" style="display:inline-flex;background:#FACC15" href="../">🏠 యాప్ తెరవండి</a></div>';
+  st('bad','లాగిన్ కావాలి · Login needed'); return;
+}
+function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){ return ('00000'+n).slice(-5); }).join('-')+'~'+h; }
+function hWard(h){ var w = {}; h.v.forEach(function(v){ w[v.w===''||v.w==null?'':String(v.w)]=1; }); var k=Object.keys(w); return k.length===1 ? k[0] : 'mix'; }
+
+function ingest(rows){
+  var m = {};
+  rows.forEach(function(r){
+    var booth = r[2], house = String(r[7]||'').trim(), sec = String(r[12]||'').replace(/,\s*MAGALLU$/i,'');
+    var id = booth+'|'+(house || ('?'+sec+r[3]));
+    var h = m[id] || (m[id] = {id:id, booth:booth, house:house||'—', sec:sec, v:[]});
+    h.v.push({e:String(r[10]), name:r[4], age:r[8], w: r[13]===''||r[13]==null ? '' : Number(r[13])});
+  });
+  Object.keys(queue).forEach(function(e){ Object.keys(m).forEach(function(k){ m[k].v.forEach(function(v){ if (v.e===e) v.w = queue[e]===''?'':Number(queue[e]); }); }); });
+  H = Object.keys(m).map(function(k){ var h=m[k]; h.sk=natKey(h.house); return h; }).sort(function(a,b){ return a.sec<b.sec?-1:a.sec>b.sec?1:(a.sk<b.sk?-1:a.sk>b.sk?1:0); });
+  byId = m; buildSelects(); render();
+}
+function load(){
+  st('busy','⏳ లోడ్ అవుతోంది… · Loading');
+  call('getVoters',[U.name, U.pin]).then(function(d){ ingest(d.rows||[]); st('','✓ తాజా · Up to date'); })
+    .catch(function(e){ var m=String(e.message);
+      if (m==='WRONG_PIN'){ $('list').innerHTML='<div class="msg">పిన్ మారింది — యాప్‌లో మళ్ళీ లాగిన్ అవ్వండి<br><br><a class="back" style="display:inline-flex;background:#FACC15" href="../">🏠 యాప్</a></div>'; st('bad','లాగిన్ కావాలి'); return; }
+      $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(m)+'</div>'; st('bad','📵 ఇంటర్నెట్ లేదు · Offline'); });
+}
+function buildWG(){
+  var h=''; for (var i=1;i<=WARDS;i++) h+='<button class="'+(String(W)===String(i)?'on':'')+'" data-w="'+i+'">'+i+'</button>';
+  $('wg').innerHTML = h;
+}
+function buildSelects(){
+  var b={}, s={}; H.forEach(function(h){ b[h.booth]=1; if (F.booth==='all'||String(h.booth)===String(F.booth)) s[h.sec]=(s[h.sec]||0)+1; });
+  $('booth').innerHTML = ['all'].concat(Object.keys(b).sort()).map(function(x){ return '<option value="'+esc(x)+'"'+(String(F.booth)===String(x)?' selected':'')+'>'+(x==='all'?'అన్ని బూత్‌లు':'బూత్ '+esc(x))+'</option>'; }).join('');
+  if (F.street!=='all' && !s[F.street]) F.street='all';
+  $('street').innerHTML = '<option value="all">అన్ని వీధులు · All streets</option>'+Object.keys(s).sort().map(function(x){ return '<option value="'+esc(x)+'"'+(F.street===x?' selected':'')+'>'+esc(x)+' ('+s[x]+')</option>'; }).join('');
+}
+function inScope(h){ return (F.booth==='all'||String(h.booth)===String(F.booth)) && (F.street==='all'||h.sec===F.street); }
+function render(){
+  var scope = H.filter(inScope), done = scope.filter(function(h){ var w=hWard(h); return w && w!=='mix'; }).length;
+  $('prog').textContent = 'వార్డు ఉన్న ఇళ్ళు '+done+' / '+scope.length;
+  $('pbar').style.width = (scope.length?100*done/scope.length:0)+'%';
+  var none = scope.filter(function(h){ return hWard(h)===''; }).length, mix = scope.filter(function(h){ return hWard(h)==='mix'; }).length;
+  var tabs = [['none','వార్డు లేనివి ('+none+')'],['all','అన్నీ ('+scope.length+')']];
+  if (mix) tabs.push(['mix','⚠ కలగలుపు ('+mix+')']);
+  if (W) tabs.push(['w','వార్డు '+W+' ('+scope.filter(function(h){ return hWard(h)===String(W); }).length+')']);
+  $('tabs').innerHTML = tabs.map(function(t){ return '<button class="tab'+(F.tab===t[0]?' on':'')+'" data-t="'+t[0]+'">'+t[1]+'</button>'; }).join('');
+  var q = F.q, list = scope.filter(function(h){
+    var w = hWard(h);
+    if (F.tab==='none' && w!=='') return false;
+    if (F.tab==='mix' && w!=='mix') return false;
+    if (F.tab==='w' && w!==String(W)) return false;
+    if (q) return h.house.toLowerCase().indexOf(q)===0 || h.v.some(function(v){ return String(v.name).toLowerCase().indexOf(q)>=0 || v.e.toLowerCase()===q; });
+    return true;
+  });
+  if (!list.length){ $('list').innerHTML = '<div class="msg">'+(F.tab==='none'&&!q?'ఈ వీధిలో అన్ని ఇళ్ళకు వార్డు పడింది 🎉':'ఏమీ లేవు · Nothing here')+'</div>'; return; }
+  var shown = list.slice(0, F.limit), groups = [], g = null;
+  shown.forEach(function(h){ if (!g || g.sec!==h.sec){ g={sec:h.sec, hs:[]}; groups.push(g); } g.hs.push(h); });
+  $('list').innerHTML = groups.map(function(g){
+    var all = list.filter(function(h){ return h.sec===g.sec; }), open = all.filter(function(h){ return hWard(h)===''; }).length;
+    return '<div class="sec"><div class="sh"><b>'+esc(g.sec||'—')+' <span>· '+all.length+' ఇళ్ళు</span></b>'+
+      (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
+      g.hs.map(function(h){ var w=hWard(h);
+        return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(h.booth)+' · '+h.v.length+' ఓటర్లు</span></b>'+
+          '<span>'+h.v.map(function(v){ return esc(v.name); }).join(', ')+'</span></span>'+
+          '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span></button>'; }).join('')+'</div>';
+  }).join('') + (list.length>F.limit ? '<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>' : '');
+}
+function setWard(hs, w){
+  hs.forEach(function(h){ h.v.forEach(function(v){ v.w = w===''?'':Number(w); queue[v.e] = String(w); }); });
+  render(); save();
+}
+function save(){
+  var es = Object.keys(queue); if (!es.length || busy) return;
+  busy = true; var batch = es.slice(0, 120), sent = {};
+  batch.forEach(function(e){ sent[e]=queue[e]; });
+  st('busy','⏳ సేవ్ అవుతోంది… '+es.length+' · Saving');
+  call('saveUpdates',[U.name, U.pin, batch.map(function(e){ return {e:e, f:{ward:sent[e]}}; })]).then(function(res){
+    busy = false; batch.forEach(function(e){ if (queue[e]===sent[e]) delete queue[e]; });
+    if (Object.keys(queue).length) save(); else st('', (res&&res.failed&&res.failed.length)?'⚠️ '+res.failed.length+' సేవ్ కాలేదు':'✓ సేవ్ అయింది · Saved');
+  }).catch(function(e){ busy = false;
+    if (String(e.message)==='READ_ONLY'){ queue={}; st('bad','👁 చూడటానికి మాత్రమే · View only'); load(); return; }
+    st('bad','⚠️ సేవ్ కాలేదు, మళ్ళీ ప్రయత్నిస్తాం · Retrying'); setTimeout(save, 5000); });
+}
+window.addEventListener('beforeunload', function(e){ if (busy || Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
+
+$('wg').onclick = function(e){ var b=e.target.closest('[data-w]'); if(!b) return; W = String(W)===b.dataset.w ? '' : b.dataset.w; LS.set('wd_pick', W); if (!W && F.tab==='w') F.tab='none'; buildWG(); render(); };
+$('tabs').onclick = function(e){ var b=e.target.closest('[data-t]'); if(!b) return; F.tab=b.dataset.t; F.limit=60; render(); };
+$('booth').onchange = function(){ F.booth=this.value; F.limit=60; buildSelects(); render(); };
+$('street').onchange = function(){ F.street=this.value; F.limit=60; render(); };
+var qt; $('q').oninput = function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=60; render(); },200); };
+$('list').onclick = function(e){
+  if (e.target.id==='more'){ F.limit+=60; render(); return; }
+  if (U.reader){ st('bad','👁 చూడటానికి మాత్రమే · View only'); return; }
+  var a=e.target.closest('[data-all]');
+  if (a){ var hs=H.filter(function(h){ return inScope(h) && h.sec===a.dataset.all && hWard(h)===''; });
+    if (!a.dataset.sure){ a.dataset.sure=1; a.textContent='ఖచ్చితమా? '+hs.length+' ఇళ్ళు → '+W+' ✓'; return; }
+    setWard(hs, W); return; }
+  var b=e.target.closest('[data-h]'); if(!b) return;
+  var h=byId[b.dataset.h]; if(!h) return;
+  if (!W){ st('bad','👆 ముందు పైన వార్డు నంబర్ ఎంచుకోండి · Pick a ward first'); $('wg').scrollIntoView(); return; }
+  setWard([h], hWard(h)===String(W) ? '' : W);
+};
+buildWG(); load();
+})();
+</script>
+</body>
+</html>

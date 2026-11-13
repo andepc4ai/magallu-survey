@@ -250,6 +250,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tHouses"><i>🏠</i><b>ఇళ్ళు · ఓటర్లు</b><small id="tHousesN">Houses &amp; voters</small></a>
       <a href="family/" class="hide" id="tFam"><i>👪</i><b>కుటుంబాలు</b><small>Families</small></a>
       <a href="castes/" class="hide" id="tCaste"><i>🏷️</i><b>కులాలు</b><small>Castes</small></a>
+      <a href="wards/" class="hide" id="tWard"><i>🗺️</i><b>వార్డులు</b><small>Houses → wards</small></a>
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 28 Nov</small></a>
     </nav>
@@ -1412,7 +1413,7 @@ function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
     S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
-    $('tCaste').classList.toggle('hide', !S.user.admin); renderHome();
+    $('tCaste').classList.toggle('hide', !S.user.admin); $('tWard').classList.toggle('hide', !S.user.admin || !HAS_API); renderHome();
     if (S.openHouse) renderHouse();
   }).catch(function(){});
 }
@@ -1450,7 +1451,7 @@ function showApp(){
   $('vLogin').classList.add('hide');
   $('who').textContent = '👤 '+S.user.name;
   $('tFam').classList.toggle('hide', !HAS_API);
-  $('tCaste').classList.toggle('hide', !S.user.admin);
+  $('tCaste').classList.toggle('hide', !S.user.admin); $('tWard').classList.toggle('hide', !S.user.admin || !HAS_API);
   applyRO();
   showView(LS.get('view')==='list' ? 'list' : 'home');
   S.wards = S.user.wards || 12;
