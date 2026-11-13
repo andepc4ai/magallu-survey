@@ -543,11 +543,11 @@ function houseLeaderHtml(h){
       (lv&&lv.mobile?'<a class="lcall" href="tel:'+esc(lv.mobile)+'">📞 '+esc(lv.mobile)+'</a>':'')+'</div>';
   }
   if (!L && !S.open['house:leader']) return '<div class="hbox" style="padding:8px 14px">'+foldRow('house:leader','👤 నాయకుడు','<span class="en">ఎంచుకో · Assign leader</span>','opt')+'</div>';
-  return '<div class="hbox"><h3>👤 నాయకుడు <span class="en">Leader who tracks this family</span></h3>'+
+  return '<div class="hbox"><div class="q qh" style="margin-top:0"><span>👤 నాయకుడు <span class="en">Leader who tracks this family</span></span><button class="done" data-fold="house:leader">మూసివేయి</button></div>'+
     '<input class="lq" data-lq="1" placeholder="పేరు టైప్ చేయండి · Type a name" autocomplete="off" value="'+esc(L?leaderName(L):'')+'">'+
     '<div class="lsug" id="lsug"></div>'+
     '<div class="lbtns"><button class="lsave" data-lsave="1">✓ ఈ పేరు సేవ్ · Save typed name</button>'+
-    (L?'<button class="lclr" data-lclr="1">✕ తీసేయి</button>':'')+'<button class="lclr cls" data-fold="house:leader">మూసివేయి</button></div></div>';
+    (L?'<button class="lclr" data-lclr="1">✕ తీసేయి</button>':'')+'</div></div>';
 }
 function leaderSugHtml(q){
   q=String(q||'').trim(); if (q.length<2) return '';
@@ -1035,7 +1035,8 @@ function notesHtml(v){
 function supportHtml(v){
   var k=v.id+':support', s=SUP.filter(function(x){return x.v===v.support;})[0];
   if (s && !S.open[k]) return foldRow(k,'మద్దతు', esc(s.te)+' <span class="en">'+s.en+'</span>', 'f-'+s.v);
-  return '<div class="q">మద్దతు <span class="en">Support</span></div><div class="sup">'+
+  return (s ? '<div class="q qh"><span>మద్దతు <span class="en">Support</span></span><button class="done" data-fold="'+esc(k)+'">మూసివేయి</button></div>'   // reopened with ✓ మార్చు
+             : '<div class="q">మద్దతు <span class="en">Support</span></div>')+'<div class="sup">'+
     SUP.map(function(x){return '<button class="tb'+(v.support===x.v?' on':'')+'" data-f="support" data-v="'+x.v+'">'+x.te+'<small>'+x.en+'</small></button>';}).join('')+'</div>';
 }
 function occupationHtml(v){
@@ -1052,7 +1053,7 @@ function personCasteHtml(v, hc, sameCaste){
     if (!v.caste) return foldRow(k,'కులం','<span class="en">కులం నమోదు కాలేదు · caste not updated</span>');
     return foldRow(k,'కులం', esc(CASTE_TE[v.caste]||v.caste)+(sameCaste?' <span class="en">ఇంటిలాగే</span>':' <span class="en">'+esc(v.caste)+'</span>'));
   }
-  return '<div class="q">కులం <span class="en">Caste — this person</span></div><div class="cgrid">'+
+  return '<div class="q qh"><span>కులం <span class="en">Caste — this person</span></span><button class="done" data-fold="'+esc(k)+'">మూసివేయి</button></div><div class="cgrid">'+
     lists().castes.map(function(c){ return '<button class="cb'+(v.caste===c?' on':'')+'" data-pc="'+esc(c)+'">'+esc(CASTE_TE[c]||c)+(CASTE_TE[c]?'<small>'+esc(c)+'</small>':'')+'</button>'; }).join('')+'</div>';
 }
 var IST = [{v:'Open',te:'తెరిచి ఉంది',c:'st-open'},{v:'In Progress',te:'పని జరుగుతోంది',c:'st-prog'},{v:'Solved',te:'పూర్తైంది ✓',c:'st-done'}];
