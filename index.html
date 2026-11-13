@@ -196,6 +196,13 @@ select.chip{appearance:auto;font-weight:700}
 .dt{width:100%;border-collapse:collapse;font-size:.85rem}.dt th{text-align:left;color:var(--muted);font-weight:600;padding:4px 4px;border-bottom:1px solid #e7e5e4}.dt td{padding:7px 4px;border-bottom:1px solid #f5f5f4;vertical-align:top}
 .dt small{color:var(--muted)}
 #vHouse{z-index:22}
+.nm.gone{color:#b91c1c;text-decoration:line-through;text-decoration-color:rgba(185,28,28,.5);opacity:.85}
+.gonebox{background:#fef2f2;border:1px solid #fecaca;border-left:6px solid #dc2626;border-radius:var(--radius);padding:12px 14px;margin-bottom:12px}
+.goneh{font-weight:700;color:#b91c1c;margin-bottom:6px}.goneh .en{color:#b91c1c;opacity:.75}
+.goner{padding:8px 0;border-top:1px dashed #fecaca}.goner b{display:block;color:#7f1d1d;text-decoration:line-through;text-decoration-color:rgba(127,29,29,.4)}
+.goner span{display:block;font-size:.8rem;color:var(--muted)}.goner i{display:inline-block;margin-top:4px;font-style:normal;font-size:.82rem;font-weight:700;background:#fee2e2;color:#b91c1c;border-radius:999px;padding:2px 10px}
+.goner i small{font-weight:400;opacity:.8}.gonen{font-size:.75rem;color:#b91c1c;opacity:.8;margin-top:6px}
+.dt tr.goner2 td{color:#b91c1c}
 details.dcard>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px}details.dcard>summary::-webkit-details-marker{display:none}
 details.dcard>summary h3{flex:1;margin:0}details.dcard>summary::after{content:'▾';font-size:1.1rem;color:var(--muted);transition:transform .2s}details.dcard:not([open])>summary::after{transform:rotate(-90deg)}
 details.dcard[open]>summary{margin-bottom:10px}
@@ -579,11 +586,12 @@ var BOOTH_2025 = {207:204, 208:205, 209:206};   // show booths as on the 2025 ro
 function toObj(a){
   return {s:a[0],r:a[1],booth:BOOTH_2025[a[2]]||a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
-  S.rows = raw.map(toObj); S.byId = {};
+  var all = raw.map(toObj);
+  S.rows = all.filter(function(v){ return !v.gone; }); S.gone = all.filter(function(v){ return v.gone; }); S.byId = {};
   S.rows.forEach(function(v){ S.byId[v.id]=v; });
   // re-apply local unsent edits on top of server data
   Object.keys(S.pending).forEach(function(id){ var v=S.byId[id]; if(v) applyLocal(v,S.pending[id].f); });
@@ -593,6 +601,7 @@ function ingest(raw){
     var h = map[hk] || (map[hk] = {id:hk,booth:v.booth,house:v.house||'—',sec:v.sec,secNo:v.secNo,v:[]});
     h.v.push(v); v._h = h;
   });
+  S.gone.forEach(function(v){ var h = map[v.booth+'|'+(v.house || ('?'+v.sec+v.sr))]; if (h) (h.gone||(h.gone=[])).push(v); });
   S.houses = Object.keys(map).map(function(k){ var h=map[k]; h.sort=h.booth+'|'+natKey(h.house); return h; })
     .sort(function(a,b){ return (b.v.length-a.v.length) || (a.sort<b.sort?-1:a.sort>b.sort?1:0); });   // biggest houses first
   S.hById = map;
@@ -761,6 +770,7 @@ function houseMatches(h){
       if ((v.e+' '+v.mobile).toLowerCase().indexOf(q)>=0) best=Math.max(best,40);
       var a=Fuzzy.score(v.name, S.Q), b=Fuzzy.score(v.name+' '+v.relN+' '+v.caste+' '+leaderName(v.leader), S.Q); best=Math.max(best, a?a+2:0, b?Math.max(0.1,b-4):0);
     });
+    (h.gone||[]).forEach(function(v){ var a=Fuzzy.score(v.name, S.Q); if (a) best=Math.max(best, Math.max(0.1, a-5)); });
     h._score=best; return best>0;
   }
   return true;
@@ -792,7 +802,7 @@ function renderList(){
         (S.stat==='revisit'?' · '+(function(){ var t=Math.max.apply(null,h.v.map(lastSeen)); return t>1?'చివరిసారి '+Math.floor((Date.now()-t)/DAY)+' రోజుల క్రితం':t===1?'పాత నమోదు':'ఎప్పుడూ వెళ్ళలేదు'; })():'')+'</div>'+
       '<div class="names">'+h.v.map(function(v){
         return '<span class="nm"><i class="dot '+(v.support|| (v.visited?'v':''))+'"></i>'+esc(v.name)+'</span>';
-      }).join('')+'</div></button>';
+      }).join('')+(h.gone||[]).map(function(v){ return '<span class="nm gone" title="'+esc(v.gone)+'">✕ '+esc(v.name)+'</span>'; }).join('')+'</div></button>';
   }).join('');
   if (hs.length>S.limit) html += '<button class="more" id="moreBtn">ఇంకా చూపించు ('+(hs.length-S.limit)+') · Show more</button>';
   $('list').innerHTML = html;
@@ -814,6 +824,20 @@ function closeHouse(){
 }
 $('btnBack').onclick=closeHouse;
 
+/* ---------- removed from the roll (Roll Status = Removed): shown in red, never counted ---------- */
+function goneTe(r){
+  r = String(r||''); var t = /expired/i.test(r)?'మరణించారు':/shift/i.test(r)?'ఊరు మారారు':/duplicate/i.test(r)?'రెండుసార్లు నమోదు':
+    /absent|untrace/i.test(r)?'కనిపించలేదు':/asdd/i.test(r)?'ASDD జాబితాలో లేరు':'తొలగించారు';
+  var still = (/still on roll as (\w+)/i.exec(r)||[])[1], other = /another booth/i.test(r);
+  return t + (still?' · ఇప్పుడు '+still+' గా ఉన్నారు':'') + (other?' · వేరే బూత్‌లో ఉండవచ్చు':'');
+}
+function goneHtml(h){
+  if (!h.gone || !h.gone.length) return '';
+  return '<div class="gonebox"><div class="goneh">✕ జాబితా నుండి తొలగించారు <span class="en">Removed from the roll · '+h.gone.length+'</span></div>'+
+    h.gone.map(function(v){ return '<div class="goner"><b>'+esc(v.name)+'</b><span>'+esc(v.age)+' ఏళ్ళు · '+esc(v.e)+'</span>'+
+      '<i>'+esc(goneTe(v.gone))+' <small>· '+esc(v.gone)+'</small></i></div>'; }).join('')+
+    '<div class="gonen">వీరికి ఓటు లేదు — లెక్కల్లో చేర్చలేదు · Not voters, not counted</div></div>';
+}
 function renderHouse(){
   var h = S.hById[S.openHouse]; if(!h) return;
   $('hTitle').textContent = '🏠 ఇంటి నం. '+h.house;
@@ -854,6 +878,7 @@ function renderHouse(){
       '<textarea data-notes="1" placeholder="ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు">'+esc(v.notes)+'</textarea>'+
     '</div>';
   }).join('');
+  html += goneHtml(h);
   var idx = nextHouseIndex(h);
   html += '<button class="next" data-next="1">'+(idx>=0?'తర్వాతి ఇల్లు → <span style="font-weight:400">Next house</span>':'← జాబితాకు వెళ్ళండి · Back to list')+'</button>';
   $('hBody').innerHTML = html;
@@ -1264,15 +1289,18 @@ function renderDash(){
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
   var rb={}, rA=0, rN=0;
-  S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
+  S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
+  var rG=(S.gone||[]).length, gr={}; (S.gone||[]).forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); o.g=(o.g||0)+1; var k=goneTe(v.gone).split(' · ')[0]; gr[k]=(gr[k]||0)+1; });
   h += '<details class="dcard" open data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
+    (rG?'<table class="dt"><tr><td>2025 జాబితాలో మొత్తం <small>rows in “All Voters”</small></td><td style="text-align:right"><b>'+(rA+rG)+'</b></td></tr>'+
+      '<tr class="goner2"><td>➖ తొలగించినవారు <small>Removed · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
     '<table class="dt"><tr><td>2025 ఓటర్ల జాబితా <small>“All Voters”</small></td><td style="text-align:right"><b>'+rA+'</b></td></tr>'+
     '<tr><td>➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small></td><td style="text-align:right"><b>'+rN+'</b></td></tr>'+
     '<tr><td><b>= మొత్తం ఓటర్లు</b> <small>Total in the app</small></td><td style="text-align:right"><b>'+(rA+rN)+'</b></td></tr></table>'+
     '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
-    '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th></tr>'+
-    Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td></tr>'; }).join('')+'</table>'+
-    '<div class="dleg">జాబితా నుండి తొలగించిన (Removed) వారు లెక్కలో లేరు. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
+    '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th>'+(rG?'<th style="color:#b91c1c">✕ తొలగింపు</th>':'')+'</tr>'+
+    Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td>'+(rG?'<td style="color:#b91c1c">'+(o.g||0)+'</td>':'')+'</tr>'; }).join('')+'</table>'+
+    '<div class="dleg">తొలగించినవారు (ఎరుపు రంగు) లెక్కల్లో లేరు. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
     (S.user.admin||S.user.reader?'':' మీ వార్డుల ఓటర్లు మాత్రమే · your wards only')+'</div></details>';
   var nv=rows.filter(function(v){ return v.voted; }).length;
   if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;

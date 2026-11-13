@@ -52,6 +52,7 @@ a{color:inherit}
 .pc.nv{border-style:dashed;background:#f8f7f4;color:#6b665c}
 .pc.me{border-color:#0f766e;box-shadow:0 0 0 2px #99f6e4}
 .pc.chk{border-color:#f59e0b}
+.pc.gone{border:2px solid #fecaca;border-left:5px solid #dc2626;background:#fef2f2;color:#7f1d1d}.pc.gone b{text-decoration:line-through;text-decoration-color:rgba(127,29,29,.4)}.pc.gone span{color:#b91c1c}
 .pc.fh{border-color:#ca8a04;background:#fef9c3;box-shadow:0 0 0 2px #fde047}
 .pc .crown{font-size:.72rem;font-weight:700;color:#854d0e}
 .fhead{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed #e5dfd2}.fhead .who{flex:1}
@@ -311,6 +312,7 @@ function contactHtml(f){
   return '<div class="contact"><span class="who">📞 సంప్రదించండి: <b>'+esc(c.name)+'</b>'+(c.age?' ('+c.age+')':'')+'</span>'+
     (c.mobile ? '<a class="callb" href="tel:'+esc(c.mobile)+'">📞 '+esc(c.mobile)+'</a>' : '<span class="nocall">నంబర్ లేదు</span>')+'</div>';
 }
+function goneTe(r){ r=String(r||''); return /expired/i.test(r)?'మరణించారు':/shift/i.test(r)?'ఊరు మారారు':/duplicate/i.test(r)?'రెండుసార్లు నమోదు':/absent|untrace/i.test(r)?'కనిపించలేదు':/asdd/i.test(r)?'ASDD జాబితాలో లేరు':'తొలగించారు'; }
 function sdot(p){ return '<i class="d c-'+(p.vote?(p.support||'none'):'none')+'"></i>'; }
 
 /* ---------- family list ---------- */
@@ -352,7 +354,7 @@ function renderList(){
   if (!list.length){ $('flist').innerHTML='<div class="msg">ఏమీ లేవు · Nothing here</div>'; return; }
   $('flist').innerHTML = list.slice(0,F.limit).map(function(f){
     var h=famHead(f)||P(f.head);
-    return '<div class="fc" role="button" data-fam="'+esc(f.head)+'"'+(q&&f._hit?' data-me="'+esc(f._hit.id)+'"':'')+'><b>'+esc(displayName(h))+'</b>'+(h.vote?'':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
+    return '<div class="fc" role="button" data-fam="'+esc(f.head)+'"'+(q&&f._hit?' data-me="'+esc(f._hit.id)+'"':'')+'><b>'+esc(displayName(h))+'</b>'+(h.vote?'':h.gone?' <span class="warnb" style="background:#fee2e2;color:#b91c1c">✕ '+esc(goneTe(h.gone))+'</span>':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
       (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+(q&&f._hit&&f._hit.id!==f.head?'<div class="hit">🔎 '+esc(displayName(f._hit))+(f._hit.house?' · 🏠 '+esc(f._hit.house):'')+'</div>':'')+(undecided(f)?'<span class="swing">🎯 '+undecided(f)+' తేల్చలేదు</span>':'')+
       '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
       '<div class="sbar">'+barHtml(f)+'</div><div class="leg">'+legHtml(f)+'</div>'+contactHtml(f)+(famHead(f)?'<div class="lmini" style="color:#854d0e">👑 కుటుంబ పెద్ద: <b>'+esc(famHead(f).name)+'</b></div>':'')+(famLeader(f)?'<div class="lmini">👤 నాయకుడు: <b>'+esc(leaderName(famLeader(f)))+'</b></div>':'')+'</div>';
@@ -376,6 +378,7 @@ $('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=2
 /* ---------- family tree ---------- */
 function pcard(p, me){
   var chk = p.vote && p.rel && !p.sure;
+  if (p.gone) return '<button class="pc gone" data-p="'+esc(p.id)+'"><div><b>'+esc(displayName(p))+'</b><span>✕ '+esc(goneTe(p.gone))+(p.age?' · '+p.age:'')+'</span></div></button>';
   return '<button class="pc'+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
     '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—'):'ఓటు లేదు · no vote')+'</span></div></button>';
 }
@@ -410,7 +413,8 @@ function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)
 function renderPerson(id, picking){
   var p=P(id); if(!p){ go(''); return; }
   $('ptitle').textContent = displayName(p);
-  $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
+  if (p.gone){ $('psub').textContent = '✕ జాబితా నుండి తొలగించారు: '+goneTe(p.gone)+' · Removed: '+p.gone+(p.house?' · 🏠 '+p.house:''); }
+  else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.vote){
     h += '<a class="b house" href="../#v='+encodeURIComponent(id)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';

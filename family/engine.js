@@ -48,7 +48,7 @@ var FamilyEngine = (function () {
     rows.forEach(function (r) {
       var p = { id: String(r[0]), name: r[1], rt: r[2], rn: String(r[3] || '').trim(), sur: String(r[4] || '').trim(),
         house: String(r[5] || ''), booth: ({207: 204, 208: 205, 209: 206})[r[6]] || r[6], street: r[7] || '', age: Number(r[8]) || 0, g: r[9],
-        support: r[10] || '', visited: r[11] || '', caste: String(r[12] || ''), mobile: String(r[13] || ''), leader: String(r[14] || ''), fhead: String(r[15] || '') === 'Yes', vote: true };
+        support: r[10] || '', visited: r[11] || '', caste: String(r[12] || ''), mobile: String(r[13] || ''), leader: String(r[14] || ''), fhead: String(r[15] || '') === 'Yes', gone: String(r[16] || ''), vote: !r[16] };
       p.sc = canon(p.sur); p.k = key(p.name, p.sur); p.hk = p.booth + '|' + p.house;
       P[p.id] = p; list.push(p);
     });
