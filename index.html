@@ -203,6 +203,8 @@ select.chip{appearance:auto;font-weight:700}
 .goner span{display:block;font-size:.8rem;color:var(--muted)}.goner i{display:inline-block;margin-top:4px;font-style:normal;font-size:.82rem;font-weight:700;background:#fee2e2;color:#b91c1c;border-radius:999px;padding:2px 10px}
 .goner i small{font-weight:400;opacity:.8}.gonen{font-size:.75rem;color:#b91c1c;opacity:.8;margin-top:6px}
 .dt tr.goner2 td{color:#b91c1c}
+.nm.r26 b{color:#c2410c;font-size:.72rem}.dt tr.r26row td{color:#c2410c}
+.r26b{background:#fff7ed;border:1px solid #fed7aa;border-left:5px solid #f97316;border-radius:10px;padding:6px 10px;margin:2px 0 10px;font-size:.84rem;color:#9a3412}.r26b .en{color:#9a3412;opacity:.75}
 details.dcard>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px}details.dcard>summary::-webkit-details-marker{display:none}
 details.dcard>summary h3{flex:1;margin:0}details.dcard>summary::after{content:'▾';font-size:1.1rem;color:var(--muted);transition:transform .2s}details.dcard:not([open])>summary::after{transform:rotate(-90deg)}
 details.dcard[open]>summary{margin-bottom:10px}
@@ -591,6 +593,7 @@ function toObj(a){
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
   var all = raw.map(toObj);
+  all.forEach(function(v){ if (v.gone && stillVotes(v.gone)){ v.r26 = v.gone; v.gone = ''; } });   // removed in 2026 but votes on the 2025 list
   S.rows = all.filter(function(v){ return !v.gone; }); S.gone = all.filter(function(v){ return v.gone; }); S.byId = {};
   S.rows.forEach(function(v){ S.byId[v.id]=v; });
   // re-apply local unsent edits on top of server data
@@ -801,7 +804,7 @@ function renderList(){
       '<div class="st">'+esc(h.sec)+(h.v[0].ward?' · వార్డు '+h.v[0].ward:'')+
         (S.stat==='revisit'?' · '+(function(){ var t=Math.max.apply(null,h.v.map(lastSeen)); return t>1?'చివరిసారి '+Math.floor((Date.now()-t)/DAY)+' రోజుల క్రితం':t===1?'పాత నమోదు':'ఎప్పుడూ వెళ్ళలేదు'; })():'')+'</div>'+
       '<div class="names">'+h.v.map(function(v){
-        return '<span class="nm"><i class="dot '+(v.support|| (v.visited?'v':''))+'"></i>'+esc(v.name)+'</span>';
+        return '<span class="nm'+(v.r26?' r26':'')+'"><i class="dot '+(v.support|| (v.visited?'v':''))+'"></i>'+esc(v.name)+(v.r26?' <b>⚠2026</b>':'')+'</span>';
       }).join('')+(h.gone||[]).map(function(v){ return '<span class="nm gone" title="'+esc(v.gone)+'">✕ '+esc(v.name)+'</span>'; }).join('')+'</div></button>';
   }).join('');
   if (hs.length>S.limit) html += '<button class="more" id="moreBtn">ఇంకా చూపించు ('+(hs.length-S.limit)+') · Show more</button>';
@@ -825,6 +828,9 @@ function closeHouse(){
 $('btnBack').onclick=closeHouse;
 
 /* ---------- removed from the roll (Roll Status = Removed): shown in red, never counted ---------- */
+// election uses the 2025 list: only the dead and duplicates (same person under another ID) lose their vote
+function stillVotes(r){ return !/expired|duplicate|still on roll/i.test(String(r||'')); }
+function r26Html(v){ return v.r26 ? '<div class="r26b">⚠ 2026 జాబితాలో తొలగించారు: <b>'+esc(goneTe(v.r26))+'</b> — 2025 జాబితా ప్రకారం ఓటు ఉంది, తప్పకుండా కలవాలి <span class="en">Removed in 2026 ('+esc(v.r26)+'), still votes on the 2025 list</span></div>' : ''; }
 function goneTe(r){
   r = String(r||''); var t = /expired/i.test(r)?'మరణించారు':/shift/i.test(r)?'ఊరు మారారు':/duplicate/i.test(r)?'రెండుసార్లు నమోదు':
     /absent|untrace/i.test(r)?'కనిపించలేదు':/asdd/i.test(r)?'ASDD జాబితాలో లేరు':'తొలగించారు';
@@ -865,7 +871,7 @@ function renderHouse(){
     }).join('')+'</div></div>';
   html += h.v.map(function(v){
     return '<div class="vc '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+
-      '<div class="vn">'+esc(v.name)+(v.isNew?' <span class="badge new">కొత్త</span>':'')+'</div>'+
+      '<div class="vn">'+esc(v.name)+(v.isNew?' <span class="badge new">కొత్త</span>':'')+'</div>'+r26Html(v)+
       '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(v.relN)+'<br>'+esc(v.e)+' · క్ర.సం. '+esc(v.sr)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
       visitHtml(v)+
       supportHtml(v)+occupationHtml(v)+personCasteHtml(v, hc, sameCaste)+
@@ -1236,7 +1242,7 @@ function isYoung(v){ return !!v.isNew || (Number(v.age)>0 && Number(v.age)<30); 
 // main target voters: undecided 3, leaning 2, support not asked 1, +1 not visited, +1 new/young. Strong and opposed are not targets.
 function targetScore(v){
   if (v.support==='Strong' || v.support==='Opposed') return 0;
-  return (v.support==='Undecided'?3:v.support==='Leaning'?2:1) + (isDone(v)?0:1) + (isYoung(v)?1:0);
+  return (v.support==='Undecided'?3:v.support==='Leaning'?2:1) + (isDone(v)?0:1) + (isYoung(v)?1:0) + (v.r26?1:0);
 }
 function stat(list){
   var o={n:list.length,vis:0,Strong:0,Leaning:0,Undecided:0,Opposed:0,na:0,tg:0};
@@ -1288,19 +1294,20 @@ function renderDash(){
     tile(total,'ఓటర్లు','Voters · '+hs.length+' ఇళ్ళు')+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited)+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
-  var rb={}, rA=0, rN=0;
+  var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
   S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
   var rG=(S.gone||[]).length, gr={}; (S.gone||[]).forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); o.g=(o.g||0)+1; var k=goneTe(v.gone).split(' · ')[0]; gr[k]=(gr[k]||0)+1; });
   h += '<details class="dcard" open data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
     (rG?'<table class="dt"><tr><td>2025 జాబితాలో మొత్తం <small>rows in “All Voters”</small></td><td style="text-align:right"><b>'+(rA+rG)+'</b></td></tr>'+
-      '<tr class="goner2"><td>➖ 2026 జాబితాలో తొలగించినవారు <small>Removed from the 2026 roll · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
+      '<tr class="goner2"><td>➖ ఓటు లేనివారు <small>No vote · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
     '<table class="dt"><tr><td>2025 ఓటర్ల జాబితా <small>“All Voters”</small></td><td style="text-align:right"><b>'+rA+'</b></td></tr>'+
+    (rR?'<tr class="r26row"><td>ఇందులో ⚠ 2026లో తొలగించినా ఓటు ఉన్నవారు <small>removed in 2026, still vote (2025 list)</small></td><td style="text-align:right"><b>'+rR+'</b></td></tr>':'')+
     '<tr><td>➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small></td><td style="text-align:right"><b>'+rN+'</b></td></tr>'+
     '<tr><td><b>= మొత్తం ఓటర్లు</b> <small>Total in the app</small></td><td style="text-align:right"><b>'+(rA+rN)+'</b></td></tr></table>'+
     '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
     '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th>'+(rG?'<th style="color:#b91c1c">✕ తొలగింపు</th>':'')+'</tr>'+
     Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td>'+(rG?'<td style="color:#b91c1c">'+(o.g||0)+'</td>':'')+'</tr>'; }).join('')+'</table>'+
-    '<div class="dleg">2026 జాబితాలో తొలగించినవారు (ఎరుపు రంగు) లెక్కల్లో లేరు. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
+    '<div class="dleg">ఎన్నికలు 2025 జాబితా ప్రకారం: మరణించినవారు, రెండుసార్లు నమోదైనవారు (ఎరుపు) లెక్కల్లో లేరు; 2026లో తొలగించిన మిగతావారు (నారింజ ⚠) ఓటర్లే. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
     (S.user.admin||S.user.reader?'':' మీ వార్డుల ఓటర్లు మాత్రమే · your wards only')+'</div></details>';
   var nv=rows.filter(function(v){ return v.voted; }).length;
   if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;
@@ -1314,7 +1321,7 @@ function renderDash(){
   var th = hs.map(function(x){ var t=x.v.filter(targetScore); return {h:x, t:t, s:t.reduce(function(a,v){ return a+targetScore(v); },0)}; })
     .filter(function(x){ return x.s; }).sort(function(a,b){ return b.s-a.s || b.h.v.length-a.h.v.length; });
   h += '<details class="dcard" open data-dk="tgt"><summary><h3>🎯 దృష్టి పెట్టాల్సిన ఓటర్లు <span class="en">Main target voters · '+so.tg+'</span></h3></summary>'+
-    '<div class="tiles t5">'+tile(und,'తేల్చలేదు','Undecided')+tile(lean,'మొగ్గు','Leaning')+tile(na,'అడగలేదు','Not asked')+tile(nvis,'కలవలేదు','Not visited')+tile(yng,'కొత్త / యువ','New / under 30')+'</div>'+
+    '<div class="tiles t5">'+tile(und,'తేల్చలేదు','Undecided')+tile(lean,'మొగ్గు','Leaning')+tile(na,'అడగలేదు','Not asked')+tile(nvis,'కలవలేదు','Not visited')+tile(yng,'కొత్త / యువ','New / under 30')+tile(rows.filter(function(v){ return v.r26 && targetScore(v); }).length,'⚠ 2026 తొలగింపు','Removed 2026, still votes')+'</div>'+
     '<div class="dsubh">ముందుగా వెళ్ళాల్సిన ఇళ్ళు <span class="en">Houses to visit first — tap to open</span></div>'+
     (th.length ? th.slice(0, S.dashMore.tgt?60:10).map(function(x){ var c=stat(x.t);
       return houseBtn(x.h, '🎯 '+x.t.length+' / '+x.h.v.length+(c.Undecided?' · తేల్చలేదు '+c.Undecided:'')+(c.Leaning?' · మొగ్గు '+c.Leaning:'')+(c.na?' · అడగలేదు '+c.na:'')); }).join('')+

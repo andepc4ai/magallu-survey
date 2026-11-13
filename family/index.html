@@ -52,6 +52,7 @@ a{color:inherit}
 .pc.nv{border-style:dashed;background:#f8f7f4;color:#6b665c}
 .pc.me{border-color:#0f766e;box-shadow:0 0 0 2px #99f6e4}
 .pc.chk{border-color:#f59e0b}
+.pc.r26{border-left:5px solid #f97316}.pc .r26t{color:#c2410c;font-weight:700}
 .pc.gone{border:2px solid #fecaca;border-left:5px solid #dc2626;background:#fef2f2;color:#7f1d1d}.pc.gone b{text-decoration:line-through;text-decoration-color:rgba(127,29,29,.4)}.pc.gone span{color:#b91c1c}
 .pc.fh{border-color:#ca8a04;background:#fef9c3;box-shadow:0 0 0 2px #fde047}
 .pc .crown{font-size:.72rem;font-weight:700;color:#854d0e}
@@ -379,8 +380,8 @@ $('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=2
 function pcard(p, me){
   var chk = p.vote && p.rel && !p.sure;
   if (p.gone) return '<button class="pc gone" data-p="'+esc(p.id)+'"><div><b>'+esc(displayName(p))+'</b><span>✕ '+esc(goneTe(p.gone))+(p.age?' · '+p.age:'')+'</span></div></button>';
-  return '<button class="pc'+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
-    '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—'):'ఓటు లేదు · no vote')+'</span></div></button>';
+  return '<button class="pc'+(p.r26?' r26':'')+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
+    '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—'):'ఓటు లేదు · no vote')+'</span>'+(p.r26?'<span class="r26t">⚠ 2026లో తొలగింపు: '+esc(goneTe(p.r26))+'</span>':'')+'</div></button>';
 }
 function treeHtml(id, seen, me){
   if (seen[id]) return ''; seen[id]=1;
