@@ -413,7 +413,7 @@ function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)
 function renderPerson(id, picking){
   var p=P(id); if(!p){ go(''); return; }
   $('ptitle').textContent = displayName(p);
-  if (p.gone){ $('psub').textContent = '✕ జాబితా నుండి తొలగించారు: '+goneTe(p.gone)+' · Removed: '+p.gone+(p.house?' · 🏠 '+p.house:''); }
+  if (p.gone){ $('psub').textContent = '✕ 2026 జాబితా నుండి తొలగించారు: '+goneTe(p.gone)+' · Removed from the 2026 roll: '+p.gone+(p.house?' · 🏠 '+p.house:''); }
   else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.vote){

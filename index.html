@@ -833,7 +833,7 @@ function goneTe(r){
 }
 function goneHtml(h){
   if (!h.gone || !h.gone.length) return '';
-  return '<div class="gonebox"><div class="goneh">✕ జాబితా నుండి తొలగించారు <span class="en">Removed from the roll · '+h.gone.length+'</span></div>'+
+  return '<div class="gonebox"><div class="goneh">✕ 2026 జాబితా నుండి తొలగించారు <span class="en">Removed from the 2026 roll · '+h.gone.length+'</span></div>'+
     h.gone.map(function(v){ return '<div class="goner"><b>'+esc(v.name)+'</b><span>'+esc(v.age)+' ఏళ్ళు · '+esc(v.e)+'</span>'+
       '<i>'+esc(goneTe(v.gone))+' <small>· '+esc(v.gone)+'</small></i></div>'; }).join('')+
     '<div class="gonen">వీరికి ఓటు లేదు — లెక్కల్లో చేర్చలేదు · Not voters, not counted</div></div>';
@@ -1293,14 +1293,14 @@ function renderDash(){
   var rG=(S.gone||[]).length, gr={}; (S.gone||[]).forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); o.g=(o.g||0)+1; var k=goneTe(v.gone).split(' · ')[0]; gr[k]=(gr[k]||0)+1; });
   h += '<details class="dcard" open data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
     (rG?'<table class="dt"><tr><td>2025 జాబితాలో మొత్తం <small>rows in “All Voters”</small></td><td style="text-align:right"><b>'+(rA+rG)+'</b></td></tr>'+
-      '<tr class="goner2"><td>➖ తొలగించినవారు <small>Removed · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
+      '<tr class="goner2"><td>➖ 2026 జాబితాలో తొలగించినవారు <small>Removed from the 2026 roll · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
     '<table class="dt"><tr><td>2025 ఓటర్ల జాబితా <small>“All Voters”</small></td><td style="text-align:right"><b>'+rA+'</b></td></tr>'+
     '<tr><td>➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small></td><td style="text-align:right"><b>'+rN+'</b></td></tr>'+
     '<tr><td><b>= మొత్తం ఓటర్లు</b> <small>Total in the app</small></td><td style="text-align:right"><b>'+(rA+rN)+'</b></td></tr></table>'+
     '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
     '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th>'+(rG?'<th style="color:#b91c1c">✕ తొలగింపు</th>':'')+'</tr>'+
     Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td>'+(rG?'<td style="color:#b91c1c">'+(o.g||0)+'</td>':'')+'</tr>'; }).join('')+'</table>'+
-    '<div class="dleg">తొలగించినవారు (ఎరుపు రంగు) లెక్కల్లో లేరు. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
+    '<div class="dleg">2026 జాబితాలో తొలగించినవారు (ఎరుపు రంగు) లెక్కల్లో లేరు. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
     (S.user.admin||S.user.reader?'':' మీ వార్డుల ఓటర్లు మాత్రమే · your wards only')+'</div></details>';
   var nv=rows.filter(function(v){ return v.voted; }).length;
   if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;
