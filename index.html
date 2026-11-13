@@ -100,6 +100,22 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .wb.on{background:var(--brand);border-color:var(--brand);color:#fff}
 .allv{width:100%;height:52px;border:0;border-radius:12px;background:var(--ok);color:#fff;font-weight:700;margin-top:12px;font-size:1.02rem}
 .vc{background:var(--card);border-radius:var(--radius);padding:14px;margin-bottom:12px;border:1px solid var(--line);border-left:6px solid #d6d0c2}
+.vc.vmin{padding:0;margin-bottom:8px}.vc.ex{padding:0 14px 14px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+.vsum{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;min-height:58px}.vc.ex .vsum{margin:0 -14px 6px;border-bottom:1px dashed var(--line)}
+.vsn{flex:1;min-width:0}.vsn b{display:block;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.vsn small{color:var(--muted);font-size:.8rem}.r26s{color:#c2410c;font-weight:700}
+.vst{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex:none}
+.vb{font-size:.72rem;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}.vb.ok{background:#dcfce7;color:#15803d}.vb.no{background:#ffedd5;color:#b45309}
+.vb.s-none{background:#f1f5f9;color:#64748b}.vb.s-Strong{background:var(--strong);color:#fff}.vb.s-Leaning{background:var(--leaning);color:#fff}.vb.s-Undecided{background:var(--undecided);color:#fff}.vb.s-Opposed{background:var(--opposed);color:#fff}
+.vcall{flex:none;width:40px;height:40px;border-radius:10px;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.chev{flex:none;color:var(--muted);font-size:1.1rem;width:14px;text-align:center}
+.htop{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:8px}
+.ht{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:78px;border:2px solid var(--line);background:#fff;border-radius:14px;padding:6px 4px;text-decoration:none;color:var(--ink);text-align:center}
+.ht i{font-style:normal;font-size:1.35rem;line-height:1.2}.ht b{font-size:.9rem;line-height:1.2}.ht small{font-size:.66rem;color:var(--muted)}
+.ht.set{border-color:var(--brand);background:var(--brand-soft)}.ht.go{background:var(--ok);border-color:var(--ok);color:#fff}.ht.go small{color:#dcfce7}.ht.fam{background:#0f766e;border-color:#0f766e;color:#fff}.ht.fam small{color:#ccfbf1}
+.frow{display:flex;gap:8px;align-items:center;margin-top:10px}.frow .fold{margin-top:0;flex:1;min-width:0}.call.sm{width:46px;height:46px}
+.visit.cmp{padding:6px 8px}.vrowc{display:flex;align-items:center;gap:6px}.vrowc .vinfo{flex:1;min-width:0;font-size:.9rem}.vrowc .vlast{display:inline;margin:0}
+.vmini{flex:none;min-height:38px;border:1px solid #86efac;background:#fff;border-radius:10px;padding:0 10px;font-weight:700;font-size:.85rem}
+.lclr.cls{color:var(--muted);border-color:var(--line)}
 .vc.Strong{border-left-color:var(--strong)}.vc.Leaning{border-left-color:var(--leaning)}.vc.Undecided{border-left-color:var(--undecided)}.vc.Opposed{border-left-color:var(--opposed)}
 .vn{font-weight:700;font-size:1.15rem}
 .vm{color:var(--muted);font-size:.88rem;margin:2px 0 10px}
@@ -110,7 +126,9 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .tb.on small{color:inherit;opacity:.85}
 .tb.vis.on{background:var(--ok);border-color:var(--ok);color:#fff}
 .tb.nv.on{background:#475569;border-color:#475569;color:#fff}
-.sup{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sup{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.sup .tb{min-height:48px;font-size:.86rem;padding:4px 2px;line-height:1.2}.sup .tb small{font-size:.6rem}
+.sup .tb[data-v=Strong]{border-top:4px solid var(--strong)}.sup .tb[data-v=Leaning]{border-top:4px solid var(--leaning)}.sup .tb[data-v=Undecided]{border-top:4px solid var(--undecided)}.sup .tb[data-v=Opposed]{border-top:4px solid var(--opposed)}
 .sup .tb.on[data-v=Strong]{background:var(--strong);border-color:var(--strong);color:#fff}
 .sup .tb.on[data-v=Leaning]{background:var(--leaning);border-color:var(--leaning);color:#fff}
 .sup .tb.on[data-v=Undecided]{background:var(--undecided);border-color:var(--undecided);color:#fff}
@@ -521,11 +539,12 @@ function houseLeaderHtml(h){
     return '<div class="hbox" style="padding:8px 14px">'+foldRow('house:leader','👤 నాయకుడు', esc(leaderName(L))+(lv?' <span class="en">🏠 '+esc(lv.house)+'</span>':''))+
       (lv&&lv.mobile?'<a class="lcall" href="tel:'+esc(lv.mobile)+'">📞 '+esc(lv.mobile)+'</a>':'')+'</div>';
   }
+  if (!L && !S.open['house:leader']) return '<div class="hbox" style="padding:8px 14px">'+foldRow('house:leader','👤 నాయకుడు','<span class="en">ఎంచుకో · Assign leader</span>','opt')+'</div>';
   return '<div class="hbox"><h3>👤 నాయకుడు <span class="en">Leader who tracks this family</span></h3>'+
     '<input class="lq" data-lq="1" placeholder="పేరు టైప్ చేయండి · Type a name" autocomplete="off" value="'+esc(L?leaderName(L):'')+'">'+
     '<div class="lsug" id="lsug"></div>'+
     '<div class="lbtns"><button class="lsave" data-lsave="1">✓ ఈ పేరు సేవ్ · Save typed name</button>'+
-    (L?'<button class="lclr" data-lclr="1">✕ తీసేయి</button>':'')+'</div></div>';
+    (L?'<button class="lclr" data-lclr="1">✕ తీసేయి</button>':'')+'<button class="lclr cls" data-fold="house:leader">మూసివేయి</button></div></div>';
 }
 function leaderSugHtml(q){
   q=String(q||'').trim(); if (q.length<2) return '';
@@ -818,7 +837,7 @@ $('list').onclick=function(e){
 
 /* ---------- house screen ---------- */
 function openHouse(hid){
-  S.openHouse = hid; S.open = {}; S.hpick=null; S.hhist=false; S.vdel=null; requestGeo(); renderHouse();
+  S.openHouse = hid; S.open = {}; S.vexp = (S.hById[hid] && S.hById[hid].v.length===1) ? S.hById[hid].v[0].id : null; S.hpick=null; S.hhist=false; S.vdel=null; requestGeo(); renderHouse();
   $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
   document.body.style.overflow='hidden';
 }
@@ -852,12 +871,13 @@ function renderHouse(){
   var hw = h.v[0].ward;
   var sameWard = h.v.every(function(v){return v.ward===hw;});
   var wards=''; for(var i=1;i<=S.wards;i++) wards+='<button class="wb'+(sameWard&&hw===i?' on':'')+'" data-w="'+i+'">'+i+'</button>';
-  var wardTop = S.open['house:ward']
-    ? '<div class="q qh"><span>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></span><button class="done" data-fold="house:ward">మూసివేయి</button></div><div class="wards">'+wards+'</div>'
-    : foldRow('house:ward','వార్డు', sameWard&&hw ? '<b>'+hw+'</b>' : h.v.some(function(v){ return v.ward; }) ? 'కొందరికి వేరు <span class="en">mixed</span>' : '<span class="en">ఎంచుకోలేదు · not set</span>', sameWard&&hw?'':'opt');
-  var html = '<div class="hbox">'+wardTop+
-    houseVisitHtml(h)+
-    (HAS_API?'<a class="allv" style="display:flex;align-items:center;justify-content:center;background:#0f766e;text-decoration:none" href="family/#p='+encodeURIComponent(h.v[0].e)+'">👪 ఈ కుటుంబం చూడండి <span style="font-weight:400">&nbsp;· Family tree</span></a>':'')+'</div>';
+  var wv = sameWard&&hw ? String(hw) : h.v.some(function(v){ return v.ward; }) ? 'mix' : '';
+  var topRow = '<div class="htop">'+
+    '<button class="ht'+(wv&&wv!=='mix'?' set':'')+'" data-'+(S.open['house:ward']?'fold':'unfold')+'="house:ward"><i>📍</i><b>'+(wv==='mix'?'వార్డు ?':wv?'వార్డు '+wv:'వార్డు')+'</b><small>'+(wv==='mix'?'కొందరికి వేరు':wv?'Ward':'ఎంచుకో · Ward')+'</small></button>'+
+    (S.hpick?'':'<button class="ht go" data-allv="1"><i>➕</i><b>ఇంటికి వెళ్ళాం</b><small>House visit</small></button>')+
+    (HAS_API?'<a class="ht fam" href="family/#p='+encodeURIComponent(h.v[0].e)+'"><i>👪</i><b>కుటుంబం</b><small>Family tree</small></a>':'')+'</div>';
+  var wardBox = S.open['house:ward'] ? '<div class="q qh"><span>ఈ ఇల్లు ఏ వార్డు? <span class="en">Ward for this house</span></span><button class="done" data-fold="house:ward">మూసివేయి</button></div><div class="wards">'+wards+'</div>' : '';
+  var html = '<div class="hbox">'+topRow+wardBox+houseVisitHtml(h)+'</div>';
   html += houseLeaderHtml(h);
   var hc = h.v[0].caste, sameCaste = h.v.every(function(v){return v.caste===hc;});
   var sug = suggestCaste(h.v[0].surname);
@@ -871,18 +891,18 @@ function renderHouse(){
       return '<button class="cb'+(sameCaste&&hc===c?' on':'')+'" data-hcaste="'+esc(c)+'">'+esc(CASTE_TE[c]||c)+(CASTE_TE[c]?'<small>'+esc(c)+'</small>':'')+'</button>';
     }).join('')+'</div></div>';
   html += h.v.map(function(v){
-    return '<div class="vc '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+
-      '<div class="vn">'+esc(v.name)+(v.isNew?' <span class="badge new">కొత్త</span>':'')+'</div>'+r26Html(v)+
+    var ex = S.vexp===v.id, s = SUP.filter(function(x){ return x.v===v.support; })[0];
+    var head = '<div class="vsum" role="button" data-vexp="'+esc(v.id)+'"><span class="vsn"><b>'+esc(v.name)+'</b>'+(v.isNew?' <span class="badge new">కొత్త</span>':'')+
+        '<small>'+(v.gen==='Female'?'👩':'👨')+' '+esc(v.age)+(v.r26?' · <span class="r26s">⚠ 2026</span>':'')+'</small></span>'+
+      '<span class="vst"><span class="vb '+(isDone(v)?'ok':'no')+'">'+(isDone(v)?'✓ కలిశాం':'కలవలేదు')+'</span>'+
+        '<span class="vb s-'+(s?s.v:'none')+'">'+(s?esc(s.te):'మద్దతు ?')+'</span></span>'+
+      (v.mobile&&!ex?'<a class="vcall" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'<span class="chev">'+(ex?'▴':'▾')+'</span></div>';
+    if (!ex) return '<div class="vc vmin '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+head+'</div>';
+    return '<div class="vc ex '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+head+r26Html(v)+
       '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(v.relN)+'<br>'+esc(v.e)+' · క్ర.సం. '+esc(v.sr)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
       visitHtml(v)+
       supportHtml(v)+occupationHtml(v)+personCasteHtml(v, hc, sameCaste)+
-      '<div class="q">మొబైల్ నంబర్ <span class="en">Mobile number</span></div>'+
-      '<div class="mob"><input data-mobile="1" type="tel" inputmode="numeric" maxlength="14" placeholder="10 అంకెలు" value="'+esc(v.mobile)+'" class="'+(v.mobile?'good':'')+'">'+
-      (v.mobile?'<a class="call" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'</div>'+
-      '<div class="mhint" data-mhint="1">'+(v.mobile?'✓ సేవ్ అయింది':'')+'</div>'+
-      issueHtml(v)+
-      '<div class="q">వివరాలు <span class="en">Notes (optional)</span></div>'+
-      '<textarea data-notes="1" placeholder="ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు">'+esc(v.notes)+'</textarea>'+
+      mobileHtml(v)+issueHtml(v)+notesHtml(v)+
     '</div>';
   }).join('');
   html += goneHtml(h);
@@ -899,6 +919,12 @@ function visitHtml(v){
     : legacy ? '✓ కలిశాం <span class="en">(పాత నమోదు · earlier entry)</span>' : '<span class="nov">ఇంకా కలవలేదు</span> <span class="en">Not visited yet</span>';
   var recent = v.lastVisit && v.lastBy===S.user.name && Date.now()-v.lastVisit < 10*60000;
   var sure = S.vsure && S.vsure[v.id];
+  if ((n||legacy) && !sure){
+    var c = '<div class="visit on cmp"><div class="vrowc"><span class="vinfo">✓ '+(n?'<b>'+n+' సార్లు</b> కలిశాం'+(v.lastVisit?' <span class="vlast">· '+esc(fmtT(v.lastVisit))+(v.lastBy?' · '+esc(v.lastBy):'')+'</span>':''):'కలిశాం <span class="vlast">· పాత నమోదు</span>')+'</span>'+
+      '<button class="vmini" data-addv="1">➕ మళ్ళీ</button>'+(n?'<button class="vmini" data-vhist="1">'+(open?'▲':'📋')+'</button>':'')+(legacy?'<button class="vmini" data-undo="1">✗ తప్పు</button>':'')+'</div>';
+    if (open) c += visitListHtml(v);
+    return c+'</div>';
+  }
   var h = '<div class="visit'+(n||legacy?' on':'')+'"><div class="vinfo">'+info+'</div><div class="vbtns">'+
     '<button class="addv'+(sure?' sure':'')+'" data-addv="1">'+(sure?'ఇప్పుడే నమోదైంది — మళ్ళీనా? ✓':'➕ ఈ రోజు కలిశాం <small>Add visit</small>')+'</button>'+
     (n?'<button class="vhist" data-vhist="1">'+(open?'▲ మూసివేయి':'📋 సందర్శనలు')+'</button>':'')+
@@ -929,7 +955,7 @@ function houseVisitHtml(h){
         return '<button class="hvp'+(S.hpick[v.id]?' on':'')+'" data-hvp="'+esc(v.id)+'"><span class="ck">'+(S.hpick[v.id]?'✓':'')+'</span><span>'+esc(v.name)+' <small>'+esc(v.age)+' · '+(v.gen==='Female'?'స్త్రీ':'పురుషుడు')+(recent?' · ఇప్పుడే నమోదైంది':'')+'</small></span></button>'; }).join('')+
       geoNote()+'<div class="hvbtns"><button class="hvsave" data-hvsave="1"'+(n?'':' disabled')+'>✓ '+n+' మందికి సందర్శన సేవ్ <small>Save visit for '+n+'</small></button>'+
       '<button class="hvcancel" data-hvcancel="1">రద్దు</button></div></div>';
-  } else html += '<button class="allv" data-allv="1">➕ ఈ రోజు ఇంటికి వెళ్ళాం <span style="font-weight:400">· House visit</span></button>';
+  }   // the house-visit button now sits in the top row
   var total = h.v.reduce(function(a,v){ return a+(v.visits||0); },0) + h.v.reduce(function(a,v){ return a+pendingVisits(v).length; },0);
   if (total) html += '<button class="hvh" data-hvh="1">'+(S.hhist?'▲':'📋')+' ఈ ఇంటి సందర్శనలు <span class="en">House visits</span></button>'+(S.hhist?houseHistHtml(h):'');
   return html;
@@ -966,6 +992,22 @@ function addVisit(v){
   delete S.vsure[v.id];
   edit(v,{visits:[newVisitId()], visited:'Visited'});
   return true;
+}
+function mobileHtml(v){
+  var k=v.id+':mobile';
+  if (!S.open[k]) return v.mobile
+    ? '<div class="frow">'+foldRow(k,'📱 మొబైల్','<span style="letter-spacing:.04em">'+esc(v.mobile)+'</span>')+'<a class="call sm" href="tel:'+esc(v.mobile)+'" title="Call">📞</a></div>'
+    : foldRow(k,'📱 మొబైల్','<span class="en">నంబర్ లేదు · Add number</span>','opt');
+  return '<div class="q qh"><span>మొబైల్ నంబర్ <span class="en">Mobile number</span></span><button class="done" data-fold="'+esc(k)+'">మూసివేయి</button></div>'+
+    '<div class="mob"><input data-mobile="1" type="tel" inputmode="numeric" maxlength="14" placeholder="10 అంకెలు" value="'+esc(v.mobile)+'" class="'+(v.mobile?'good':'')+'">'+
+    (v.mobile?'<a class="call" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'</div>'+
+    '<div class="mhint" data-mhint="1">'+(v.mobile?'✓ సేవ్ అయింది':'')+'</div>';
+}
+function notesHtml(v){
+  var k=v.id+':notes', n=String(v.notes||'');
+  if (!S.open[k]) return foldRow(k,'📝 వివరాలు', n ? esc(n.length>40?n.slice(0,40)+'…':n) : '<span class="en">ఐచ్ఛికం · Optional</span>', n?'':'opt');
+  return '<div class="q qh"><span>వివరాలు <span class="en">Notes (optional)</span></span><button class="done" data-fold="'+esc(k)+'">మూసివేయి</button></div>'+
+    '<textarea data-notes="1" placeholder="ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు">'+esc(n)+'</textarea>';
 }
 function supportHtml(v){
   var k=v.id+':support', s=SUP.filter(function(x){return x.v===v.support;})[0];
@@ -1013,6 +1055,10 @@ function nextHouseIndex(h){
 }
 $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
+  if (e.target.closest('a')) return;                       // call / family links work as links
+  var vx=e.target.closest('[data-vexp]');
+  if (vx){ var id=vx.dataset.vexp; S.vexp = S.vexp===id ? null : id; renderHouse();
+    var card=document.querySelector('#hBody [data-id="'+id.replace(/"/g,'')+'"]'); if (card && S.vexp) card.scrollIntoView({block:'start', behavior:'smooth'}); return; }
   var w=e.target.closest('[data-w]');
   if (w){ var n=Number(w.dataset.w), allN=h.v.every(function(v){ return v.ward===n; });
     if (allN){ h.v.forEach(function(v){ edit(v,{ward:''}); }); toast('వార్డు తీసేశాం · Ward cleared'); }
@@ -1425,7 +1471,7 @@ $('surFix').onclick=function(e){
 function isRO(){ return !!(S.user && S.user.reader); }
 function roToast(){ toast('👁 చూడటానికి మాత్రమే · View only'); }
 function applyRO(){ document.body.classList.toggle('ro', isRO()); $('roBadge').classList.toggle('hide', !isRO()); }
-var RO_OK = '[data-vhist],[data-hvh],[data-fold],[data-unfold],a';
+var RO_OK = '[data-vhist],[data-hvh],[data-fold],[data-unfold],[data-vexp],a';
 ['hBody','pList','surList'].forEach(function(id){
   $(id).addEventListener('click', function(e){
     if (!isRO()) return;
