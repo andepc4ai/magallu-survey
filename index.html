@@ -1261,6 +1261,18 @@ function renderDash(){
   h += '<div class="tiles">'+
     tile(total,'ఓటర్లు','Voters · '+hs.length+' ఇళ్ళు')+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited)+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
+  // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
+  var rb={}, rA=0, rN=0;
+  S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
+  h += '<details class="dcard" open data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
+    '<table class="dt"><tr><td>2025 ఓటర్ల జాబితా <small>“All Voters”</small></td><td style="text-align:right"><b>'+rA+'</b></td></tr>'+
+    '<tr><td>➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small></td><td style="text-align:right"><b>'+rN+'</b></td></tr>'+
+    '<tr><td><b>= మొత్తం ఓటర్లు</b> <small>Total in the app</small></td><td style="text-align:right"><b>'+(rA+rN)+'</b></td></tr></table>'+
+    '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
+    '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th></tr>'+
+    Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td></tr>'; }).join('')+'</table>'+
+    '<div class="dleg">జాబితా నుండి తొలగించిన (Removed) వారు లెక్కలో లేరు. పాత బూత్‌లు 204/205/206 = కొత్త 207/208/209.'+
+    (S.user.admin||S.user.reader?'':' మీ వార్డుల ఓటర్లు మాత్రమే · your wards only')+'</div></details>';
   var nv=rows.filter(function(v){ return v.voted; }).length;
   if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;
     h += '<div class="dcard"><h3>🗳️ పోలింగ్ <span class="en">Turnout</span></h3><div class="tiles" style="margin:0">'+tile(pct(nv,total)+'%','ఓటు వేశారు','Voted · '+nv+' / '+total)+tile(pct(spv,sp.length)+'%','మనవాళ్ళు వేశారు','Supporters · '+spv+' / '+sp.length)+'</div></div>'; }
