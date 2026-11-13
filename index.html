@@ -828,8 +828,8 @@ function closeHouse(){
 $('btnBack').onclick=closeHouse;
 
 /* ---------- removed from the roll (Roll Status = Removed): shown in red, never counted ---------- */
-// election uses the 2025 list: only the dead and duplicates (same person under another ID) lose their vote
-function stillVotes(r){ return !/expired|duplicate|still on roll/i.test(String(r||'')); }
+// election uses the 2025 list: only those who have died lose their vote (Anudeep, 2026-11-13)
+function stillVotes(r){ return !/expired/i.test(String(r||'')); }
 function r26Html(v){ return v.r26 ? '<div class="r26b">⚠ 2026 జాబితాలో తొలగించారు: <b>'+esc(goneTe(v.r26))+'</b> — 2025 జాబితా ప్రకారం ఓటు ఉంది, తప్పకుండా కలవాలి <span class="en">Removed in 2026 ('+esc(v.r26)+'), still votes on the 2025 list</span></div>' : ''; }
 function goneTe(r){
   r = String(r||''); var t = /expired/i.test(r)?'మరణించారు':/shift/i.test(r)?'ఊరు మారారు':/duplicate/i.test(r)?'రెండుసార్లు నమోదు':
@@ -1307,7 +1307,7 @@ function renderDash(){
     '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
     '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th>'+(rG?'<th style="color:#b91c1c">✕ తొలగింపు</th>':'')+'</tr>'+
     Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td>'+(rG?'<td style="color:#b91c1c">'+(o.g||0)+'</td>':'')+'</tr>'; }).join('')+'</table>'+
-    '<div class="dleg">ఎన్నికలు 2025 జాబితా ప్రకారం: మరణించినవారు, రెండుసార్లు నమోదైనవారు (ఎరుపు) లెక్కల్లో లేరు; 2026లో తొలగించిన మిగతావారు (నారింజ ⚠) ఓటర్లే. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
+    '<div class="dleg">ఎన్నికలు 2025 జాబితా ప్రకారం: మరణించినవారు (ఎరుపు) మాత్రమే లెక్కల్లో లేరు; 2026లో తొలగించిన మిగతావారు (నారింజ ⚠) అందరూ ఓటర్లే. బూత్ నంబర్లు 2025 జాబితా ప్రకారం (204/205/206); కొత్త నంబర్లు 207/208/209.'+
     (S.user.admin||S.user.reader?'':' మీ వార్డుల ఓటర్లు మాత్రమే · your wards only')+'</div></details>';
   var nv=rows.filter(function(v){ return v.voted; }).length;
   if (nv){ var sp=rows.filter(isSup), spv=sp.filter(function(v){ return v.voted; }).length;
