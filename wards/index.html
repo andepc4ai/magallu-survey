@@ -75,31 +75,24 @@ function st(cls, t){ var e=$('st'); e.className='st '+cls; e.textContent=t; }
 var U = LS.get('mvs_user');
 var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:'all', street:'all', q:'', limit:60 }, queue = {}, busy = false;
 
-if (!U || !U.name || !U.pin){
-  $('list').innerHTML = '<div class="msg">ముందు యాప్‌లో లాగిన్ అవ్వండి<br><span style="font-size:.85rem">Please log in to the app first</span><br><br><a class="back" style="display:inline-flex;background:#FACC15" href="../">🏠 యాప్ తెరవండి</a></div>';
-  st('bad','లాగిన్ కావాలి · Login needed'); return;
-}
+var who = U && U.name && U.pin ? [U.name, U.pin] : ['', ''];   // open page: works without login
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){ return ('00000'+n).slice(-5); }).join('-')+'~'+h; }
-function hWard(h){ var w = {}; h.v.forEach(function(v){ w[v.w===''||v.w==null?'':String(v.w)]=1; }); var k=Object.keys(w); return k.length===1 ? k[0] : 'mix'; }
+function hWard(h){ return h.w; }
 
+// rows: [booth, house, street, ward ('' | '3' | 'mix'), voters, names]
 function ingest(rows){
-  var m = {};
-  rows.forEach(function(r){
-    var booth = r[2], house = String(r[7]||'').trim(), sec = String(r[12]||'').replace(/,\s*MAGALLU$/i,'');
-    var id = booth+'|'+(house || ('?'+sec+r[3]));
-    var h = m[id] || (m[id] = {id:id, booth:booth, house:house||'—', sec:sec, v:[]});
-    h.v.push({e:String(r[10]), name:r[4], age:r[8], w: r[13]===''||r[13]==null ? '' : Number(r[13])});
-  });
-  Object.keys(queue).forEach(function(e){ Object.keys(m).forEach(function(k){ m[k].v.forEach(function(v){ if (v.e===e) v.w = queue[e]===''?'':Number(queue[e]); }); }); });
-  H = Object.keys(m).map(function(k){ var h=m[k]; h.sk=natKey(h.house); return h; }).sort(function(a,b){ return a.sec<b.sec?-1:a.sec>b.sec?1:(a.sk<b.sk?-1:a.sk>b.sk?1:0); });
-  byId = m; buildSelects(); render();
+  H = rows.map(function(r){ var h = {id:r[0]+'|'+r[1], booth:r[0], house:String(r[1]), sec:String(r[2]||''), w:String(r[3]==null?'':r[3]), n:r[4], names:String(r[5]||'')};
+    if (h.id in queue) h.w = queue[h.id]; h.sk = natKey(h.house); return h; })
+    .sort(function(a,b){ return a.sec<b.sec?-1:a.sec>b.sec?1:(a.sk<b.sk?-1:a.sk>b.sk?1:0); });
+  byId = {}; H.forEach(function(h){ byId[h.id]=h; });
+  buildSelects(); render();
 }
 function load(){
   st('busy','⏳ లోడ్ అవుతోంది… · Loading');
-  call('getVoters',[U.name, U.pin]).then(function(d){ ingest(d.rows||[]); st('','✓ తాజా · Up to date'); })
+  call('getWardHouses', who).then(function(rows){ ingest(rows||[]); st('','✓ తాజా · Up to date'); })
     .catch(function(e){ var m=String(e.message);
-      if (m==='WRONG_PIN'){ $('list').innerHTML='<div class="msg">పిన్ మారింది — యాప్‌లో మళ్ళీ లాగిన్ అవ్వండి<br><br><a class="back" style="display:inline-flex;background:#FACC15" href="../">🏠 యాప్</a></div>'; st('bad','లాగిన్ కావాలి'); return; }
-      $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(m)+'</div>'; st('bad','📵 ఇంటర్నెట్ లేదు · Offline'); });
+      if (m==='WRONG_PIN'){ who=['','']; load(); return; }
+      $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(m)+'<br><br><button class="all" onclick="location.reload()">⟳ మళ్ళీ ప్రయత్నించండి</button></div>'; st('bad','📵 ఇంటర్నెట్ లేదు · Offline'); });
 }
 function buildWG(){
   var h=''; for (var i=1;i<=WARDS;i++) h+='<button class="'+(String(W)===String(i)?'on':'')+'" data-w="'+i+'">'+i+'</button>';
@@ -126,7 +119,7 @@ function render(){
     if (F.tab==='none' && w!=='') return false;
     if (F.tab==='mix' && w!=='mix') return false;
     if (F.tab==='w' && w!==String(W)) return false;
-    if (q) return h.house.toLowerCase().indexOf(q)===0 || h.v.some(function(v){ return String(v.name).toLowerCase().indexOf(q)>=0 || v.e.toLowerCase()===q; });
+    if (q) return h.house.toLowerCase().indexOf(q)===0 || h.names.toLowerCase().indexOf(q)>=0;
     return true;
   });
   if (!list.length){ $('list').innerHTML = '<div class="msg">'+(F.tab==='none'&&!q?'ఈ వీధిలో అన్ని ఇళ్ళకు వార్డు పడింది 🎉':'ఏమీ లేవు · Nothing here')+'</div>'; return; }
@@ -137,25 +130,26 @@ function render(){
     return '<div class="sec"><div class="sh"><b>'+esc(g.sec||'—')+' <span>· '+all.length+' ఇళ్ళు</span></b>'+
       (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
       g.hs.map(function(h){ var w=hWard(h);
-        return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(h.booth)+' · '+h.v.length+' ఓటర్లు</span></b>'+
-          '<span>'+h.v.map(function(v){ return esc(v.name); }).join(', ')+'</span></span>'+
+        return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(h.booth)+' · '+h.n+' ఓటర్లు</span></b>'+
+          '<span>'+esc(h.names)+'</span></span>'+
           '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span></button>'; }).join('')+'</div>';
   }).join('') + (list.length>F.limit ? '<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>' : '');
 }
 function setWard(hs, w){
-  hs.forEach(function(h){ h.v.forEach(function(v){ v.w = w===''?'':Number(w); queue[v.e] = String(w); }); });
+  hs.forEach(function(h){ h.w = String(w); queue[h.id] = String(w); });
   render(); save();
 }
 function save(){
-  var es = Object.keys(queue); if (!es.length || busy) return;
-  busy = true; var batch = es.slice(0, 120), sent = {};
-  batch.forEach(function(e){ sent[e]=queue[e]; });
-  st('busy','⏳ సేవ్ అవుతోంది… '+es.length+' · Saving');
-  call('saveUpdates',[U.name, U.pin, batch.map(function(e){ return {e:e, f:{ward:sent[e]}}; })]).then(function(res){
-    busy = false; batch.forEach(function(e){ if (queue[e]===sent[e]) delete queue[e]; });
-    if (Object.keys(queue).length) save(); else st('', (res&&res.failed&&res.failed.length)?'⚠️ '+res.failed.length+' సేవ్ కాలేదు':'✓ సేవ్ అయింది · Saved');
-  }).catch(function(e){ busy = false;
-    if (String(e.message)==='READ_ONLY'){ queue={}; st('bad','👁 చూడటానికి మాత్రమే · View only'); load(); return; }
+  var ids = Object.keys(queue); if (!ids.length || busy) return;
+  busy = true; var batch = ids.slice(0, 200), sent = {};
+  batch.forEach(function(id){ sent[id]=queue[id]; });
+  st('busy','⏳ సేవ్ అవుతోంది… '+ids.length+' ఇళ్ళు · Saving');
+  call('saveWards', who.concat([batch.map(function(id){ var h=byId[id]; return {b:h.booth, h:h.house, w:sent[id]}; })])).then(function(){
+    busy = false; batch.forEach(function(id){ if (queue[id]===sent[id]) delete queue[id]; });
+    if (Object.keys(queue).length) save(); else st('','✓ సేవ్ అయింది · Saved');
+  }).catch(function(e){ busy = false; var m=String(e.message);
+    if (m==='READ_ONLY'){ queue={}; st('bad','👁 చూడటానికి మాత్రమే · View only'); load(); return; }
+    if (m==='WRONG_PIN'){ who=['','']; }
     st('bad','⚠️ సేవ్ కాలేదు, మళ్ళీ ప్రయత్నిస్తాం · Retrying'); setTimeout(save, 5000); });
 }
 window.addEventListener('beforeunload', function(e){ if (busy || Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
@@ -167,7 +161,7 @@ $('street').onchange = function(){ F.street=this.value; F.limit=60; render(); };
 var qt; $('q').oninput = function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=60; render(); },200); };
 $('list').onclick = function(e){
   if (e.target.id==='more'){ F.limit+=60; render(); return; }
-  if (U.reader){ st('bad','👁 చూడటానికి మాత్రమే · View only'); return; }
+  if (U && U.reader){ st('bad','👁 చూడటానికి మాత్రమే · View only'); return; }
   var a=e.target.closest('[data-all]');
   if (a){ var hs=H.filter(function(h){ return inScope(h) && h.sec===a.dataset.all && hWard(h)===''; });
     if (!a.dataset.sure){ a.dataset.sure=1; a.textContent='ఖచ్చితమా? '+hs.length+' ఇళ్ళు → '+W+' ✓'; return; }
