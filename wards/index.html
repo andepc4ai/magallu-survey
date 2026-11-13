@@ -75,7 +75,7 @@ function st(cls, t){ var e=$('st'); e.className='st '+cls; e.textContent=t; }
 var U = LS.get('mvs_user');
 var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:'all', street:'all', q:'', limit:60 }, queue = {}, busy = false;
 
-var who = U && U.name && U.pin ? [U.name, U.pin] : ['', ''];   // open page: works without login
+var who = U && U.name && U.pin && !U.reader ? [U.name, U.pin] : ['', ''];   // open page: works without login; Readers save in open mode
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){ return ('00000'+n).slice(-5); }).join('-')+'~'+h; }
 function hWard(h){ return h.w; }
 
@@ -161,7 +161,6 @@ $('street').onchange = function(){ F.street=this.value; F.limit=60; render(); };
 var qt; $('q').oninput = function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=60; render(); },200); };
 $('list').onclick = function(e){
   if (e.target.id==='more'){ F.limit+=60; render(); return; }
-  if (U && U.reader){ st('bad','👁 చూడటానికి మాత్రమే · View only'); return; }
   var a=e.target.closest('[data-all]');
   if (a){ var hs=H.filter(function(h){ return inScope(h) && h.sec===a.dataset.all && hWard(h)===''; });
     if (!a.dataset.sure){ a.dataset.sure=1; a.textContent='ఖచ్చితమా? '+hs.length+' ఇళ్ళు → '+W+' ✓'; return; }

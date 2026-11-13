@@ -1413,7 +1413,7 @@ function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
     S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
-    $('tCaste').classList.toggle('hide', !S.user.admin); $('tWard').classList.toggle('hide', !S.user.admin || !HAS_API); renderHome();
+    $('tCaste').classList.toggle('hide', !(S.user.admin || S.user.reader)); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API); renderHome();
     if (S.openHouse) renderHouse();
   }).catch(function(){});
 }
@@ -1451,7 +1451,7 @@ function showApp(){
   $('vLogin').classList.add('hide');
   $('who').textContent = '👤 '+S.user.name;
   $('tFam').classList.toggle('hide', !HAS_API);
-  $('tCaste').classList.toggle('hide', !S.user.admin); $('tWard').classList.toggle('hide', !S.user.admin || !HAS_API);
+  $('tCaste').classList.toggle('hide', !(S.user.admin || S.user.reader)); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API);
   applyRO();
   showView(LS.get('view')==='list' ? 'list' : 'home');
   S.wards = S.user.wards || 12;
