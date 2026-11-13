@@ -116,6 +116,8 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .visit.cmp{padding:6px 8px}.vrowc{display:flex;align-items:center;gap:6px}.vrowc .vinfo{flex:1;min-width:0;font-size:.9rem}.vrowc .vlast{display:inline;margin:0}
 .vmini{flex:none;min-height:38px;border:1px solid #86efac;background:#fff;border-radius:10px;padding:0 10px;font-weight:700;font-size:.85rem}
 .lclr.cls{color:var(--muted);border-color:var(--line)}
+.splitb{width:100%;margin:0 0 12px;min-height:46px;border:2px dashed #d6d0c2;background:transparent;border-radius:12px;font-weight:700;color:#57534e;font-size:.9rem}.splitb .en{font-weight:400}
+.splitbox{border:2px solid #f59e0b;background:#fffbeb}.splitbox .lq{margin-bottom:4px}
 .vc.Strong{border-left-color:var(--strong)}.vc.Leaning{border-left-color:var(--leaning)}.vc.Undecided{border-left-color:var(--undecided)}.vc.Opposed{border-left-color:var(--opposed)}
 .vn{font-weight:700;font-size:1.15rem}
 .vm{color:var(--muted);font-size:.88rem;margin:2px 0 10px}
@@ -608,7 +610,7 @@ var BOOTH_2025 = {207:204, 208:205, 209:206};   // show booths as on the 2025 ro
 function toObj(a){
   return {s:a[0],r:a[1],booth:BOOTH_2025[a[2]]||a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',hh:a[32]?String(a[32]):'',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
@@ -618,13 +620,18 @@ function ingest(raw){
   S.rows.forEach(function(v){ S.byId[v.id]=v; });
   // re-apply local unsent edits on top of server data
   Object.keys(S.pending).forEach(function(id){ var v=S.byId[id]; if(v) applyLocal(v,S.pending[id].f); });
+  buildHouses();
+}
+// house = booth + door number (+ household label when one door number was split into two families)
+function hkOf(v){ return v.booth+'|'+(v.house || ('?'+v.sec+v.sr))+(v.hh?'|'+v.hh:''); }
+function buildHouses(){
   var map = {};
   S.rows.forEach(function(v){
-    var hk = v.booth+'|'+(v.house || ('?'+v.sec+v.sr));
-    var h = map[hk] || (map[hk] = {id:hk,booth:v.booth,house:v.house||'—',sec:v.sec,secNo:v.secNo,v:[]});
+    var hk = hkOf(v);
+    var h = map[hk] || (map[hk] = {id:hk,booth:v.booth,house:(v.house||'—')+(v.hh?' · '+v.hh:''),door:v.house||'—',hh:v.hh||'',sec:v.sec,secNo:v.secNo,v:[]});
     h.v.push(v); v._h = h;
   });
-  S.gone.forEach(function(v){ var h = map[v.booth+'|'+(v.house || ('?'+v.sec+v.sr))]; if (h) (h.gone||(h.gone=[])).push(v); });
+  S.gone.forEach(function(v){ var h = map[hkOf(v)] || map[v.booth+'|'+(v.house || ('?'+v.sec+v.sr))]; if (h) (h.gone||(h.gone=[])).push(v); });
   S.houses = Object.keys(map).map(function(k){ var h=map[k]; h.sort=h.booth+'|'+natKey(h.house); return h; })
     .sort(function(a,b){ return (b.v.length-a.v.length) || (a.sort<b.sort?-1:a.sort>b.sort?1:0); });   // biggest houses first
   S.hById = map;
@@ -642,6 +649,7 @@ function applyLocal(v,f){
   if('leader' in f) v.leader = f.leader;
   if('issueStatus' in f) v.issueStatus = f.issueStatus;
   if('voted' in f) v.voted = f.voted==='Yes';
+  if('hh' in f) v.hh = String(f.hh||'');
   if(f.visits && f.visits.length){ v.visits=(v.visits||0)+f.visits.length; v.lastVisit=Date.now(); v.lastBy=S.user?S.user.name:''; v.visited=true; }
 }
 function cleanMobile(s){
@@ -837,7 +845,7 @@ $('list').onclick=function(e){
 
 /* ---------- house screen ---------- */
 function openHouse(hid){
-  S.openHouse = hid; S.open = {}; S.vexp = (S.hById[hid] && S.hById[hid].v.length===1) ? S.hById[hid].v[0].id : null; S.hpick=null; S.hhist=false; S.vdel=null; requestGeo(); renderHouse();
+  S.openHouse = hid; S.split = null; S.open = {}; S.vexp = (S.hById[hid] && S.hById[hid].v.length===1) ? S.hById[hid].v[0].id : null; S.hpick=null; S.hhist=false; S.vdel=null; requestGeo(); renderHouse();
   $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
   document.body.style.overflow='hidden';
 }
@@ -864,6 +872,20 @@ function goneHtml(h){
       '<i>'+esc(goneTe(v.gone))+' <small>· '+esc(v.gone)+'</small></i></div>'; }).join('')+
     '<div class="gonen">వీరికి ఓటు లేదు — లెక్కల్లో చేర్చలేదు · Not voters, not counted</div></div>';
 }
+/* ---------- split a door number: another family wrongly given the same house number ---------- */
+function lastWord(n){ var w=String(n||'').trim().split(/\s+/); return w[w.length-1]||''; }
+function splitHtml(h){
+  if (h.hh) return '<button class="splitb" data-hjoin="1">🔗 మళ్ళీ '+esc(h.door)+' ఇంటిలో కలుపు <span class="en">Join back to house '+esc(h.door)+'</span></button>';
+  if (h.v.length<2) return '';
+  if (!S.split) return '<button class="splitb" data-split="1">✂️ ఈ ఇంట్లో వేరే కుటుంబం ఉందా? విడదీయండి <span class="en">Another family in this house? Split it</span></button>';
+  var n = h.v.filter(function(v){ return S.split.ids[v.id]; }).length;
+  return '<div class="hbox splitbox"><div class="q">✂️ వేరే కుటుంబం వారిని ఎంచుకోండి <span class="en">Tick the people of the other family</span></div>'+
+    h.v.map(function(v){ return '<button class="hvp'+(S.split.ids[v.id]?' on':'')+'" data-sp="'+esc(v.id)+'"><span class="ck">'+(S.split.ids[v.id]?'✓':'')+'</span><span>'+esc(v.name)+' <small>'+esc(v.age)+' · '+(v.gen==='Female'?'స్త్రీ':'పురుషుడు')+'</small></span></button>'; }).join('')+
+    '<div class="q">ఆ కుటుంబం పేరు <span class="en">Name for that family (usually the surname)</span></div>'+
+    '<input class="lq" data-spname="1" value="'+esc(S.split.name)+'" placeholder="ఉదా: Kotte">'+
+    '<div class="hvbtns"><button class="hvsave" data-spsave="1"'+(n&&n<h.v.length?'':' disabled')+'>✂️ '+n+' మందిని వేరు చేయి <small>Split '+n+'</small></button><button class="hvcancel" data-spcancel="1">రద్దు</button></div></div>';
+}
+function splitName(h){ var c={}; h.v.forEach(function(v){ if (S.split.ids[v.id]){ var w=lastWord(v.name); c[w]=(c[w]||0)+1; } }); return Object.keys(c).sort(function(a,b){ return c[b]-c[a]; })[0]||''; }
 function renderHouse(){
   var h = S.hById[S.openHouse]; if(!h) return;
   $('hTitle').textContent = '🏠 ఇంటి నం. '+h.house;
@@ -905,7 +927,7 @@ function renderHouse(){
       mobileHtml(v)+issueHtml(v)+notesHtml(v)+
     '</div>';
   }).join('');
-  html += goneHtml(h);
+  html += goneHtml(h) + splitHtml(h);
   var idx = nextHouseIndex(h);
   html += '<button class="next" data-next="1">'+(idx>=0?'తర్వాతి ఇల్లు → <span style="font-weight:400">Next house</span>':'← జాబితాకు వెళ్ళండి · Back to list')+'</button>';
   $('hBody').innerHTML = html;
@@ -1056,6 +1078,20 @@ function nextHouseIndex(h){
 $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
   if (e.target.closest('a')) return;                       // call / family links work as links
+  if (e.target.closest('[data-split]')){ if (isRO()){ roToast(); return; } S.split={ids:{}, name:'', typed:false}; renderHouse(); return; }
+  if (e.target.closest('[data-spcancel]')){ S.split=null; renderHouse(); return; }
+  var sp=e.target.closest('[data-sp]');
+  if (sp && S.split){ var sid=sp.dataset.sp; if (S.split.ids[sid]) delete S.split.ids[sid]; else S.split.ids[sid]=1; if (!S.split.typed) S.split.name=splitName(h); renderHouse(); return; }
+  if (e.target.closest('[data-spsave]') && S.split){
+    var nm=String(S.split.name||'').replace(/[|]/g,' ').trim().slice(0,30), moved=h.v.filter(function(v){ return S.split.ids[v.id]; });
+    if (!nm){ toast('కుటుంబం పేరు రాయండి · Type a name'); return; }
+    if (!moved.length || moved.length===h.v.length) return;
+    moved.forEach(function(v){ edit(v,{hh:nm}); }); S.split=null; buildHouses();
+    toast('✂️ వేరు చేశాం: '+h.door+' · '+nm); renderList(); renderHouse(); return; }
+  if (e.target.closest('[data-hjoin]')){
+    if (isRO()){ roToast(); return; }
+    var back=h.v.slice(), door=h.v[0]; back.forEach(function(v){ edit(v,{hh:''}); }); buildHouses();
+    S.openHouse = hkOf(door); toast('🔗 మళ్ళీ కలిపాం · Joined'); renderList(); renderHouse(); return; }
   var vx=e.target.closest('[data-vexp]');
   if (vx){ var id=vx.dataset.vexp; S.vexp = S.vexp===id ? null : id; renderHouse();
     var card=document.querySelector('#hBody [data-id="'+id.replace(/"/g,'')+'"]'); if (card && S.vexp) card.scrollIntoView({block:'start', behavior:'smooth'}); return; }
@@ -1139,6 +1175,7 @@ $('hBody').addEventListener('change',function(e){
 });
 var mT={};
 $('hBody').addEventListener('input',function(e){
+  if(e.target.dataset.spname && S.split){ S.split.name=e.target.value; S.split.typed=true; return; }
   if(e.target.dataset.lq){ var box=$('lsug'); if(box) box.innerHTML=leaderSugHtml(e.target.value); return; }
   if(!e.target.dataset.mobile) return;
   var inp=e.target, card=inp.closest('[data-id]'), id=card.dataset.id, hint=card.querySelector('[data-mhint]');

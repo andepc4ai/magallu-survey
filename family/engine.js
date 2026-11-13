@@ -51,7 +51,7 @@ var FamilyEngine = (function () {
         support: r[10] || '', visited: r[11] || '', caste: String(r[12] || ''), mobile: String(r[13] || ''), leader: String(r[14] || ''), fhead: String(r[15] || '') === 'Yes', gone: '', r26: '', vote: true };
       var rm = String(r[16] || '');   // removed in 2026: dead / duplicate lose the vote, others still vote on the 2025 list
       if (rm) { if (/expired/i.test(rm)) { p.gone = rm; p.vote = false; } else p.r26 = rm; }
-      p.sc = canon(p.sur); p.k = key(p.name, p.sur); p.hk = p.booth + '|' + p.house;
+      p.sc = canon(p.sur); p.k = key(p.name, p.sur); p.hk = p.booth + '|' + p.house + (r[17] ? '|' + r[17] : '');   // a split household is its own house
       P[p.id] = p; list.push(p);
     });
     // index by surname + name key
