@@ -10,7 +10,7 @@
 body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",system-ui,sans-serif;font-size:16px}
 button,input,select{font:inherit;color:inherit}
 a{color:inherit}
-.hide{display:none!important}
+.hide{display:none!important}.wbad{color:#854d0e;background:#fef9c3;border-radius:6px;padding:0 5px;font-size:.85rem}
 .top{position:sticky;top:0;z-index:5;background:#FACC15;color:#1c1917;padding:10px 14px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .top .r{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
 .top h1{margin:0;font-size:1.08rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -234,6 +234,8 @@ $('reload').onclick=function(){ load(true); };
 
 /* ---------- helpers ---------- */
 function P(id){ return M.P[id]; }
+// a family's ward = the ward most of its mapped voters live in ('none' if no house is mapped yet)
+function famWard(f){ var c={}, best='none', n=0; f.members.forEach(function(id){ var p=P(id); if (p.vote && p.ward){ c[p.ward]=(c[p.ward]||0)+1; if (c[p.ward]>n){ n=c[p.ward]; best=p.ward; } } }); return best; }
 function famOf(id){ return M.families.filter(function(f){ return f.members.indexOf(id)>=0; })[0]; }
 function supCounts(f){ var c={}; SUP.forEach(function(s){ c[s[0]]=0; }); Object.keys(f.support).forEach(function(k){ c[k==='-'||!c.hasOwnProperty(k)?'none':k]+=f.support[k]; }); return c; }
 function barHtml(f){ var c=supCounts(f), t=f.voters||1;
@@ -339,7 +341,7 @@ function renderList(){
     return '<button class="chip'+(String(F.booth)===String(b)?' on':'')+'" data-booth="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
   var hasWard = fams.some(function(f){ return f.members.some(function(id){ var p=P(id); return p.vote && p.ward; }); });
   hasWard = true;   // always show the ward chips (houses without a ward are under 'లేదు')
-  var fn={}; fams.forEach(function(f){ var seen={}; f.members.forEach(function(id){ var p=P(id); if (p.vote){ var w=p.ward||'none'; if(!seen[w]){ seen[w]=1; fn[w]=(fn[w]||0)+1; } } }); });
+  var fn={}; fams.forEach(function(f){ if (f.voters>=2){ var w=famWard(f); fn[w]=(fn[w]||0)+1; } });
   var wb=$('wtogFam'); wb.className='wtog'+(F.wsel.length?' act':'');
   wb.innerHTML='📍 వార్డు <span class="wv">'+(F.wsel.length?F.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'అన్నీ · All')+'</span><span class="wc">'+(F.wopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('wardChips').classList.toggle('hide', !F.wopen);
@@ -347,7 +349,7 @@ function renderList(){
     ['1','2','3','4','5','6','7','8','9','10','11','12','none'].map(function(w){ return '<button class="chip'+(F.wsel.indexOf(w)>=0?' on':'')+'" data-fw="'+w+'">'+(w==='none'?'లేదు':w)+'<small>'+(fn[w]||0)+' కుటుంబాలు</small></button>'; }).join('');
   var q = F.q;
   var list = fams.filter(function(f){
-    if (F.wsel.length && !f.members.some(function(id){ var p=P(id); return p.vote && F.wsel.indexOf(p.ward||'none')>=0; })) return false;
+    if (F.wsel.length && F.wsel.indexOf(famWard(f))<0) return false;
     if (F.swing) { if (!undecided(f)) return false; }
     else if (F.check ? !f.check : (!q && f.voters < F.size)) return false;
     var ms = f.members.map(P);
@@ -374,7 +376,7 @@ function renderList(){
     var h=famHead(f)||P(f.head);
     return '<div class="fc" role="button" data-fam="'+esc(f.head)+'"'+(q&&f._hit?' data-me="'+esc(f._hit.id)+'"':'')+'><b>'+esc(displayName(h))+'</b>'+(h.vote?'':h.gone?' <span class="warnb" style="background:#fee2e2;color:#b91c1c">✕ '+esc(goneTe(h.gone))+'</span>':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
       (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+(q&&f._hit&&f._hit.id!==f.head?'<div class="hit">🔎 '+esc(displayName(f._hit))+(f._hit.house?' · 🏠 '+esc(f._hit.house):'')+'</div>':'')+(undecided(f)?'<span class="swing">🎯 '+undecided(f)+' తేల్చలేదు</span>':'')+
-      '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
+      '<div class="m">'+(famWard(f)!=='none'?'<b class="wbad">📍 వార్డు '+famWard(f)+'</b> · ':'')+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+
       '<div class="sbar">'+barHtml(f)+'</div><div class="leg">'+legHtml(f)+'</div>'+contactHtml(f)+(famHead(f)?'<div class="lmini" style="color:#854d0e">👑 కుటుంబ పెద్ద: <b>'+esc(famHead(f).name)+'</b></div>':'')+(famLeader(f)?'<div class="lmini">👤 నాయకుడు: <b>'+esc(leaderName(famLeader(f)))+'</b></div>':'')+'</div>';
   }).join('') + (list.length>F.limit?'<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>':'');
 }
