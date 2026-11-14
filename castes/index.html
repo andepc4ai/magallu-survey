@@ -41,6 +41,7 @@ select.cs.big{width:100%;height:52px;font-size:1.05rem}
 .hh .hd span{color:#6b665c;font-weight:400}
 .pp{padding:10px 12px;border-top:1px solid #f0ebe1}
 .pp b{display:block}.pp span{color:#6b665c;font-size:.85rem}
+.clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .retry{margin-top:12px;height:46px;border:0;border-radius:10px;background:#6d28d9;color:#fff;padding:0 18px;font-weight:700}
 </style>
 </head>
@@ -234,6 +235,18 @@ document.querySelector('.tabs').onclick=function(e){
 var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); Q=Fuzzy.query(q); renderList(); },150); };
 window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
 
+
+/* ✕ button inside a search box: clears it in one tap */
+function addClear(inp){
+  if (!inp || inp.dataset.clr) return; inp.dataset.clr = 1;
+  var w = document.createElement('span'); w.className = 'clrw'; inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'clrx'; b.textContent = '✕'; b.setAttribute('aria-label', 'Clear'); w.appendChild(b);
+  function upd(){ b.style.display = inp.value ? 'flex' : 'none'; }
+  inp.addEventListener('input', upd);
+  b.onclick = function(){ inp.value = ''; inp.dispatchEvent(new Event('input', {bubbles:true})); upd(); inp.focus(); };
+  upd();
+}
+addClear($('q'));
 // admins only: uses the login saved by the app on this phone
 var ME = null; try { ME = JSON.parse(localStorage.getItem('mvs_user')); } catch(e){}
 var WHO = ME && ME.name && ME.pin ? [ME.name, ME.pin] : ['', ''];

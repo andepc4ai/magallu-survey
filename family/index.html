@@ -52,6 +52,8 @@ a{color:inherit}
 .pc.nv{border-style:dashed;background:#f8f7f4;color:#6b665c}
 .pc.me{border-color:#0f766e;box-shadow:0 0 0 2px #99f6e4}
 .pc.chk{border-color:#f59e0b}
+#wardChips{flex-wrap:wrap}.wlab{align-self:center;font-weight:700;font-size:.85rem;margin-right:2px}#wardChips .chip{min-width:40px;text-align:center}
+.clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .pc.r26{border-left:5px solid #f97316}.pc .r26t{color:#c2410c;font-weight:700}
 .pc.gone{border:2px solid #fecaca;border-left:5px solid #dc2626;background:#fef2f2;color:#7f1d1d}.pc.gone b{text-decoration:line-through;text-decoration-color:rgba(127,29,29,.4)}.pc.gone span{color:#b91c1c}
 .pc.fh{border-color:#ca8a04;background:#fef9c3;box-shadow:0 0 0 2px #fde047}
@@ -119,6 +121,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
     <input id="q" class="f" type="search" placeholder="పేరు / ఇంటిపేరు / ఇంటి నం. వెతకండి">
     <div class="chips" id="sizeChips"></div>
     <div class="chips" id="boothChips"></div>
+    <div class="chips" id="wardChips"></div>
     <div class="count" id="lcount"></div>
     <div id="flist"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
@@ -174,7 +177,7 @@ function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text
 
 var U = LS.get('mvs_user');           // shared with the volunteer app
 var TE = {}, DATA = null, M = null, links = {}, queue = {}, busy = false, PK = null;  // PK = open picker {slot, as}
-var F = { q:'', size:2, booth:'all', check:false, sur:'', limit:40 }, scrolls = {};
+var F = { q:'', size:2, booth:'all', wsel:[], check:false, sur:'', limit:40 }, scrolls = {};
 
 fetch('te_surnames.json').then(function(r){ return r.json(); }).then(function(j){ TE=j; if (M) route(); }).catch(function(){});
 function tes(s){ return TE[s] || ''; }
@@ -329,8 +332,12 @@ function renderList(){
   var booths={}; fams.forEach(function(f){ f.members.forEach(function(id){ var p=P(id); if(p.vote) booths[p.booth]=1; }); });
   $('boothChips').innerHTML = ['all'].concat(Object.keys(booths).sort()).map(function(b){
     return '<button class="chip'+(String(F.booth)===String(b)?' on':'')+'" data-booth="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
+  var hasWard = fams.some(function(f){ return f.members.some(function(id){ var p=P(id); return p.vote && p.ward; }); });
+  $('wardChips').innerHTML = hasWard ? '<span class="wlab">వార్డు</span><button class="chip'+(F.wsel.length?'':' on')+'" data-fw="all">అన్నీ</button>'+
+    ['1','2','3','4','5','6','7','8','9','10','11','12','none'].map(function(w){ return '<button class="chip'+(F.wsel.indexOf(w)>=0?' on':'')+'" data-fw="'+w+'">'+(w==='none'?'లేదు':w)+'</button>'; }).join('') : '';
   var q = F.q;
   var list = fams.filter(function(f){
+    if (F.wsel.length && !f.members.some(function(id){ var p=P(id); return p.vote && F.wsel.indexOf(p.ward||'none')>=0; })) return false;
     if (F.swing) { if (!undecided(f)) return false; }
     else if (F.check ? !f.check : (!q && f.voters < F.size)) return false;
     var ms = f.members.map(P);
@@ -364,6 +371,8 @@ function renderList(){
 $('sizeChips').onclick=function(e){ var b=e.target.closest('button'); if(!b) return;
   if (b.dataset.swing){ F.swing=!F.swing; F.check=false; }
   else if (b.dataset.chk){ F.check=!F.check; F.swing=false; } else { F.size=Number(b.dataset.size); F.check=false; F.swing=false; } F.limit=40; renderList(); };
+$('wardChips').onclick=function(e){ var b=e.target.closest('[data-fw]'); if(!b) return; var w=b.dataset.fw;
+  if (w==='all') F.wsel=[]; else { var i=F.wsel.indexOf(w); if (i>=0) F.wsel.splice(i,1); else F.wsel.push(w); } F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
 var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.Q=Fuzzy.query(F.q); F.limit=40; renderList(); },200); };
 $('flist').onclick=function(e){
@@ -526,6 +535,18 @@ function route(){
 }
 window.addEventListener('hashchange', route);
 
+
+/* ✕ button inside a search box: clears it in one tap */
+function addClear(inp){
+  if (!inp || inp.dataset.clr) return; inp.dataset.clr = 1;
+  var w = document.createElement('span'); w.className = 'clrw'; inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'clrx'; b.textContent = '✕'; b.setAttribute('aria-label', 'Clear'); w.appendChild(b);
+  function upd(){ b.style.display = inp.value ? 'flex' : 'none'; }
+  inp.addEventListener('input', upd);
+  b.onclick = function(){ inp.value = ''; inp.dispatchEvent(new Event('input', {bubbles:true})); upd(); inp.focus(); };
+  upd();
+}
+addClear($('q'));
 if (U && U.name && U.pin) load(false); else showLogin('');
 })();
 </script>

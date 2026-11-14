@@ -38,6 +38,7 @@ button,input,select{font:inherit;color:inherit}
 .wb.set{border:2px solid #16a34a;background:#dcfce7;color:#14532d;font-size:1.05rem}
 .wb.mix{border:2px solid #d97706;background:#fef3c7;color:#92400e;font-size:.8rem}
 .hs.flash{background:#dcfce7}
+.clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .msg{text-align:center;color:#6b665c;padding:40px 10px}
 .more{width:100%;height:48px;border:2px dashed #e5dfd2;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
 .st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
@@ -171,6 +172,18 @@ $('list').onclick = function(e){
   if (!W){ st('bad','👆 ముందు పైన వార్డు నంబర్ ఎంచుకోండి · Pick a ward first'); $('wg').scrollIntoView(); return; }
   setWard([h], hWard(h)===String(W) ? '' : W);
 };
+
+/* ✕ button inside a search box: clears it in one tap */
+function addClear(inp){
+  if (!inp || inp.dataset.clr) return; inp.dataset.clr = 1;
+  var w = document.createElement('span'); w.className = 'clrw'; inp.parentNode.insertBefore(w, inp); w.appendChild(inp);
+  var b = document.createElement('button'); b.type = 'button'; b.className = 'clrx'; b.textContent = '✕'; b.setAttribute('aria-label', 'Clear'); w.appendChild(b);
+  function upd(){ b.style.display = inp.value ? 'flex' : 'none'; }
+  inp.addEventListener('input', upd);
+  b.onclick = function(){ inp.value = ''; inp.dispatchEvent(new Event('input', {bubbles:true})); upd(); inp.focus(); };
+  upd();
+}
+addClear($('q'));
 buildWG(); load();
 })();
 </script>
