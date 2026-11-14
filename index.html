@@ -301,7 +301,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 14:50</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 15:10</b></div>
   </div>
 </section>
 
@@ -353,6 +353,7 @@ details.dcard[open]>summary{margin-bottom:10px}
   </div>
   <div class="wrap">
     <div class="chips" id="pBooth"></div>
+    <div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>
     <div class="chips wchips" id="pWard"></div>
     <div class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="pq" type="search" inputmode="search" placeholder="క్రమ సంఖ్య / పేరు / ఇంటి నం. · Serial no. or name"></div>
@@ -762,12 +763,17 @@ function wardChoices(){
   if (my.length) return my.sort(function(a,b){ return a-b; });
   var out=[]; for (var i=1;i<=S.wards;i++) out.push(String(i)); return out;
 }
+// the one ward-filter look used everywhere: అన్నీ + 1..12 + లేదు, number big, count small
+function wChips(attr, sel, ch, n, unit){
+  return '<button class="chip'+(sel.length?'':' on')+'" '+attr+'="all">అన్నీ<small>All</small></button>' +
+    ch.map(function(w){ return '<button class="chip'+(sel.indexOf(w)>=0?' on':'')+'" '+attr+'="'+w+'">'+(w==='none'?'లేదు':w)+'<small>'+(n[w]||0)+' '+unit+'</small></button>'; }).join('');
+}
+var WLAB = '<div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>';
 function buildWardChips(){
   var n = {}; S.houses.forEach(function(h){ if ((S.booth==='all'||String(h.booth)===String(S.booth))){ var w=hWard(h); n[w]=(n[w]||0)+1; } });
   var ch = wardChoices(); if (n.none) ch = ch.concat('none');
   S.wsel = S.wsel.filter(function(w){ return ch.indexOf(w)>=0; });
-  $('wardChips').innerHTML = '<button class="chip'+(S.wsel.length?'':' on')+'" data-wd="all">అన్నీ<small>All</small></button>' +
-    ch.map(function(w){ return '<button class="chip'+(S.wsel.indexOf(w)>=0?' on':'')+'" data-wd="'+w+'">'+(w==='none'?'వార్డు లేదు':w)+'<small>'+(n[w]||0)+' ఇళ్ళు</small></button>'; }).join('');
+  $('wardChips').innerHTML = wChips('data-wd', S.wsel, ch, n, 'ఇళ్ళు');
 }
 function buildFilters(){
   var booths = {}; S.rows.forEach(function(v){booths[v.booth]=1;});
@@ -1308,7 +1314,8 @@ function renderPoll(){
   $('pBooth').innerHTML=['all'].concat(Object.keys(booths).sort()).map(function(b){ return '<button class="chip'+(String(P.booth)===String(b)?' on':'')+'" data-pb="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
   var pch=wardChoices(); if (S.houses.some(function(h){ return hWard(h)==='none'; })) pch=pch.concat('none');
   P.wsel=(P.wsel||[]).filter(function(w){ return pch.indexOf(w)>=0; });
-  $('pWard').innerHTML='<span class="wlab">వార్డు</span><button class="chip'+(P.wsel.length?'':' on')+'" data-pw="all">అన్నీ</button>'+pch.map(function(w){ return '<button class="chip'+(P.wsel.indexOf(w)>=0?' on':'')+'" data-pw="'+w+'">'+(w==='none'?'లేదు':w)+'</button>'; }).join('');
+  var pn={}; S.rows.forEach(function(v){ if (P.booth==='all' || String(v.booth)===String(P.booth)){ var w=hWard(v._h); pn[w]=(pn[w]||0)+1; } });
+  $('pWard').innerHTML = wChips('data-pw', P.wsel, pch, pn, 'ఓటర్లు');
   var inB=S.rows.filter(function(v){ return (P.booth==='all' || String(v.booth)===String(P.booth)) && (!P.wsel.length || P.wsel.indexOf(hWard(v._h))>=0); });
   var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(isSup), supV=sup.filter(function(v){ return v.voted; }).length;
   $('pTxt').innerHTML='ఓటు వేశారు <b>'+voted+' / '+inB.length+'</b> ('+pct(voted,inB.length)+'%) · మన వాళ్ళు <b>'+supV+' / '+sup.length+'</b>';
@@ -1371,8 +1378,7 @@ function dfHtml(){
   var sum = dfActive() ? [f.w.length?'వార్డు '+f.w.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'', f.b!=='all'?'బూత్ '+f.b:'', f.s!=='all'?f.s:''].filter(String).join(' · ') : 'అన్నీ · All';
   return '<details class="dcard dfil"'+(dfActive()||S.dashOpen.dfil!==false?' open':'')+' data-dk="dfil"><summary><h3>🔎 ఫిల్టర్లు <span class="en">'+esc(sum)+'</span></h3></summary>'+
     '<div class="dleg" style="margin:0 0 8px">ఈ ఫిల్టర్లు డాష్‌బోర్డ్‌కు మాత్రమే · Only for this dashboard</div>'+
-    '<div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div><div class="chips wchips">'+
-    '<button class="chip'+(f.w.length?'':' on')+'" data-dfw="all">అన్నీ</button>'+ch.map(function(w){ return '<button class="chip'+(f.w.indexOf(w)>=0?' on':'')+'" data-dfw="'+w+'">'+(w==='none'?'వార్డు లేదు':w)+'</button>'; }).join('')+'</div>'+
+    WLAB+'<div class="chips wchips">'+wChips('data-dfw', f.w, ch, (function(){ var n={}; S.houses.forEach(function(h){ if ((f.b==='all'||String(h.booth)===String(f.b)) && (f.s==='all'||h.sec===f.s)){ var w=hWard(h); n[w]=(n[w]||0)+1; } }); return n; })(), 'ఇళ్ళు')+'</div>'+
     '<div class="selrow"><select class="field" data-dfb="1"><option value="all">అన్ని బూత్‌లు</option>'+Object.keys(bs).sort().map(function(b){ return '<option value="'+esc(b)+'"'+(String(f.b)===String(b)?' selected':'')+'>బూత్ '+esc(b)+'</option>'; }).join('')+'</select>'+
     '<select class="field" data-dfs="1"><option value="all">అన్ని వీధులు · All streets</option>'+Object.keys(ss).sort().map(function(x){ return '<option value="'+esc(x)+'"'+(f.s===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('')+'</select></div>'+
     (dfActive()?'<button class="dclr" data-dfclr="1" style="width:100%;margin-top:4px">✕ ఫిల్టర్లు తీసేయి · Clear filters</button>':'')+'</details>';

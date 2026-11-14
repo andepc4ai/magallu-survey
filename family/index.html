@@ -52,7 +52,10 @@ a{color:inherit}
 .pc.nv{border-style:dashed;background:#f8f7f4;color:#6b665c}
 .pc.me{border-color:#0f766e;box-shadow:0 0 0 2px #99f6e4}
 .pc.chk{border-color:#f59e0b}
-#wardChips{flex-wrap:wrap}.wlab{align-self:center;font-weight:700;font-size:.85rem;margin-right:2px}#wardChips .chip{min-width:40px;text-align:center}
+.flab{font-weight:700;font-size:.95rem;margin:4px 2px 6px}.flab .en{color:#6b665c;font-size:.78em;font-weight:400}
+.wchips{flex-wrap:wrap;overflow:visible;gap:6px}
+.wchips .chip{min-width:48px;padding:5px 10px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:1.02rem}
+.wchips .chip small{font-weight:400;font-size:.66rem;opacity:.75}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .pc.r26{border-left:5px solid #f97316}.pc .r26t{color:#c2410c;font-weight:700}
 .pc.gone{border:2px solid #fecaca;border-left:5px solid #dc2626;background:#fef2f2;color:#7f1d1d}.pc.gone b{text-decoration:line-through;text-decoration-color:rgba(127,29,29,.4)}.pc.gone span{color:#b91c1c}
@@ -121,7 +124,8 @@ label{display:block;font-weight:700;margin:14px 0 6px}
     <input id="q" class="f" type="search" placeholder="పేరు / ఇంటిపేరు / ఇంటి నం. వెతకండి">
     <div class="chips" id="sizeChips"></div>
     <div class="chips" id="boothChips"></div>
-    <div class="chips" id="wardChips"></div>
+    <div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>
+    <div class="chips wchips" id="wardChips"></div>
     <div class="count" id="lcount"></div>
     <div id="flist"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
@@ -334,8 +338,9 @@ function renderList(){
     return '<button class="chip'+(String(F.booth)===String(b)?' on':'')+'" data-booth="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
   var hasWard = fams.some(function(f){ return f.members.some(function(id){ var p=P(id); return p.vote && p.ward; }); });
   hasWard = true;   // always show the ward chips (houses without a ward are under 'లేదు')
-  $('wardChips').innerHTML = hasWard ? '<span class="wlab">వార్డు</span><button class="chip'+(F.wsel.length?'':' on')+'" data-fw="all">అన్నీ</button>'+
-    ['1','2','3','4','5','6','7','8','9','10','11','12','none'].map(function(w){ return '<button class="chip'+(F.wsel.indexOf(w)>=0?' on':'')+'" data-fw="'+w+'">'+(w==='none'?'లేదు':w)+'</button>'; }).join('') : '';
+  var fn={}; fams.forEach(function(f){ var seen={}; f.members.forEach(function(id){ var p=P(id); if (p.vote){ var w=p.ward||'none'; if(!seen[w]){ seen[w]=1; fn[w]=(fn[w]||0)+1; } } }); });
+  $('wardChips').innerHTML = '<button class="chip'+(F.wsel.length?'':' on')+'" data-fw="all">అన్నీ<small>All</small></button>'+
+    ['1','2','3','4','5','6','7','8','9','10','11','12','none'].map(function(w){ return '<button class="chip'+(F.wsel.indexOf(w)>=0?' on':'')+'" data-fw="'+w+'">'+(w==='none'?'లేదు':w)+'<small>'+(fn[w]||0)+' కుటుంబాలు</small></button>'; }).join('');
   var q = F.q;
   var list = fams.filter(function(f){
     if (F.wsel.length && !f.members.some(function(id){ var p=P(id); return p.vote && F.wsel.indexOf(p.ward||'none')>=0; })) return false;
