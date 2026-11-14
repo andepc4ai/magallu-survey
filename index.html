@@ -301,7 +301,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 13:45</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 14:15</b></div>
   </div>
 </section>
 
@@ -1369,7 +1369,7 @@ function dfHtml(){
   var f=S.df, ch=wardChoices(); if (S.houses.some(function(h){ return hWard(h)==='none'; })) ch=ch.concat('none');
   var bs={}, ss={}; S.houses.forEach(function(h){ bs[h.booth]=1; if (f.b==='all'||String(h.booth)===String(f.b)) ss[h.sec]=1; });
   var sum = dfActive() ? [f.w.length?'వార్డు '+f.w.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'', f.b!=='all'?'బూత్ '+f.b:'', f.s!=='all'?f.s:''].filter(String).join(' · ') : 'అన్నీ · All';
-  return '<details class="dcard dfil"'+(dfActive()||S.dashOpen.dfil?' open':'')+' data-dk="dfil"><summary><h3>🔎 ఫిల్టర్లు <span class="en">'+esc(sum)+'</span></h3></summary>'+
+  return '<details class="dcard dfil"'+(dfActive()||S.dashOpen.dfil!==false?' open':'')+' data-dk="dfil"><summary><h3>🔎 ఫిల్టర్లు <span class="en">'+esc(sum)+'</span></h3></summary>'+
     '<div class="dleg" style="margin:0 0 8px">ఈ ఫిల్టర్లు డాష్‌బోర్డ్‌కు మాత్రమే · Only for this dashboard</div>'+
     '<div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div><div class="chips wchips">'+
     '<button class="chip'+(f.w.length?'':' on')+'" data-dfw="all">అన్నీ</button>'+ch.map(function(w){ return '<button class="chip'+(f.w.indexOf(w)>=0?' on':'')+'" data-dfw="'+w+'">'+(w==='none'?'వార్డు లేదు':w)+'</button>'; }).join('')+'</div>'+

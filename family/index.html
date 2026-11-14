@@ -333,6 +333,7 @@ function renderList(){
   $('boothChips').innerHTML = ['all'].concat(Object.keys(booths).sort()).map(function(b){
     return '<button class="chip'+(String(F.booth)===String(b)?' on':'')+'" data-booth="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
   var hasWard = fams.some(function(f){ return f.members.some(function(id){ var p=P(id); return p.vote && p.ward; }); });
+  hasWard = true;   // always show the ward chips (houses without a ward are under 'లేదు')
   $('wardChips').innerHTML = hasWard ? '<span class="wlab">వార్డు</span><button class="chip'+(F.wsel.length?'':' on')+'" data-fw="all">అన్నీ</button>'+
     ['1','2','3','4','5','6','7','8','9','10','11','12','none'].map(function(w){ return '<button class="chip'+(F.wsel.indexOf(w)>=0?' on':'')+'" data-fw="'+w+'">'+(w==='none'?'లేదు':w)+'</button>'; }).join('') : '';
   var q = F.q;
