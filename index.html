@@ -118,6 +118,16 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .lclr.cls{color:var(--muted);border-color:var(--line)}
 .vdet .vage{color:var(--muted);font-size:.8rem}
 .vdet{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;max-height:2.7em;-webkit-box-orient:vertical;overflow:hidden;font-size:.76rem;color:#57534e;line-height:1.35;margin-top:2px}
+.dview{display:flex;gap:6px;margin:12px 0 4px;background:#e7e5e4;border-radius:12px;padding:4px}
+.dview button{flex:1;border:0;background:transparent;border-radius:9px;min-height:42px;font-weight:700;font-size:.95rem;color:#57534e}
+.dview button small{font-weight:400;font-size:.72rem;margin-left:3px}.dview button.on{background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.hc{display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.hr .hl{display:flex;align-items:baseline;gap:6px;font-size:.88rem;margin-bottom:3px}.hr .hl b{font-weight:700}.hr .hl small{color:var(--muted);font-size:.72rem}
+.hbw{display:flex;align-items:center;gap:8px}.hbt{display:flex;gap:2px;height:16px;min-width:0}
+.hbt i{display:block;height:100%;min-width:3px;cursor:pointer}.hbt i:first-child{border-radius:4px 0 0 4px}.hbt i:last-child{border-radius:0 4px 4px 0}.hbt i:only-child{border-radius:4px}
+.hv{flex:none;font-size:.85rem;white-space:nowrap}.hv small{color:var(--muted);font-size:.7rem;margin-left:4px}
+.hleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.75rem;color:#57534e;margin:2px 0 6px}.hleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.dt i.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 .appver{text-align:center;color:var(--muted);font-size:.78rem;margin:18px 0 0}
 .q.qh{cursor:pointer;margin-left:-6px;margin-right:-6px;padding:6px;border-radius:10px}.q.qh:active{background:#f5f5f4}
 .splitb{width:100%;margin:0 0 12px;min-height:46px;border:2px dashed #d6d0c2;background:transparent;border-radius:12px;font-weight:700;color:#57534e;font-size:.9rem}.splitb .en{font-weight:400}
@@ -288,7 +298,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 11:30</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 12:30</b></div>
   </div>
 </section>
 
@@ -526,7 +536,7 @@ var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్�
 var S = {
   user: LS.get('user'),           // {name,pin,booth,wards}
   rows: [], byId:{}, houses:[], hById:{},
-  dashMore: {}, dashOpen: {},
+  dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
   booth: 'all', sec: 'all', wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
   pending: LS.get('pending') || {}, // id -> {s,r,e,f}
   inflight: false, online: navigator.onLine !== false,
@@ -1332,7 +1342,8 @@ $('tDash').onclick=function(e){ e.preventDefault(); openDash(); };
 $('btnDashBack').onclick=function(){ $('vDash').classList.add('hide'); document.body.style.overflow=''; };
 
 /* ---------- dashboard: admin sees everything, a volunteer sees their wards ---------- */
-var SUPC = [['Strong','పూర్తి మద్దతు','var(--strong)'],['Leaning','మొగ్గు','var(--leaning)'],['Undecided','తేల్చలేదు','var(--undecided)'],['Opposed','వ్యతిరేకం','var(--opposed)'],['','అడగలేదు','#cbd5e1']];
+// dashboard chart colours (validated for colour-blind separation; house-screen buttons keep their own colours)
+var SUPC = [['Strong','పూర్తి మద్దతు','#15803d'],['Leaning','మొగ్గు','#a3e635'],['Undecided','తేల్చలేదు','#f97316'],['Opposed','వ్యతిరేకం','#b91c1c'],['','అడగలేదు','#cbd5e1']];
 function openDash(){
   $('vDash').classList.remove('hide'); $('vDash').scrollTop=0; document.body.style.overflow='hidden';
   S.dash = S.dash || null; renderDash();
@@ -1365,15 +1376,33 @@ function moreBtn(key, total, lim, label){
   if (total<=lim) return '';
   return '<button class="dmore" data-more="'+key+'">'+(S.dashMore[key]?'తక్కువ చూపించు · Show less':(label||'అన్నీ చూపించు')+' ('+total+')')+'</button>';
 }
+// ---- chart helpers: horizontal bars (chart view is the default; S.dview remembers the choice) ----
+function isChart(){ return S.dview!=='table'; }
+function supSegs(o){ return SUPC.map(function(x){ var n=x[0]?o[x[0]]:o.na; return [n, x[2], x[1]]; }); }
+// rows: [{label, sub, segs:[[n,colour,name]], tot, right}]  — bar length = tot / biggest tot
+function hChart(rows, unit){
+  var mx = Math.max.apply(null, rows.map(function(r){ return r.tot; }).concat([1]));
+  return '<div class="hc">'+rows.map(function(r){
+    var w = Math.max(r.tot?3:0, Math.round(100*r.tot/mx));
+    return '<div class="hr"><div class="hl"><b>'+r.label+'</b>'+(r.sub?'<small>'+r.sub+'</small>':'')+'</div>'+
+      '<div class="hbw"><div class="hbt" style="width:'+w+'%">'+r.segs.filter(function(g){ return g[0]>0; }).map(function(g){
+        return '<i style="flex:'+g[0]+';background:'+g[1]+'" title="'+esc(g[2])+': '+g[0]+'" data-tip="'+esc(g[2])+': '+g[0]+(unit?' '+unit:'')+'"></i>'; }).join('')+'</div>'+
+      '<span class="hv">'+r.right+'</span></div></div>'; }).join('')+'</div>';
+}
+function legendHtml(items){ return '<div class="hleg">'+items.map(function(x){ return '<span><i style="background:'+x[1]+'"></i>'+x[0]+'</span>'; }).join('')+'</div>'; }
+function supLegendSmall(){ return legendHtml(SUPC.map(function(x){ return [x[1], x[2]]; })); }
+var NEEDC = [['Open','తెరిచి','#d97706'],['In Progress','పని జరుగుతోంది','#2563eb'],['Solved','పూర్తైంది','#15803d']];
 // one table: label (+ support bar) | voters | visited % | 🎯 targets
 function dTable(key, te, en, groups, colTe, open, limit){
   groups = groups.filter(function(g){ return g.rows.length; });
   var shown = limit && !S.dashMore[key] ? groups.slice(0,limit) : groups;
   return '<details class="dcard"'+(open?' open':'')+' data-dk="'+key+'"><summary><h3>'+te+' <span class="en">'+en+' · '+groups.length+'</span></h3></summary>'+
-    '<table class="dt"><tr><th>'+colTe+'</th><th>ఓటర్లు</th><th>కలిశాం</th><th>🎯</th></tr>'+
+    (isChart() ? supLegendSmall()+hChart(shown.map(function(g){ var o=stat(g.rows);
+        return {label:g.label, sub:g.sub, segs:supSegs(o), tot:o.n, right:'<b>'+o.n+'</b><small>కలిశాం '+pct(o.vis,o.n)+'% · 🎯 '+o.tg+'</small>'}; }), 'ఓటర్లు')
+    : '<table class="dt"><tr><th>'+colTe+'</th><th>ఓటర్లు</th><th>కలిశాం</th><th>🎯</th></tr>'+
     shown.map(function(g){ var o=stat(g.rows);
       return '<tr><td><b>'+g.label+'</b>'+(g.sub?' <small>'+g.sub+'</small>':'')+supBar(o)+'</td><td>'+o.n+'</td><td>'+pct(o.vis,o.n)+'%<div class="mini"><i style="width:'+pct(o.vis,o.n)+'%"></i></div></td><td><b class="tg">'+o.tg+'</b></td></tr>'; }).join('')+
-    '</table>'+(limit?moreBtn(key, groups.length, limit):'')+
+    '</table>')+(limit?moreBtn(key, groups.length, limit):'')+
     '<div class="dleg">🎯 = దృష్టి పెట్టాల్సిన ఓటర్లు · target voters</div></details>';
 }
 function groupBy(rows, keyFn){ var g={}; rows.forEach(function(v){ var k=keyFn(v); (g[k]||(g[k]=[])).push(v); }); return g; }
@@ -1391,7 +1420,7 @@ function renderDash(){
   var V = S.dash ? S.dash.visits.filter(function(x){ return inS[x[2]]; }) : null;
   var wtxt = S.wsel.length ? 'వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(', ') : (adm ? 'అన్ని వార్డులు · All wards' : 'మీ వార్డులు · Your wards: '+((S.user.myWards||[]).join(', ')||'అన్నీ'));
   $('dSub').textContent = wtxt+' · '+total+' ఓటర్లు';
-  var h='';
+  var h='<div class="dview"><button class="'+(isChart()?'on':'')+'" data-dview="chart">📊 చార్ట్ <small>Chart</small></button><button class="'+(isChart()?'':'on')+'" data-dview="table">📋 పట్టిక <small>Table</small></button></div>';
   if (S.wsel.length) h += '<div class="dnote"><span>వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(', ')+' కి మాత్రమే ఈ లెక్కలు <span class="en">· filtered</span></span><button class="dclr" data-wclr="1">✕ అన్ని వార్డులు చూపించు</button></div>';
   // tiles
   var vToday = V ? V.filter(function(x){ return x[0]===today; }).length : null;
@@ -1419,14 +1448,19 @@ function renderDash(){
     h += '<div class="dcard"><h3>🗳️ పోలింగ్ <span class="en">Turnout</span></h3><div class="tiles" style="margin:0">'+tile(pct(nv,total)+'%','ఓటు వేశారు','Voted · '+nv+' / '+total)+tile(pct(spv,sp.length)+'%','మనవాళ్ళు వేశారు','Supporters · '+spv+' / '+sp.length)+'</div></div>'; }
   // support
   var so=stat(rows);
-  h += '<div class="dcard"><h3>మద్దతు <span class="en">Support</span></h3>'+supBar(so,'sbarD')+supLegend(so,total)+'</div>';
+  h += '<div class="dcard"><h3>మద్దతు <span class="en">Support</span></h3>'+(isChart()
+    ? supBar(so,'sbarD')+supLegend(so,total)
+    : '<table class="dt"><tr><th>మద్దతు</th><th>ఓటర్లు</th><th>%</th></tr>'+SUPC.map(function(x){ var n=x[0]?so[x[0]]:so.na; return '<tr><td><i class="sw" style="background:'+x[2]+'"></i>'+x[1]+'</td><td>'+n+'</td><td>'+pct(n,total)+'%</td></tr>'; }).join('')+'</table>')+'</div>';
   // 🎯 main target voters
   var und=so.Undecided, lean=so.Leaning, na=so.na, nvis=total-visited,
       yng=rows.filter(function(v){ return isYoung(v) && targetScore(v); }).length;
   var th = hs.map(function(x){ var t=x.v.filter(targetScore); return {h:x, t:t, s:t.reduce(function(a,v){ return a+targetScore(v); },0)}; })
     .filter(function(x){ return x.s; }).sort(function(a,b){ return b.s-a.s || b.h.v.length-a.h.v.length; });
   h += '<details class="dcard" open data-dk="tgt"><summary><h3>🎯 దృష్టి పెట్టాల్సిన ఓటర్లు <span class="en">Main target voters · '+so.tg+'</span></h3></summary>'+
-    '<div class="tiles t5">'+tile(und,'తేల్చలేదు','Undecided')+tile(lean,'మొగ్గు','Leaning')+tile(na,'అడగలేదు','Not asked')+tile(nvis,'కలవలేదు','Not visited')+tile(yng,'కొత్త / యువ','New / under 30')+tile(rows.filter(function(v){ return v.r26 && targetScore(v); }).length,'⚠ 2026 తొలగింపు','Removed 2026, still votes')+'</div>'+
+    (function(){ var r26n=rows.filter(function(v){ return v.r26 && targetScore(v); }).length;
+      var T=[['తేల్చలేదు','Undecided',und,'#f97316'],['మొగ్గు','Leaning',lean,'#a3e635'],['అడగలేదు','Not asked',na,'#94a3b8'],['కలవలేదు','Not visited',nvis,'#b45309'],['కొత్త / యువ','New / under 30',yng,'#7c3aed'],['⚠ 2026 తొలగింపు','Removed 2026, still votes',r26n,'#ea580c']];
+      return isChart() ? hChart(T.map(function(t){ return {label:t[0], sub:t[1], segs:[[t[2],t[3],t[0]]], tot:t[2], right:'<b>'+t[2]+'</b>'}; }), 'ఓటర్లు')
+        : '<div class="tiles t5">'+T.map(function(t){ return tile(t[2],t[0],t[1]); }).join('')+'</div>'; })()+
     '<div class="dsubh">ముందుగా వెళ్ళాల్సిన ఇళ్ళు <span class="en">Houses to visit first — tap to open</span></div>'+
     (th.length ? th.slice(0, S.dashMore.tgt?60:10).map(function(x){ var c=stat(x.t);
       return houseBtn(x.h, '🎯 '+x.t.length+' / '+x.h.v.length+(c.Undecided?' · తేల్చలేదు '+c.Undecided:'')+(c.Leaning?' · మొగ్గు '+c.Leaning:'')+(c.na?' · అడగలేదు '+c.na:'')); }).join('')+
@@ -1451,9 +1485,10 @@ function renderDash(){
   var bands=[[1,1,'1 ఓటరు'],[2,3,'2–3'],[4,6,'4–6'],[7,10,'7–10'],[11,999,'11+']];
   var big = hs.slice().sort(function(a,b){ return b.v.length-a.v.length; });
   h += '<details class="dcard" data-dk="house"><summary><h3>🏠 ఇంటి నంబర్ల వారీగా <span class="en">Houses by size · '+hs.length+'</span></h3></summary>'+
-    '<table class="dt"><tr><th>ఇంట్లో ఓటర్లు</th><th>ఇళ్ళు</th><th>ఓటర్లు</th><th>కలిశాం</th><th>🎯</th></tr>'+
-    bands.map(function(b){ var bh=hs.filter(function(x){ return x.v.length>=b[0] && x.v.length<=b[1]; }), r=[]; bh.forEach(function(x){ r=r.concat(x.v); }); var o=stat(r);
-      return bh.length?'<tr><td><b>'+b[2]+'</b>'+supBar(o)+'</td><td>'+bh.length+'</td><td>'+o.n+'</td><td>'+pct(o.vis,o.n)+'%</td><td><b class="tg">'+o.tg+'</b></td></tr>':''; }).join('')+'</table>'+
+    (function(){ var B=bands.map(function(b){ var bh=hs.filter(function(x){ return x.v.length>=b[0] && x.v.length<=b[1]; }), r=[]; bh.forEach(function(x){ r=r.concat(x.v); }); return {b:b, bh:bh, o:stat(r)}; }).filter(function(x){ return x.bh.length; });
+      return isChart() ? supLegendSmall()+hChart(B.map(function(x){ return {label:x.b[2], sub:x.bh.length+' ఇళ్ళు', segs:supSegs(x.o), tot:x.o.n, right:'<b>'+x.o.n+'</b><small>ఓటర్లు · 🎯 '+x.o.tg+'</small>'}; }), 'ఓటర్లు')
+      : '<table class="dt"><tr><th>ఇంట్లో ఓటర్లు</th><th>ఇళ్ళు</th><th>ఓటర్లు</th><th>కలిశాం</th><th>🎯</th></tr>'+
+        B.map(function(x){ var o=x.o; return '<tr><td><b>'+x.b[2]+'</b>'+supBar(o)+'</td><td>'+x.bh.length+'</td><td>'+o.n+'</td><td>'+pct(o.vis,o.n)+'%</td><td><b class="tg">'+o.tg+'</b></td></tr>'; }).join('')+'</table>'; })()+
     '<div class="dsubh">పెద్ద ఇళ్ళు <span class="en">Biggest houses — one visit, many votes</span></div>'+
     big.slice(0, S.dashMore.house?40:8).map(function(x){ var o=stat(x.v); return houseBtn(x, x.v.length+' ఓటర్లు · కలిశాం '+o.vis+(o.tg?' · 🎯 '+o.tg:'')); }).join('')+
     moreBtn('house', Math.min(big.length,40), 8, 'ఇంకా చూపించు')+'</details>';
@@ -1476,8 +1511,9 @@ function renderDash(){
     var days=[], cnt={}; for (var i=13;i>=0;i--){ var k=dayKey(Date.now()-i*DAY); days.push(k); cnt[k]=0; }
     V.forEach(function(x){ if (x[0] in cnt) cnt[x[0]]++; });
     var mx=Math.max.apply(null, days.map(function(k){ return cnt[k]; }))||1;
-    h += '<div class="dcard"><h3>రోజువారీ సందర్శనలు <span class="en">Visits per day · last 14 days</span></h3><div class="bars">'+
-      days.map(function(k){ var n=cnt[k]; return '<div class="bc" title="'+k+': '+n+' visits"><span class="bv">'+(n||'')+'</span><i style="height:'+Math.max(n?4:0,Math.round(n*110/mx))+'px"></i><span class="bl">'+Number(k.slice(8))+'</span></div>'; }).join('')+'</div></div>';
+    h += '<div class="dcard"><h3>రోజువారీ సందర్శనలు <span class="en">Visits per day · last 14 days</span></h3>'+(isChart()
+      ? '<div class="bars">'+days.map(function(k){ var n=cnt[k]; return '<div class="bc" title="'+k+': '+n+' visits" data-tip="'+k+': '+n+' సందర్శనలు"><span class="bv">'+(n||'')+'</span><i style="height:'+Math.max(n?4:0,Math.round(n*110/mx))+'px"></i><span class="bl">'+Number(k.slice(8))+'</span></div>'; }).join('')+'</div>'
+      : '<table class="dt"><tr><th>తేదీ</th><th>సందర్శనలు</th></tr>'+days.slice().reverse().map(function(k){ return '<tr><td>'+k+'</td><td>'+cnt[k]+'</td></tr>'; }).join('')+'</table>')+'</div>';
   } else h += '<div class="dcard">'+(S.dashErr?'📵 సందర్శనల వివరాలకు ఇంటర్నెట్ కావాలి':'⏳ సందర్శనలు లోడ్ అవుతున్నాయి…')+'</div>';
   // by volunteer
   if (V){
@@ -1485,12 +1521,18 @@ function renderDash(){
     V.forEach(function(x){ var o=by[x[1]]||(by[x[1]]={n:0,w:0,t:0,p:{}}); o.n++; o.p[x[2]]=1; if (x[0]===today) o.t++; if (new Date(x[0]).getTime()>=wk-DAY) o.w++; });
     var names=Object.keys(by); if (!adm) names=names.filter(function(n){ return n===S.user.name; });
     names.sort(function(a,b){ return by[b].w-by[a].w || by[b].n-by[a].n; });
-    h += '<div class="dcard"><h3>'+(adm?'వాలంటీర్ల వారీగా':'మీ పని')+' <span class="en">'+(adm?'By volunteer':'Your work')+'</span></h3><table class="dt"><tr><th>పేరు</th><th>ఈ రోజు</th><th>7 రోజులు</th><th>మొత్తం</th><th>కలిసిన ఓటర్లు</th></tr>'+
+    if (isChart() && names.length) h += '<div class="dcard"><h3>'+(adm?'వాలంటీర్ల వారీగా':'మీ పని')+' <span class="en">'+(adm?'Visits by volunteer':'Your work')+'</span></h3>'+
+      legendHtml([['7 రోజులు','#1d4ed8'],['అంతకు ముందు','#93c5fd']])+
+      hChart(names.map(function(n){ var o=by[n]; return {label:esc(n), sub:'ఈ రోజు '+o.t+' · కలిసిన ఓటర్లు '+Object.keys(o.p).length, segs:[[o.w,'#1d4ed8','7 రోజులు'],[Math.max(0,o.n-o.w),'#93c5fd','అంతకు ముందు']], tot:o.n, right:'<b>'+o.n+'</b><small>సందర్శనలు</small>'}; }), '')+'</div>';
+    else h += '<div class="dcard"><h3>'+(adm?'వాలంటీర్ల వారీగా':'మీ పని')+' <span class="en">'+(adm?'By volunteer':'Your work')+'</span></h3><table class="dt"><tr><th>పేరు</th><th>ఈ రోజు</th><th>7 రోజులు</th><th>మొత్తం</th><th>కలిసిన ఓటర్లు</th></tr>'+
       (names.length?names.map(function(n){ var o=by[n]; return '<tr><td>'+esc(n)+'</td><td>'+o.t+'</td><td>'+o.w+'</td><td>'+o.n+'</td><td>'+Object.keys(o.p).length+'</td></tr>'; }).join(''):'<tr><td colspan="5">ఇంకా సందర్శనలు లేవు</td></tr>')+'</table></div>';
   }
   // needs
   var ic={}; rows.forEach(function(v){ var st=istat(v); issues(v).forEach(function(x){ var o=ic[x]||(ic[x]={Open:0,'In Progress':0,Solved:0}); o[st[x]||'Open']++; }); });
-  h += '<div class="dcard"><h3>సమస్యలు <span class="en">Needs by status</span></h3><table class="dt"><tr><th>సమస్య</th><th>తెరిచి</th><th>పని జరుగుతోంది</th><th>పూర్తైంది</th></tr>'+
+  if (isChart() && Object.keys(ic).length) h += '<div class="dcard"><h3>సమస్యలు <span class="en">Needs by status</span></h3>'+legendHtml(NEEDC.map(function(c){ return [c[1], c[2]]; }))+
+    hChart(ISS.filter(function(x){ return ic[x.v]; }).map(function(x){ var o=ic[x.v], t=o.Open+o['In Progress']+o.Solved;
+      return {label:x.te, segs:NEEDC.map(function(c){ return [o[c[0]], c[2], c[1]]; }), tot:t, right:'<b>'+t+'</b><small>తెరిచి '+o.Open+'</small>'}; }), '')+'</div>';
+  else h += '<div class="dcard"><h3>సమస్యలు <span class="en">Needs by status</span></h3><table class="dt"><tr><th>సమస్య</th><th>తెరిచి</th><th>పని జరుగుతోంది</th><th>పూర్తైంది</th></tr>'+
     (Object.keys(ic).length?ISS.filter(function(x){ return ic[x.v]; }).map(function(x){ var o=ic[x.v]; return '<tr><td>'+x.te+'</td><td>'+o.Open+'</td><td>'+o['In Progress']+'</td><td>'+o.Solved+'</td></tr>'; }).join(''):'<tr><td colspan="4">ఇంకా సమస్యలు నమోదు కాలేదు</td></tr>')+'</table></div>';
   // leaders
   var withL=hs.filter(function(x){ return topLeader(x.v); }).length;
@@ -1500,6 +1542,8 @@ function renderDash(){
 }
 $('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk) S.dashOpen[d.dataset.dk]=d.open; }, true);
 $('dBody').onclick=function(e){
+  var dv=e.target.closest('[data-dview]'); if (dv){ S.dview=dv.dataset.dview; LS.set('dview',S.dview); renderDash(); return; }
+  var tp=e.target.closest('[data-tip]'); if (tp){ toast(tp.dataset.tip); return; }
   if (e.target.closest('[data-wclr]')){ S.wsel=[]; LS.set('wsel',S.wsel); buildFilters(); renderList(); renderDash(); return; }
   var m=e.target.closest('[data-more]'); if (m){ S.dashMore[m.dataset.more]=!S.dashMore[m.dataset.more]; renderDash(); return; }
   var b=e.target.closest('[data-h]'); if (b) openHouse(b.dataset.h);
