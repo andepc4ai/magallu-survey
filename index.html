@@ -302,7 +302,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 15:40</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 16:00</b></div>
   </div>
 </section>
 
@@ -542,7 +542,7 @@ var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్�
 var S = {
   user: LS.get('user'),           // {name,pin,booth,wards}
   rows: [], byId:{}, houses:[], hById:{},
-  df: LS.get('dfil') || {w:[], b:'all', s:'all'},
+  df: Object.assign({w:[], b:'all', s:'all', c:'all'}, LS.get('dfil') || {}),
   dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
   booth: 'all', sec: 'all', wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
   pending: LS.get('pending') || {}, // id -> {s,r,e,f}
@@ -1384,19 +1384,27 @@ function pct(a,b){ return b?Math.round(a*100/b):0; }
 function dayKey(t){ var d=new Date(t); return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2); }
 /* scope = houses in the wards picked on the house list (all wards when none picked) */
 function dfOk(h){ var f=S.df; return (!f.w.length || f.w.indexOf(hWard(h))>=0) && (f.b==='all' || String(h.booth)===String(f.b)) && (f.s==='all' || h.sec===f.s); }
-function dfActive(){ return S.df.w.length || S.df.b!=='all' || S.df.s!=='all'; }
+function dfActive(){ return S.df.w.length || S.df.b!=='all' || S.df.s!=='all' || S.df.c!=='all'; }
+function cOk(v){ var c=S.df.c; return c==='all' || (c==='none' ? !v.caste : v.caste===c); }   // caste filter is per voter
 function dfHtml(){
   var f=S.df, ch=wardChoices(); if (S.houses.some(function(h){ return hWard(h)==='none'; })) ch=ch.concat('none');
   var bs={}, ss={}; S.houses.forEach(function(h){ bs[h.booth]=1; if (f.b==='all'||String(h.booth)===String(f.b)) ss[h.sec]=1; });
-  var sum = dfActive() ? [f.w.length?'వార్డు '+f.w.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'', f.b!=='all'?'బూత్ '+f.b:'', f.s!=='all'?f.s:''].filter(String).join(' · ') : 'అన్నీ · All';
+  var sum = dfActive() ? [f.w.length?'వార్డు '+f.w.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'', f.b!=='all'?'బూత్ '+f.b:'', f.s!=='all'?f.s:'', f.c!=='all'?(f.c==='none'?'కులం నమోదు కాలేదు':(CASTE_TE[f.c]||f.c)):''].filter(String).join(' · ') : 'అన్నీ · All';
   return '<details class="dcard dfil"'+(S.dashOpen.dfil?' open':'')+' data-dk="dfil"><summary><h3>🔎 ఫిల్టర్లు <span class="en">'+esc(sum)+'</span></h3></summary>'+
     '<div class="dleg" style="margin:0 0 8px">ఈ ఫిల్టర్లు డాష్‌బోర్డ్‌కు మాత్రమే · Only for this dashboard</div>'+
     WLAB+'<div class="chips wchips">'+wChips('data-dfw', f.w, ch, (function(){ var n={}; S.houses.forEach(function(h){ if ((f.b==='all'||String(h.booth)===String(f.b)) && (f.s==='all'||h.sec===f.s)){ var w=hWard(h); n[w]=(n[w]||0)+1; } }); return n; })(), 'ఇళ్ళు')+'</div>'+
     '<div class="selrow"><select class="field" data-dfb="1"><option value="all">అన్ని బూత్‌లు</option>'+Object.keys(bs).sort().map(function(b){ return '<option value="'+esc(b)+'"'+(String(f.b)===String(b)?' selected':'')+'>బూత్ '+esc(b)+'</option>'; }).join('')+'</select>'+
     '<select class="field" data-dfs="1"><option value="all">అన్ని వీధులు · All streets</option>'+Object.keys(ss).sort().map(function(x){ return '<option value="'+esc(x)+'"'+(f.s===x?' selected':'')+'>'+esc(x)+'</option>'; }).join('')+'</select></div>'+
+    (function(){ var cs={}, none=0; S.rows.forEach(function(v){ if (v.caste) cs[v.caste]=(cs[v.caste]||0)+1; else none++; });
+      return '<select class="field" data-dfc="1" style="width:100%"><option value="all">అన్ని కులాలు · All castes</option>'+
+        Object.keys(cs).sort(function(a,b){ return cs[b]-cs[a]; }).map(function(c){ return '<option value="'+esc(c)+'"'+(f.c===c?' selected':'')+'>'+esc(CASTE_TE[c]||c)+' · '+esc(c)+' ('+cs[c]+')</option>'; }).join('')+
+        (none?'<option value="none"'+(f.c==='none'?' selected':'')+'>కులం నమోదు కాలేదు · Not updated ('+none+')</option>':'')+'</select>'; })()+
     (dfActive()?'<button class="dclr" data-dfclr="1" style="width:100%;margin-top:4px">✕ ఫిల్టర్లు తీసేయి · Clear filters</button>':'')+'</details>';
 }
-function dashScope(){ var hs=S.houses.filter(dfOk), rows=[]; hs.forEach(function(h){ rows=rows.concat(h.v); }); return {hs:hs, rows:rows}; }
+function dashScope(){
+  var hs=S.houses.filter(dfOk);
+  if (S.df.c!=='all') hs = hs.map(function(h){ var fv=h.v.filter(cOk); return fv.length ? {id:h.id, booth:h.booth, house:h.house, door:h.door, hh:h.hh, sec:h.sec, secNo:h.secNo, gone:h.gone, v:fv} : null; }).filter(Boolean);
+  var rows=[]; hs.forEach(function(h){ rows=rows.concat(h.v); }); return {hs:hs, rows:rows}; }
 function isYoung(v){ return !!v.isNew || (Number(v.age)>0 && Number(v.age)<30); }
 // main target voters: undecided 3, leaning 2, support not asked 1, +1 not visited, +1 new/young. Strong and opposed are not targets.
 function targetScore(v){
@@ -1586,11 +1594,12 @@ function renderDash(){
 }
 $('dBody').addEventListener('change', function(e){ var t=e.target;
   if (t.dataset.dfb){ S.df.b=t.value; S.df.s='all'; LS.set('dfil',S.df); renderDash(); }
-  else if (t.dataset.dfs){ S.df.s=t.value; LS.set('dfil',S.df); renderDash(); } });
+  else if (t.dataset.dfs){ S.df.s=t.value; LS.set('dfil',S.df); renderDash(); }
+  else if (t.dataset.dfc){ S.df.c=t.value; LS.set('dfil',S.df); renderDash(); } });
 $('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk) S.dashOpen[d.dataset.dk]=d.open; }, true);
 $('dBody').onclick=function(e){
   var dw=e.target.closest('[data-dfw]'); if (dw){ var w=dw.dataset.dfw; if (w==='all') S.df.w=[]; else { var i=S.df.w.indexOf(w); if (i>=0) S.df.w.splice(i,1); else S.df.w.push(w); } LS.set('dfil',S.df); renderDash(); return; }
-  if (e.target.closest('[data-dfclr]')){ S.df={w:[], b:'all', s:'all'}; LS.set('dfil',S.df); renderDash(); return; }
+  if (e.target.closest('[data-dfclr]')){ S.df={w:[], b:'all', s:'all', c:'all'}; LS.set('dfil',S.df); renderDash(); return; }
   var dv=e.target.closest('[data-dview]'); if (dv){ S.dview=dv.dataset.dview; LS.set('dview',S.dview); renderDash(); return; }
   var tp=e.target.closest('[data-tip]'); if (tp){ toast(tp.dataset.tip); return; }
   if (e.target.closest('[data-wclr]')){ S.wsel=[]; LS.set('wsel',S.wsel); buildFilters(); renderList(); renderDash(); return; }
