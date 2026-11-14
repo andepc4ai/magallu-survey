@@ -44,6 +44,7 @@ body.ro #hBody input,body.ro #hBody textarea{pointer-events:none;background:#f5f
 .selrow{display:flex;gap:8px}
 .selrow select.field{flex:1 1 0;min-width:0;padding:0 8px;font-size:.95rem}
 .selrow #boothSel{flex:0 0 38%}
+#casteSel{height:46px;font-size:.95rem;margin-top:0}#casteSel.act{border-color:#ca8a04;background:#fef9c3;font-weight:700}
 .iconbtn{background:rgba(0,0,0,.1);border:0;color:#1c1917;border-radius:10px;min-width:44px;height:40px;padding:0 10px;font-size:.9rem}
 .iconbtn.sq{flex:none;width:44px;padding:0;display:flex;align-items:center;justify-content:center}
 .prog{max-width:640px;margin:8px auto 0;display:flex;align-items:center;gap:10px;font-size:.88rem}
@@ -302,7 +303,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 16:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 16:20</b></div>
   </div>
 </section>
 
@@ -324,6 +325,7 @@ details.dcard[open]>summary{margin-bottom:10px}
     <button class="wtog" id="wtogList" data-wtog="list"></button>
     <div class="chips wchips hide" id="wardChips"></div>
     <div class="selrow"><select id="boothSel" class="field"></select><select id="secSel" class="field"></select></div>
+    <select id="casteSel" class="field"></select>
     <div class="chips" id="statChips"></div>
     <div class="count" id="count"></div>
     <div id="list"><div class="loading"><div class="spin"></div>డేటా లోడ్ అవుతోంది… <br><span class="en">Loading voters…</span></div></div>
@@ -544,7 +546,7 @@ var S = {
   rows: [], byId:{}, houses:[], hById:{},
   df: Object.assign({w:[], b:'all', s:'all', c:'all'}, LS.get('dfil') || {}),
   dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
-  booth: 'all', sec: 'all', wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
+  booth: 'all', sec: 'all', lcaste: LS.get('lcaste') || 'all', wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
   pending: LS.get('pending') || {}, // id -> {s,r,e,f}
   inflight: false, online: navigator.onLine !== false,
   openHouse: null, wards: 14,
@@ -757,7 +759,16 @@ setInterval(function(){ if(Object.keys(S.pending).length) flush(); }, 15000);
 /* ward of a house = first ward set on any of its voters; 'none' when no ward yet */
 function hWard(h){ for (var i=0;i<h.v.length;i++){ if (h.v[i].ward!=='' && h.v[i].ward!=null) return String(h.v[i].ward); } return 'none'; }
 function wardOk(h){ return !S.wsel.length || S.wsel.indexOf(hWard(h))>=0; }
-function inScope(h){ return (S.booth==='all'||String(h.booth)===String(S.booth)) && (S.sec==='all'||h.sec===S.sec) && wardOk(h); }
+// caste filter on the house list: houses with at least one voter of that caste ('none' = caste not updated)
+function lcOk(h){ var c=S.lcaste; return c==='all' || h.v.some(function(v){ return c==='none' ? !v.caste : v.caste===c; }); }
+function inScope(h){ return (S.booth==='all'||String(h.booth)===String(S.booth)) && (S.sec==='all'||h.sec===S.sec) && wardOk(h) && lcOk(h); }
+function buildCasteSel(){
+  var cs={}, none=0; S.rows.forEach(function(v){ if (v.caste) cs[v.caste]=(cs[v.caste]||0)+1; else none++; });
+  if (S.lcaste!=='all' && S.lcaste!=='none' && !cs[S.lcaste]) S.lcaste='all';
+  var el=$('casteSel'); el.classList.toggle('act', S.lcaste!=='all');
+  el.innerHTML='<option value="all">అన్ని కులాలు · All castes</option>'+Object.keys(cs).sort(function(a,b){ return cs[b]-cs[a]; }).map(function(c){ return '<option value="'+esc(c)+'"'+(S.lcaste===c?' selected':'')+'>'+esc(CASTE_TE[c]||c)+' · '+esc(c)+' ('+cs[c]+')</option>'; }).join('')+
+    (none?'<option value="none"'+(S.lcaste==='none'?' selected':'')+'>కులం నమోదు కాలేదు · Not updated ('+none+')</option>':'');
+}
 // wards this user may pick: admin (or no wards set) → all wards; volunteer → only their wards
 function wardChoices(){
   var my = (S.user && !S.user.admin && S.user.myWards || []).map(String).filter(Boolean);
@@ -788,6 +799,7 @@ function buildWardChips(){
   wTog('wtogList', 'wardChips', 'list', S.wsel);
 }
 function buildFilters(){
+  buildCasteSel();
   var booths = {}; S.rows.forEach(function(v){booths[v.booth]=1;});
   var bl = ['all'].concat(Object.keys(booths).sort());
   if (bl.indexOf(String(S.booth))<0) S.booth='all';
@@ -813,6 +825,7 @@ $('wardChips').onclick=function(e){ var b=e.target.closest('[data-wd]'); if(!b) 
   S.limit=40; LS.set('wsel',S.wsel); buildFilters(); renderList(); };
 $('statChips').onclick=function(e){var b=e.target.closest('[data-s]'); if(!b)return; S.stat=b.dataset.s; S.limit=40; buildFilters(); renderList();};
 $('secSel').onchange=function(){S.sec=this.value; S.limit=40; renderList();};
+$('casteSel').onchange=function(){ S.lcaste=this.value; LS.set('lcaste',S.lcaste); S.limit=40; buildCasteSel(); renderList(); };
 var qT; $('q').oninput=function(){clearTimeout(qT); var t=this; qT=setTimeout(function(){S.q=t.value.trim().toLowerCase(); S.Q=Fuzzy.query(S.q); S.limit=40; renderList();},200);};
 
 /* ---------- list ---------- */
@@ -1692,7 +1705,7 @@ $('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ము
 function logout(msg){
   S.user=null; LS.del('user'); LS.del('rows'); applyRO();
   $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
-  S.wsel=[]; LS.del('wsel'); LS.del('view');
+  S.wsel=[]; LS.del('wsel'); LS.del('view'); S.lcaste='all'; LS.del('lcaste');
   $('vHome').classList.add('hide'); $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
   $('lErr').textContent = msg||''; renderSync(); initLogin();
 }
