@@ -10,7 +10,7 @@
 body{margin:0;background:#f6f3ec;color:#1d1b16;font-family:"Noto Sans Telugu",system-ui,sans-serif;font-size:16px}
 button,input,select{font:inherit;color:inherit}
 a{color:inherit}
-.hide{display:none!important}.wbad{color:#854d0e;background:#fef9c3;border-radius:6px;padding:1px 6px;font-size:.82rem;white-space:nowrap;display:inline-block;margin:2px 2px 0 0}.wbad.wno{color:#57534e;background:#f1efe9}.wline{font-size:.85rem;margin:3px 0 2px}.wtot{color:#78716c;font-size:.8rem}.pc.ow{opacity:.4}
+.hide{display:none!important}.gpn{font-style:normal;width:auto!important;display:inline-block;background:#1c1917;color:#fde047;border-radius:6px;padding:0 5px;font-size:.72rem;font-weight:700;margin-right:5px;vertical-align:2px;white-space:nowrap}.wbad{color:#854d0e;background:#fef9c3;border-radius:6px;padding:1px 6px;font-size:.82rem;white-space:nowrap;display:inline-block;margin:2px 2px 0 0}.wbad.wno{color:#57534e;background:#f1efe9}.wline{font-size:.85rem;margin:3px 0 2px}.wtot{color:#78716c;font-size:.8rem}.pc.ow{opacity:.4}
 .top{position:sticky;top:0;z-index:5;background:#FACC15;color:#1c1917;padding:10px 14px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
 .top .r{display:flex;align-items:center;gap:10px;max-width:640px;margin:0 auto}
 .top h1{margin:0;font-size:1.08rem;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -421,7 +421,7 @@ function pcard(p, me){
   var chk = p.vote && p.rel && !p.sure;
   if (p.gone) return '<button class="pc gone" data-p="'+esc(p.id)+'"><div><b>'+esc(displayName(p))+'</b><span>✕ '+esc(goneTe(p.gone))+(p.age?' · '+p.age:'')+'</span></div></button>';
   return '<button class="pc'+(p.r26?' r26':'')+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+(F.wsel.length&&p.vote&&!inSel(p)?' ow':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
-    '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—')+(p.ward?' · వా '+esc(p.ward):''):'ఓటు లేదు · no vote')+'</span>'+(p.r26?'<span class="r26t">⚠ 2026లో తొలగింపు: '+esc(goneTe(p.r26))+'</span>':'')+'</div></button>';
+    '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+(p.vote&&p.gp?'<em class="gpn">GP '+esc(p.gp)+'</em>':'')+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—')+(p.ward?' · వా '+esc(p.ward):''):'ఓటు లేదు · no vote')+'</span>'+(p.r26?'<span class="r26t">⚠ 2026లో తొలగింపు: '+esc(goneTe(p.r26))+'</span>':'')+'</div></button>';
 }
 function treeHtml(id, seen, me){
   if (seen[id]) return ''; seen[id]=1;

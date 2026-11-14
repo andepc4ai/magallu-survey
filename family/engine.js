@@ -48,7 +48,7 @@ var FamilyEngine = (function () {
     rows.forEach(function (r) {
       var p = { id: String(r[0]), name: r[1], rt: r[2], rn: String(r[3] || '').trim(), sur: String(r[4] || '').trim(),
         house: String(r[5] || ''), booth: ({207: 204, 208: 205, 209: 206})[r[6]] || r[6], street: r[7] || '', age: Number(r[8]) || 0, g: r[9],
-        support: r[10] || '', visited: r[11] || '', caste: String(r[12] || ''), mobile: String(r[13] || ''), leader: String(r[14] || ''), fhead: String(r[15] || '') === 'Yes', gone: '', r26: '', ward: r[18] == null ? '' : String(r[18]), vote: true };
+        support: r[10] || '', visited: r[11] || '', caste: String(r[12] || ''), mobile: String(r[13] || ''), leader: String(r[14] || ''), fhead: String(r[15] || '') === 'Yes', gone: '', r26: '', ward: r[18] == null ? '' : String(r[18]), gp: r[19] == null ? '' : String(r[19]), vote: true };
       var rm = String(r[16] || '');   // removed in 2026: dead / duplicate lose the vote, others still vote on the 2025 list
       if (rm) { if (/expired/i.test(rm)) { p.gone = rm; p.vote = false; } else p.r26 = rm; }
       p.sc = canon(p.sur); p.k = key(p.name, p.sur); p.hk = p.booth + '|' + p.house + (r[17] ? '|' + r[17] : '');   // a split household is its own house
@@ -60,9 +60,12 @@ var FamilyEngine = (function () {
       (idx[p.sc + '|' + p.k] = idx[p.sc + '|' + p.k] || []).push(p);
       (idxKey[p.k] = idxKey[p.k] || []).push(p);
     });
+    // main door number: '4 -157' = '4-157', '3-93/5' = '3-93', '1-138B' = '1-138/B' = '1-138'
+    function door(h) { var s = String(h || '').toLowerCase().replace(/\s+/g, ''), m = s.match(/^\d+(-\d+)?/); return m ? m[0] : s; }
     function fits(p, c) {
       if (c.id === p.id) return false;
-      if (p.rt === 'Husband') return c.g === 'Male' && (!p.age || !c.age || (c.age - p.age >= -12 && c.age - p.age <= 35));
+      // a husband is auto-linked only at the same door number: a same-name man in another house is usually a different person
+      if (p.rt === 'Husband') return c.g === 'Male' && door(c.house) === door(p.house) && (!p.age || !c.age || (c.age - p.age >= -12 && c.age - p.age <= 35));
       if (p.rt === 'Father') return c.g === 'Male' && (!p.age || !c.age || c.age - p.age >= 15);
       if (p.rt === 'Mother') return c.g === 'Female' && (!p.age || !c.age || c.age - p.age >= 15);
       if (p.rt === 'Other') return c.g !== p.g && c.hk === p.hk && (!p.age || !c.age || Math.abs(c.age - p.age) <= 25);
@@ -106,7 +109,7 @@ var FamilyEngine = (function () {
     var groups = {};
     unmatched.forEach(function (p) {
       if (p.rt === 'Other') return;
-      var gk = p.sc + '|' + p.relKey + '|' + (p.rt === 'Mother' ? 'F' : 'M') + '|' + p.booth;
+      var gk = p.sc + '|' + p.relKey + '|' + (p.rt === 'Mother' ? 'F' : 'M') + '|' + p.booth + (p.rt === 'Husband' ? '|' + door(p.house) : '');
       (groups[gk] = groups[gk] || []).push(p);
     });
     Object.keys(groups).forEach(function (gk) {
