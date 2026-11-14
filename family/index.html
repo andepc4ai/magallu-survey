@@ -54,6 +54,7 @@ a{color:inherit}
 .pc.chk{border-color:#f59e0b}
 .flab{font-weight:700;font-size:.95rem;margin:4px 2px 6px}.flab .en{color:#6b665c;font-size:.78em;font-weight:400}
 .wchips{flex-wrap:wrap;overflow:visible;gap:6px}
+.wtog{width:100%;display:flex;align-items:center;gap:8px;min-height:46px;border:2px solid #e5dfd2;background:#fff;border-radius:12px;padding:0 12px;font-weight:700;font-size:.95rem;margin:2px 0 8px;text-align:left;cursor:pointer;color:inherit}.wtog .wv{flex:1;font-weight:400;color:#57534e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wtog .wc{color:#78716c}.wtog.act{border-color:#ca8a04;background:#fef9c3}.wtog.act .wv{color:#1c1917;font-weight:700}
 .wchips .chip{min-width:48px;padding:5px 10px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:1.02rem}
 .wchips .chip small{font-weight:400;font-size:.66rem;opacity:.75}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
@@ -124,8 +125,8 @@ label{display:block;font-weight:700;margin:14px 0 6px}
     <input id="q" class="f" type="search" placeholder="పేరు / ఇంటిపేరు / ఇంటి నం. వెతకండి">
     <div class="chips" id="sizeChips"></div>
     <div class="chips" id="boothChips"></div>
-    <div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>
-    <div class="chips wchips" id="wardChips"></div>
+    <button class="wtog" id="wtogFam"></button>
+    <div class="chips wchips hide" id="wardChips"></div>
     <div class="count" id="lcount"></div>
     <div id="flist"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
@@ -339,6 +340,9 @@ function renderList(){
   var hasWard = fams.some(function(f){ return f.members.some(function(id){ var p=P(id); return p.vote && p.ward; }); });
   hasWard = true;   // always show the ward chips (houses without a ward are under 'లేదు')
   var fn={}; fams.forEach(function(f){ var seen={}; f.members.forEach(function(id){ var p=P(id); if (p.vote){ var w=p.ward||'none'; if(!seen[w]){ seen[w]=1; fn[w]=(fn[w]||0)+1; } } }); });
+  var wb=$('wtogFam'); wb.className='wtog'+(F.wsel.length?' act':'');
+  wb.innerHTML='📍 వార్డు <span class="wv">'+(F.wsel.length?F.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'అన్నీ · All')+'</span><span class="wc">'+(F.wopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('wardChips').classList.toggle('hide', !F.wopen);
   $('wardChips').innerHTML = '<button class="chip'+(F.wsel.length?'':' on')+'" data-fw="all">అన్నీ<small>All</small></button>'+
     ['1','2','3','4','5','6','7','8','9','10','11','12','none'].map(function(w){ return '<button class="chip'+(F.wsel.indexOf(w)>=0?' on':'')+'" data-fw="'+w+'">'+(w==='none'?'లేదు':w)+'<small>'+(fn[w]||0)+' కుటుంబాలు</small></button>'; }).join('');
   var q = F.q;
@@ -377,6 +381,7 @@ function renderList(){
 $('sizeChips').onclick=function(e){ var b=e.target.closest('button'); if(!b) return;
   if (b.dataset.swing){ F.swing=!F.swing; F.check=false; }
   else if (b.dataset.chk){ F.check=!F.check; F.swing=false; } else { F.size=Number(b.dataset.size); F.check=false; F.swing=false; } F.limit=40; renderList(); };
+$('wtogFam').onclick=function(){ F.wopen=!F.wopen; renderList(); };
 $('wardChips').onclick=function(e){ var b=e.target.closest('[data-fw]'); if(!b) return; var w=b.dataset.fw;
   if (w==='all') F.wsel=[]; else { var i=F.wsel.indexOf(w); if (i>=0) F.wsel.splice(i,1); else F.wsel.push(w); } F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };

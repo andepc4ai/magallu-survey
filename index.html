@@ -119,6 +119,7 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .vdet .vage{color:var(--muted);font-size:.8rem}
 .vdet{display:-webkit-box;-webkit-line-clamp:2;line-clamp:2;max-height:2.7em;-webkit-box-orient:vertical;overflow:hidden;font-size:.76rem;color:#57534e;line-height:1.35;margin-top:2px}
 .wlab{align-self:center;font-weight:700;font-size:.85rem;margin-right:2px}
+.wtog{width:100%;display:flex;align-items:center;gap:8px;min-height:46px;border:2px solid #e5dfd2;background:#fff;border-radius:12px;padding:0 12px;font-weight:700;font-size:.95rem;margin:2px 0 8px;text-align:left;cursor:pointer;color:inherit}.wtog .wv{flex:1;font-weight:400;color:#57534e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wtog .wc{color:#78716c}.wtog.act{border-color:#ca8a04;background:#fef9c3}.wtog.act .wv{color:#1c1917;font-weight:700}
 .dfil .wchips{margin-bottom:8px}.dfil summary h3 .en{font-size:.78rem}
 .dview{display:flex;gap:6px;margin:12px 0 4px;background:#e7e5e4;border-radius:12px;padding:4px}
 .dview button{flex:1;border:0;background:transparent;border-radius:9px;min-height:42px;font-weight:700;font-size:.95rem;color:#57534e}
@@ -301,7 +302,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 15:10</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 15:40</b></div>
   </div>
 </section>
 
@@ -320,8 +321,8 @@ details.dcard[open]>summary{margin-bottom:10px}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="పేరు / ఇంటి నం. / ఓటర్ ID వెతకండి">
     </div>
-    <div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>
-    <div class="chips wchips" id="wardChips"></div>
+    <button class="wtog" id="wtogList" data-wtog="list"></button>
+    <div class="chips wchips hide" id="wardChips"></div>
     <div class="selrow"><select id="boothSel" class="field"></select><select id="secSel" class="field"></select></div>
     <div class="chips" id="statChips"></div>
     <div class="count" id="count"></div>
@@ -353,8 +354,8 @@ details.dcard[open]>summary{margin-bottom:10px}
   </div>
   <div class="wrap">
     <div class="chips" id="pBooth"></div>
-    <div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>
-    <div class="chips wchips" id="pWard"></div>
+    <button class="wtog" id="wtogPoll" data-wtog="poll"></button>
+    <div class="chips wchips hide" id="pWard"></div>
     <div class="search"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="pq" type="search" inputmode="search" placeholder="క్రమ సంఖ్య / పేరు / ఇంటి నం. · Serial no. or name"></div>
     <div class="chips" id="pTabs"></div>
@@ -769,11 +770,22 @@ function wChips(attr, sel, ch, n, unit){
     ch.map(function(w){ return '<button class="chip'+(sel.indexOf(w)>=0?' on':'')+'" '+attr+'="'+w+'">'+(w==='none'?'లేదు':w)+'<small>'+(n[w]||0)+' '+unit+'</small></button>'; }).join('');
 }
 var WLAB = '<div class="flab">వార్డు <span class="en">Ward — tap one or more</span></div>';
+// folded ward line: '📍 వార్డు: అన్నీ ▾' — tap to open the chips
+var WOPEN = {};
+function wTog(btnId, boxId, key, sel){
+  var b=$(btnId); if(!b) return;
+  b.className='wtog'+(sel.length?' act':'');
+  b.innerHTML='📍 వార్డు <span class="wv">'+(sel.length?sel.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'అన్నీ · All')+'</span><span class="wc">'+(WOPEN[key]?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $(boxId).classList.toggle('hide', !WOPEN[key]);
+}
+document.addEventListener('click', function(e){ var t=e.target.closest('[data-wtog]'); if(!t) return; var k=t.dataset.wtog; WOPEN[k]=!WOPEN[k];
+  if (k==='list') buildWardChips(); else if (k==='poll') renderPoll(); });
 function buildWardChips(){
   var n = {}; S.houses.forEach(function(h){ if ((S.booth==='all'||String(h.booth)===String(S.booth))){ var w=hWard(h); n[w]=(n[w]||0)+1; } });
   var ch = wardChoices(); if (n.none) ch = ch.concat('none');
   S.wsel = S.wsel.filter(function(w){ return ch.indexOf(w)>=0; });
   $('wardChips').innerHTML = wChips('data-wd', S.wsel, ch, n, 'ఇళ్ళు');
+  wTog('wtogList', 'wardChips', 'list', S.wsel);
 }
 function buildFilters(){
   var booths = {}; S.rows.forEach(function(v){booths[v.booth]=1;});
@@ -1316,6 +1328,7 @@ function renderPoll(){
   P.wsel=(P.wsel||[]).filter(function(w){ return pch.indexOf(w)>=0; });
   var pn={}; S.rows.forEach(function(v){ if (P.booth==='all' || String(v.booth)===String(P.booth)){ var w=hWard(v._h); pn[w]=(pn[w]||0)+1; } });
   $('pWard').innerHTML = wChips('data-pw', P.wsel, pch, pn, 'ఓటర్లు');
+  wTog('wtogPoll', 'pWard', 'poll', P.wsel);
   var inB=S.rows.filter(function(v){ return (P.booth==='all' || String(v.booth)===String(P.booth)) && (!P.wsel.length || P.wsel.indexOf(hWard(v._h))>=0); });
   var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(isSup), supV=sup.filter(function(v){ return v.voted; }).length;
   $('pTxt').innerHTML='ఓటు వేశారు <b>'+voted+' / '+inB.length+'</b> ('+pct(voted,inB.length)+'%) · మన వాళ్ళు <b>'+supV+' / '+sup.length+'</b>';
@@ -1376,7 +1389,7 @@ function dfHtml(){
   var f=S.df, ch=wardChoices(); if (S.houses.some(function(h){ return hWard(h)==='none'; })) ch=ch.concat('none');
   var bs={}, ss={}; S.houses.forEach(function(h){ bs[h.booth]=1; if (f.b==='all'||String(h.booth)===String(f.b)) ss[h.sec]=1; });
   var sum = dfActive() ? [f.w.length?'వార్డు '+f.w.map(function(w){ return w==='none'?'లేదు':w; }).join(', '):'', f.b!=='all'?'బూత్ '+f.b:'', f.s!=='all'?f.s:''].filter(String).join(' · ') : 'అన్నీ · All';
-  return '<details class="dcard dfil"'+(dfActive()||S.dashOpen.dfil!==false?' open':'')+' data-dk="dfil"><summary><h3>🔎 ఫిల్టర్లు <span class="en">'+esc(sum)+'</span></h3></summary>'+
+  return '<details class="dcard dfil"'+(S.dashOpen.dfil?' open':'')+' data-dk="dfil"><summary><h3>🔎 ఫిల్టర్లు <span class="en">'+esc(sum)+'</span></h3></summary>'+
     '<div class="dleg" style="margin:0 0 8px">ఈ ఫిల్టర్లు డాష్‌బోర్డ్‌కు మాత్రమే · Only for this dashboard</div>'+
     WLAB+'<div class="chips wchips">'+wChips('data-dfw', f.w, ch, (function(){ var n={}; S.houses.forEach(function(h){ if ((f.b==='all'||String(h.booth)===String(f.b)) && (f.s==='all'||h.sec===f.s)){ var w=hWard(h); n[w]=(n[w]||0)+1; } }); return n; })(), 'ఇళ్ళు')+'</div>'+
     '<div class="selrow"><select class="field" data-dfb="1"><option value="all">అన్ని బూత్‌లు</option>'+Object.keys(bs).sort().map(function(b){ return '<option value="'+esc(b)+'"'+(String(f.b)===String(b)?' selected':'')+'>బూత్ '+esc(b)+'</option>'; }).join('')+'</select>'+
