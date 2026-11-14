@@ -231,9 +231,18 @@ $('list').addEventListener('click', function(e){
 $('back').onclick = function(){ if (history.length>1 && document.referrer!==location.href) history.back(); else location.hash=''; };
 
 /* ---------- saving ---------- */
+// top progress line + tab counts (rows stay where they are, so the list does not jump while you work)
+function renderProg(){
+  var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
+  var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
+  $('prog').textContent = 'మొత్తం పూర్తి · Done: '+filled.length+' / '+rows.length+' ఇంటిపేర్లు ('+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు)';
+  $('pbar').style.width = (100*done/Math.max(tot,1))+'%';
+  var cnt = {missing: rows.length-filled.length, all: rows.length, done: filled.length}, lbl = {missing:'కులం నమోదు కాలేదు', all:'అన్నీ', done:'ఉన్నవి'};
+  [].forEach.call(document.querySelectorAll('.tab'), function(t){ t.textContent = lbl[t.dataset.m]+' ('+cnt[t.dataset.m]+')'; });
+}
 function setCaste(s, c){
   var r = bySur[s]; if (!r) return;
-  r[3] = c;
+  r[3] = c; renderProg();
   queue[r[0]] = { r:r[0], s:s, c:c };
   save();
 }

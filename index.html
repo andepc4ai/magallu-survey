@@ -313,7 +313,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 20:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 10:00</b></div>
   </div>
 </section>
 
@@ -1389,11 +1389,12 @@ function renderPoll(){
   var q=P.q;
   if (q){
     var num=/^\d+$/.test(q), Q=Fuzzy.query(q);
-    list=list.map(function(v){ var sc=0;
+    // a search looks at everyone in the booth/ward, whichever tab is picked
+    list=inB.map(function(v){ var sc=0;
       if (num && v.gp===q) sc=110; else if (num && String(v.sr)===q) sc=100; else if (num && String(v.house).indexOf(q)===0) sc=30; else if (String(v.e).toLowerCase().indexOf(q)>=0) sc=50; else if (String(v.house).toLowerCase().indexOf(q)===0) sc=30; else sc=Fuzzy.score(v.name+' '+v.relN, Q);
       v._ps=sc; return v; }).filter(function(v){ return v._ps>0; }).sort(function(a,b){ return b._ps-a._ps; });
   } else list=list.slice().sort(function(a,b){ return String(a.booth).localeCompare(String(b.booth)) || (Number(a.sr)||0)-(Number(b.sr)||0); });
-  $('pCount').textContent=list.length+' ఓటర్లు';
+  $('pCount').textContent=list.length+' ఓటర్లు'+(q?' · 🔎 అందరిలో వెతికాం (All tabs)':'');
   $('pList').innerHTML = list.slice(0,P.limit).map(function(v){
     var ask=P.ask===v.id, lv=leaderName(v.leader);
     return '<div class="pv'+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+esc(v.name)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+

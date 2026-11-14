@@ -91,6 +91,7 @@ a{color:inherit}
 .po{display:block;width:100%;text-align:left;background:#fff;border:1px solid #e9e2d5;border-radius:10px;padding:10px 12px;margin-bottom:6px;cursor:pointer}
 .po span{color:#6b665c;font-size:.8rem}
 .po.none{background:#f8f7f4;font-weight:700}
+.po.warnpick{border:2px solid #ea580c;background:#fff7ed}.po .pw{margin-top:6px;color:#9a3412;font-size:.82rem;line-height:1.35}
 .msg{text-align:center;color:#6b665c;padding:40px 10px}
 .st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
 .st.busy{background:#1f2937}.st.bad{background:#7c2d12}
@@ -526,8 +527,22 @@ $('pbody').onclick=function(e){
   if ((t=e.target.closest('[data-as]'))) { PK.as=t.dataset.as; e.currentTarget.querySelectorAll('[data-as]').forEach(function(b){ b.classList.toggle('on', b===t); });
     var pq=$('pq'); renderPick(me.id, pq?pq.value.trim().toLowerCase():''); return; }
   if ((t=e.target.closest('[data-del]'))) { if (confirmDel(t)) setLink(me, 'none', true, '', t.dataset.del); return; }
-  if ((t=e.target.closest('[data-set]'))) { var pk=PK; PK=null; setLink(me, t.dataset.set, true, pk?pk.as:'', pk?pk.slot:''); return; }
+  if ((t=e.target.closest('[data-set]'))) {
+    var x = t.dataset.set!=='none' && P(t.dataset.set), wn = x ? relWarn(me, x, PK?PK.as:'') : '';
+    if (wn && !t.dataset.sure){ t.dataset.sure=1; t.classList.add('warnpick'); t.insertAdjacentHTML('beforeend','<div class="pw">⚠️ '+esc(wn)+'<br><b>అయినా ఇదే సరైనదా? మళ్ళీ నొక్కండి · Tap again to save anyway</b></div>'); return; }
+    var pk=PK; PK=null; setLink(me, t.dataset.set, true, pk?pk.as:'', pk?pk.slot:''); return; }
 };
+// sanity check for a hand-made link: "x is <as> of p" — gender and age must make sense
+function relWarn(p, x, as){
+  var g = TYPE_G[as], a = Number(p.age)||0, b = Number(x.age)||0, w = [];
+  if (g && x.g && x.g!==g) w.push(x.name+' '+(x.g==='Female'?'స్త్రీ':'పురుషుడు')+', కానీ '+REL[as]+' గా ఎంచుకున్నారు');
+  if (a && b){
+    if ((as==='Father'||as==='Mother') && b-a < 15) w.push(REL[as]+' వయసు '+b+', ఈ వ్యక్తి వయసు '+a+' — '+REL[as]+' కనీసం 15 ఏళ్ళు పెద్దవారై ఉండాలి');
+    if ((as==='Son'||as==='Daughter') && a-b < 15) w.push(REL[as]+' వయసు '+b+', ఈ వ్యక్తి వయసు '+a+' — పిల్లలు కనీసం 15 ఏళ్ళు చిన్నవారై ఉండాలి');
+    if ((as==='Husband'||as==='Wife') && Math.abs(a-b) > 25) w.push('భార్యాభర్తల వయసు తేడా '+Math.abs(a-b)+' ఏళ్ళు');
+  }
+  return w.join(' · ');
+}
 function confirmDel(btn){ if (btn.dataset.sure) return true; btn.dataset.sure=1; btn.textContent='తీసేయాలా? ✓'; btn.classList.add('sure'); return false; }
 function setLink(p, to, ok, as, slot){
   if (RO()) return;

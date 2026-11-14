@@ -43,23 +43,34 @@ button,input,select{font:inherit;color:inherit}
 .more{width:100%;height:48px;border:2px dashed #e5dfd2;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
 .st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
 .st.busy{background:#1f2937}.st.bad{background:#7c2d12}
+.hs.chg{background:#fff7ed;box-shadow:inset 4px 0 0 #ea580c}.wb.chg{border:2px solid #ea580c;background:#ffedd5;color:#9a3412;font-size:1rem}
+.wb small{display:block;font-size:.62rem;font-weight:400;line-height:1}
+.ab{position:fixed;left:0;right:0;bottom:0;z-index:10;background:#1c1917;color:#fff;padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;max-width:none}
+.ab .t{flex:1;font-size:.88rem;line-height:1.25}.ab .t b{color:#FACC15}
+.ab button{height:46px;border:0;border-radius:12px;font-weight:700;padding:0 14px;font-size:.95rem;white-space:nowrap}
+.ab .dis{background:#44403c;color:#fff}.ab .app{background:#16a34a;color:#fff}
+.wtog{width:100%;display:flex;align-items:center;gap:8px;min-height:46px;border:2px solid #e5dfd2;background:#fff;border-radius:12px;padding:0 12px;font-weight:700;font-size:.95rem;margin:8px 0 0;text-align:left;cursor:pointer;color:inherit}
+.wtog .wv{flex:1;font-weight:400;color:#57534e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wtog .wc{color:#78716c}.wtog.act{border-color:#ca8a04;background:#fef9c3}.wtog.act .wv{color:#1c1917;font-weight:700}
+.mchips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}.mchips .chip{min-width:48px;max-width:100%;padding:5px 10px;border-radius:12px;border:2px solid #e5dfd2;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.15;font-size:.98rem;font-weight:700;cursor:pointer;white-space:normal;text-align:center}
+.mchips .chip small{font-weight:400;font-size:.66rem;opacity:.75}.mchips .chip.on{background:#1d1b16;border-color:#1d1b16;color:#fff}.mchips .mdone{background:#1c1917;color:#fff;border-color:#1c1917}
 .tip{background:#fff;border:1px dashed #ca8a04;border-radius:12px;padding:8px 12px;font-size:.85rem;color:#57534e}
 </style>
 </head>
 <body>
 <div class="top">
-  <div class="r"><a class="back" href="../">🏠 యాప్</a><h1>🗺️ ఇళ్ళు → వార్డులు</h1></div>
+  <div class="r"><a class="back" href="../" id="toApp">🏠 యాప్</a><h1>🗺️ ఇళ్ళు → వార్డులు</h1></div>
   <div class="p"><span id="prog">—</span><div class="bar"><i id="pbar"></i></div></div>
   <div class="pick"><div class="l">1. వార్డు ఎంచుకోండి <span style="font-weight:400">· Pick the ward</span></div><div class="wg" id="wg"></div></div>
 </div>
 <div class="wrap">
-  <div class="tip" id="tip">2. ఇంటి మీద నొక్కితే ఆ వార్డు పడుతుంది. మళ్ళీ నొక్కితే తీసేస్తుంది. <span style="color:#a8a29e">Tap a house to put it in the picked ward; tap again to clear.</span></div>
-  <div class="sr"><select id="booth" class="f"></select><select id="street" class="f"></select></div>
+  <div class="tip" id="tip">2. ఇంటి మీద నొక్కితే ఆ వార్డు గుర్తు పడుతుంది (నారింజ). మళ్ళీ నొక్కితే తీసేస్తుంది. 3. చివర్లో <b>✓ సేవ్ చేయండి</b> నొక్కితేనే సేవ్ అవుతుంది. <span style="color:#a8a29e">Tap houses to mark them (orange); nothing is saved until you tap ✓ Apply. ✕ Discard undoes the marks.</span></div>
+  <div id="fil"></div>
   <input id="q" class="f" style="margin-top:8px" type="search" placeholder="ఇంటి నం. / పేరు వెతకండి · Search house or name">
   <div class="tabs" id="tabs"></div>
   <div id="list"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
 </div>
 <div class="st" id="st">—</div>
+<div class="ab hide" id="ab"><div class="t" id="abt"></div><button class="dis" id="abDis">✕ రద్దు</button><button class="app" id="abApp">✓ సేవ్ చేయండి</button></div>
 <script>
 (function(){
 "use strict";
@@ -75,7 +86,8 @@ function call(fn, args){
 }
 function st(cls, t){ var e=$('st'); e.className='st '+cls; e.textContent=t; }
 var U = LS.get('mvs_user');
-var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:'all', street:'all', q:'', limit:60 }, queue = {}, busy = false;
+var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:[], street:[], q:'', limit:60 }, queue = {}, busy = false;
+var staged = LS.get('wd_staged') || {}, MOPEN = {};   // marked but not yet applied: {houseId: ward}
 
 var who = U && U.name && U.pin && !U.reader ? [U.name, U.pin] : ['', ''];   // open page: works without login; Readers save in open mode
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){ return ('00000'+n).slice(-5); }).join('-')+'~'+h; }
@@ -84,10 +96,10 @@ function hWard(h){ return h.w; }
 // rows: [booth, house, street, ward ('' | '3' | 'mix'), voters, names]
 function ingest(rows){
   H = rows.map(function(r){ var h = {id:r[0]+'|'+r[1], booth:r[0], house:String(r[1]), sec:String(r[2]||''), w:String(r[3]==null?'':r[3]), n:r[4], names:String(r[5]||'')};
-    if (h.id in queue) h.w = queue[h.id]; h.sk = natKey(h.house); return h; })
+    if (h.id in queue) h.w = queue[h.id]; h.w0 = h.w; if (h.id in staged){ if (staged[h.id]===h.w) delete staged[h.id]; else h.w = staged[h.id]; } h.sk = natKey(h.house); return h; })
     .sort(function(a,b){ return a.sec<b.sec?-1:a.sec>b.sec?1:(a.sk<b.sk?-1:a.sk>b.sk?1:0); });
   byId = {}; H.forEach(function(h){ byId[h.id]=h; });
-  buildSelects(); render();
+  buildSelects(); render(); abar();
 }
 function load(){
   st('busy','⏳ లోడ్ అవుతోంది… · Loading');
@@ -100,13 +112,28 @@ function buildWG(){
   var h=''; for (var i=1;i<=WARDS;i++) h+='<button class="'+(String(W)===String(i)?'on':'')+'" data-w="'+i+'">'+i+'</button>';
   $('wg').innerHTML = h;
 }
-function buildSelects(){
-  var b={}, s={}; H.forEach(function(h){ b[h.booth]=1; if (F.booth==='all'||String(h.booth)===String(F.booth)) s[h.sec]=(s[h.sec]||0)+1; });
-  $('booth').innerHTML = ['all'].concat(Object.keys(b).sort()).map(function(x){ return '<option value="'+esc(x)+'"'+(String(F.booth)===String(x)?' selected':'')+'>'+(x==='all'?'అన్ని బూత్‌లు':'బూత్ '+esc(bd(x)))+'</option>'; }).join('');
-  if (F.street!=='all' && !s[F.street]) F.street='all';
-  $('street').innerHTML = '<option value="all">అన్ని వీధులు · All streets</option>'+Object.keys(s).sort().map(function(x){ return '<option value="'+esc(x)+'"'+(F.street===x?' selected':'')+'>'+esc(x)+' ('+s[x]+')</option>'; }).join('');
+function inA(a, v){ return !a.length || a.indexOf(String(v))>=0; }
+function mSel(key, label, sel, opts){
+  var txt = sel.length ? sel.map(function(v){ var o=opts.filter(function(x){ return x[0]===v; })[0]; return o?o[1]:v; }).join(', ') : 'అన్నీ · All';
+  return '<button class="wtog'+(sel.length?' act':'')+'" data-mtog="'+key+'">'+label+' <span class="wv">'+esc(txt)+'</span><span class="wc">'+(MOPEN[key]?'▴ మూసివేయి':'▾ మార్చు')+'</span></button>'+
+    (MOPEN[key] ? '<div class="mchips"><button class="chip'+(sel.length?'':' on')+'" data-mk="'+key+'" data-mv="__all">అన్నీ<small>All</small></button>'+
+      opts.map(function(o){ return '<button class="chip'+(sel.indexOf(o[0])>=0?' on':'')+'" data-mk="'+key+'" data-mv="'+esc(o[0])+'">'+esc(o[1])+'<small>'+o[2]+'</small></button>'; }).join('')+
+      '<button class="chip mdone" data-mtog="'+key+'">✓ అయిపోయింది · Done</button></div>' : '');
 }
-function inScope(h){ return (F.booth==='all'||String(h.booth)===String(F.booth)) && (F.street==='all'||h.sec===F.street); }
+function buildSelects(){
+  var b={}, s={}; H.forEach(function(h){ b[h.booth]=(b[h.booth]||0)+1; if (inA(F.booth, h.booth)) s[h.sec]=(s[h.sec]||0)+1; });
+  F.booth = F.booth.filter(function(x){ return b[x]; }); F.street = F.street.filter(function(x){ return s[x]; });
+  $('fil').innerHTML = mSel('b', '🗳️ బూత్', F.booth, Object.keys(b).sort().map(function(x){ return [x, String(bd(x)), b[x]+' ఇళ్ళు']; })) +
+    mSel('s', '🛣️ వీధి', F.street, Object.keys(s).sort().map(function(x){ return [x, x, s[x]+' ఇళ్ళు']; }));
+}
+$('fil').onclick = function(e){
+  var t=e.target.closest('[data-mtog]'); if (t){ MOPEN[t.dataset.mtog]=!MOPEN[t.dataset.mtog]; buildSelects(); return; }
+  var c=e.target.closest('[data-mk]'); if (!c) return;
+  var a = c.dataset.mk==='b' ? F.booth : F.street, v=c.dataset.mv;
+  if (v==='__all') a.length=0; else { var i=a.indexOf(v); if (i>=0) a.splice(i,1); else a.push(v); }
+  F.limit=60; buildSelects(); render();
+};
+function inScope(h){ return inA(F.booth, h.booth) && inA(F.street, h.sec); }
 function render(){
   var scope = H.filter(inScope), done = scope.filter(function(h){ var w=hWard(h); return w && w!=='mix'; }).length;
   $('prog').textContent = 'వార్డు ఉన్న ఇళ్ళు '+done+' / '+scope.length;
@@ -115,12 +142,14 @@ function render(){
   var tabs = [['none','వార్డు లేనివి ('+none+')'],['all','అన్నీ ('+scope.length+')']];
   if (mix) tabs.push(['mix','⚠ కలగలుపు ('+mix+')']);
   if (W) tabs.push(['w','వార్డు '+W+' ('+scope.filter(function(h){ return hWard(h)===String(W); }).length+')']);
+  var nch = Object.keys(staged).length; if (nch) tabs.push(['chg','📝 మార్పులు ('+nch+')']); else if (F.tab==='chg') F.tab='none';
   $('tabs').innerHTML = tabs.map(function(t){ return '<button class="tab'+(F.tab===t[0]?' on':'')+'" data-t="'+t[0]+'">'+t[1]+'</button>'; }).join('');
-  var q = F.q, list = scope.filter(function(h){
+  var q = F.q, list = (F.tab==='chg' ? H : scope).filter(function(h){
     var w = hWard(h);
     if (F.tab==='none' && w!=='') return false;
     if (F.tab==='mix' && w!=='mix') return false;
     if (F.tab==='w' && w!==String(W)) return false;
+    if (F.tab==='chg' && !(h.id in staged)) return false;
     if (q) return h.house.toLowerCase().indexOf(q)===0 || h.names.toLowerCase().indexOf(q)>=0;
     return true;
   });
@@ -131,16 +160,35 @@ function render(){
     var all = list.filter(function(h){ return h.sec===g.sec; }), open = all.filter(function(h){ return hWard(h)===''; }).length;
     return '<div class="sec"><div class="sh"><b>'+esc(g.sec||'—')+' <span>· '+all.length+' ఇళ్ళు</span></b>'+
       (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
-      g.hs.map(function(h){ var w=hWard(h);
-        return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(bd(h.booth))+' · '+h.n+' ఓటర్లు</span></b>'+
+      g.hs.map(function(h){ var w=hWard(h), ch=(h.id in staged);
+        return '<button class="hs'+(ch?' chg':'')+'" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(bd(h.booth))+' · '+h.n+' ఓటర్లు</span></b>'+
           '<span>'+esc(h.names)+'</span></span>'+
-          '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span></button>'; }).join('')+'</div>';
+          (ch ? '<span class="wb chg">'+(w||'✕')+'<small>'+(h.w0&&h.w0!=='mix'?'ముందు '+h.w0:h.w0==='mix'?'ముందు కలగలుపు':'కొత్త')+'</small></span>'
+              : '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span>')+'</button>'; }).join('')+'</div>';
   }).join('') + (list.length>F.limit ? '<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>' : '');
 }
 function setWard(hs, w){
-  hs.forEach(function(h){ h.w = String(w); queue[h.id] = String(w); });
-  render(); save();
+  hs.forEach(function(h){ h.w = String(w); if (h.w===h.w0) delete staged[h.id]; else staged[h.id] = h.w; });
+  LS.set('wd_staged', staged); render(); abar();
 }
+// bottom bar: N houses marked → ✕ Discard / ✓ Apply
+function abar(){
+  var ids = Object.keys(staged), n = ids.length;
+  $('ab').classList.toggle('hide', !n); $('st').classList.toggle('hide', !!n);
+  if (!n) return;
+  var to = {}; ids.forEach(function(id){ var w=staged[id]||'✕'; to[w]=(to[w]||0)+1; });
+  $('abt').innerHTML = '<b>'+n+' ఇళ్ళు</b> మార్చారు, ఇంకా సేవ్ కాలేదు<br><span style="opacity:.8">'+Object.keys(to).map(function(w){ return (w==='✕'?'వార్డు తీసేయి':'వార్డు '+w)+': '+to[w]; }).join(' · ')+'</span>';
+}
+$('abApp').onclick = function(){
+  Object.keys(staged).forEach(function(id){ queue[id] = staged[id]; if (byId[id]) byId[id].w0 = staged[id]; });
+  staged = {}; LS.set('wd_staged', staged); abar(); render(); save();
+};
+$('abDis').onclick = function(){
+  var b=this; if (!b.dataset.sure){ b.dataset.sure=1; b.textContent='✕ ఖచ్చితమా?'; setTimeout(function(){ delete b.dataset.sure; b.textContent='✕ రద్దు'; }, 4000); return; }
+  delete b.dataset.sure; b.textContent='✕ రద్దు';
+  Object.keys(staged).forEach(function(id){ var h=byId[id]; if (h) h.w = h.w0; });
+  staged = {}; LS.set('wd_staged', staged); abar(); render(); st('','↩️ మార్పులు రద్దు చేశాం · Discarded');
+};
 function save(){
   var ids = Object.keys(queue); if (!ids.length || busy) return;
   busy = true; var batch = ids.slice(0, 200), sent = {};
@@ -154,12 +202,10 @@ function save(){
     if (m==='WRONG_PIN'){ who=['','']; }
     st('bad','⚠️ సేవ్ కాలేదు, మళ్ళీ ప్రయత్నిస్తాం · Retrying'); setTimeout(save, 5000); });
 }
-window.addEventListener('beforeunload', function(e){ if (busy || Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload', function(e){ if (busy || Object.keys(queue).length || Object.keys(staged).length){ e.preventDefault(); e.returnValue=''; } });
 
 $('wg').onclick = function(e){ var b=e.target.closest('[data-w]'); if(!b) return; W = String(W)===b.dataset.w ? '' : b.dataset.w; LS.set('wd_pick', W); if (!W && F.tab==='w') F.tab='none'; buildWG(); render(); };
 $('tabs').onclick = function(e){ var b=e.target.closest('[data-t]'); if(!b) return; F.tab=b.dataset.t; F.limit=60; render(); };
-$('booth').onchange = function(){ F.booth=this.value; F.limit=60; buildSelects(); render(); };
-$('street').onchange = function(){ F.street=this.value; F.limit=60; render(); };
 var qt; $('q').oninput = function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.limit=60; render(); },200); };
 $('list').onclick = function(e){
   if (e.target.id==='more'){ F.limit+=60; render(); return; }
@@ -184,6 +230,7 @@ function addClear(inp){
   upd();
 }
 addClear($('q'));
+$('toApp').onclick = function(e){ if (Object.keys(staged).length && !confirm('సేవ్ చేయని '+Object.keys(staged).length+' మార్పులు ఉన్నాయి. వదిలేయాలా? · Leave without saving?')) e.preventDefault(); };
 buildWG(); load();
 })();
 </script>
