@@ -301,7 +301,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 14:15</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 14:40</b></div>
   </div>
 </section>
 
@@ -1455,7 +1455,7 @@ function renderDash(){
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
   S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
   var rG=(S.gone||[]).length, gr={}; (S.gone||[]).forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); o.g=(o.g||0)+1; var k=goneTe(v.gone).split(' · ')[0]; gr[k]=(gr[k]||0)+1; });
-  h += '<details class="dcard" open data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
+  h += '<details class="dcard" data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
     (rG?'<table class="dt"><tr><td>2025 జాబితాలో మొత్తం <small>rows in “All Voters”</small></td><td style="text-align:right"><b>'+(rA+rG)+'</b></td></tr>'+
       '<tr class="goner2"><td>➖ ఓటు లేనివారు <small>No vote · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
     '<table class="dt"><tr><td>2025 ఓటర్ల జాబితా <small>“All Voters”</small></td><td style="text-align:right"><b>'+rA+'</b></td></tr>'+
