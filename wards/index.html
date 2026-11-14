@@ -38,7 +38,6 @@ button,input,select{font:inherit;color:inherit}
 .wb.set{border:2px solid #16a34a;background:#dcfce7;color:#14532d;font-size:1.05rem}
 .wb.mix{border:2px solid #d97706;background:#fef3c7;color:#92400e;font-size:.8rem}
 .hs.flash{background:#dcfce7}
-.hs .hn .enl{font-size:.68rem;color:#a8a29e}
 .msg{text-align:center;color:#6b665c;padding:40px 10px}
 .more{width:100%;height:48px;border:2px dashed #e5dfd2;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
 .st{position:fixed;left:0;right:0;bottom:0;background:#14532d;color:#fff;text-align:center;padding:10px;font-size:.9rem;z-index:9}
@@ -60,7 +59,6 @@ button,input,select{font:inherit;color:inherit}
   <div id="list"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
 </div>
 <div class="st" id="st">—</div>
-<script src="../telugu.js"></script>
 <script>
 (function(){
 "use strict";
@@ -134,7 +132,7 @@ function render(){
       (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
       g.hs.map(function(h){ var w=hWard(h);
         return '<button class="hs" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(bd(h.booth))+' · '+h.n+' ఓటర్లు</span></b>'+
-          '<span>'+esc(h.names.split(",").map(function(n){ return typeof TeName!=="undefined" ? TeName.full(n.trim()) : n; }).join(", "))+'</span><span class="enl">'+esc(h.names)+'</span></span>'+
+          '<span>'+esc(h.names)+'</span></span>'+
           '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span></button>'; }).join('')+'</div>';
   }).join('') + (list.length>F.limit ? '<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>' : '');
 }
@@ -174,7 +172,6 @@ $('list').onclick = function(e){
   setWard([h], hWard(h)===String(W) ? '' : W);
 };
 buildWG(); load();
-if (typeof TeName!=='undefined') TeName.ready(function(){ if (H.length) render(); });
 })();
 </script>
 </body>
