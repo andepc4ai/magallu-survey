@@ -108,16 +108,17 @@ function casteOptions(cur){
 
 /* ---------- data ---------- */
 function load(){
-  call('getSurnames',['','']).then(function(data){
+  call('getSurnames',WHO).then(function(data){
     rows = data.filter(function(r){ return r[1] && r[1].toLowerCase()!=='total'; }); bySur = {}; rows.forEach(function(r){ bySur[r[1]] = r; });
     st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved'); route();
   }).catch(function(e){
+    if (/NOT_ADMIN|WRONG_PIN/.test(String(e.message))) { noAccess('మీకు అనుమతి లేదు'); return; }
     $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'<br><button class="retry" onclick="location.reload()">మళ్ళీ · Retry</button></div>';
   });
   loadVoters();
 }
 function loadVoters(){
-  if (!votersP) votersP = call('getSurnameVoters',['','']).then(function(v){ voters = v; return v; })
+  if (!votersP) votersP = call('getSurnameVoters',WHO).then(function(v){ voters = v; return v; })
     .catch(function(e){ votersP = null; throw e; });
   return votersP;
 }
@@ -209,7 +210,7 @@ function save(){
   if (!items.length || busy) return;
   busy = true; queue = {};
   st('busy','⏳ సేవ్ అవుతోంది… · Saving');
-  call('saveSurnameCastes',['','',items]).then(function(){
+  call('saveSurnameCastes',WHO.concat([items])).then(function(){
     busy=false;
     items.forEach(function(it){ var el=document.querySelector('[data-r="'+it.r+'"]'); if(el) el.classList.add('ok'); });
     if (Object.keys(queue).length) save(); else st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved');
@@ -233,7 +234,12 @@ document.querySelector('.tabs').onclick=function(e){
 var t; $('q').oninput=function(){ clearTimeout(t); var v=this.value; t=setTimeout(function(){ q=v.trim().toLowerCase(); Q=Fuzzy.query(q); renderList(); },150); };
 window.addEventListener('beforeunload',function(e){ if(busy||Object.keys(queue).length){ e.preventDefault(); e.returnValue=''; } });
 
-load();
+// admins only: uses the login saved by the app on this phone
+var ME = null; try { ME = JSON.parse(localStorage.getItem('mvs_user')); } catch(e){}
+var WHO = ME && ME.name && ME.pin ? [ME.name, ME.pin] : ['', ''];
+function noAccess(t){ $('list').innerHTML='<div class="msg">🔒 '+t+'<br><span style="font-size:.85rem">కులాలు అడ్మిన్ మాత్రమే మార్చగలరు · Only admins can edit castes</span><br><br><a class="retry" style="display:inline-block;text-decoration:none" href="../">🏠 యాప్ తెరవండి · Open app</a></div>'; st('bad','🔒 అడ్మిన్ మాత్రమే · Admins only'); }
+if (!ME || !ME.admin) noAccess(ME ? 'మీకు అనుమతి లేదు' : 'ముందు అడ్మిన్‌గా యాప్‌లో లాగిన్ అవ్వండి');
+else load();
 })();
 </script>
 </body>
