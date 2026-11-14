@@ -313,7 +313,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 19:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>14 Nov · 20:00</b></div>
   </div>
 </section>
 
@@ -935,6 +935,7 @@ function openHouse(hid){
   S.openHouse = hid; S.split = null; S.open = {}; S.vexp = (S.hById[hid] && S.hById[hid].v.length===1) ? S.hById[hid].v[0].id : null; S.hpick=null; S.hhist=false; S.vdel=null; requestGeo(); renderHouse();
   $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
   document.body.style.overflow='hidden';
+  setTimeout(function(){ if (typeof navSync==='function') navSync(); }, 0);   // also when opened from a shared link
 }
 function closeHouse(){
   S.hpick=null; S.hhist=false; S.vdel=null;
@@ -1799,6 +1800,29 @@ function renderHome(){
 }
 $('tHouses').onclick=function(e){ e.preventDefault(); showView('list'); };
 $('btnHome').onclick=function(){ showView('home'); };
+/* ---------- phone back button = the screen's own "← వెనక్కి" ----------
+   every open screen is one step in the phone's history; phone back closes the top one */
+var NAV = {h:0, ign:0};
+var LAYERS = [['vHouse','btnBack'],['vDrill','btnDrillBack'],['vSur','btnSurBack'],['vPoll','btnPollBack'],['vDash','btnDashBack']];
+function isOpen(id){ return !$(id).classList.contains('hide'); }
+function navDepth(){
+  if (isOpen('vLogin')) return 0;
+  var n = isOpen('vList') ? 1 : 0;
+  LAYERS.forEach(function(l){ if (isOpen(l[0])) n++; });
+  return n;
+}
+function navSync(){
+  var d = navDepth();
+  while (NAV.h < d){ NAV.h++; try{ history.pushState({mvs:NAV.h}, ''); }catch(e){} }
+  if (NAV.h > d){ NAV.ign++; history.go(d - NAV.h); NAV.h = d; }   // closed with the on-screen button: drop the extra steps quietly
+}
+document.addEventListener('click', function(){ setTimeout(navSync, 0); });
+window.addEventListener('popstate', function(){
+  if (NAV.ign){ NAV.ign--; return; }
+  NAV.h = Math.max(0, NAV.h-1);
+  for (var i=0; i<LAYERS.length; i++){ if (isOpen(LAYERS[i][0])){ $(LAYERS[i][1]).click(); return; } }
+  if (isOpen('vList')) $('btnHome').click();
+});
 $('btnListRef').onclick=function(){ flush(); loadData(true); };
 function showApp(){
   $('vLogin').classList.add('hide');
