@@ -138,6 +138,7 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .lnote{margin-top:14px;font-size:.78rem;color:var(--muted);line-height:1.4}
 @keyframes spin360{to{transform:rotate(360deg)}}.spinning svg,.spinning{animation:spin360 .9s linear infinite}.iconbtn.spinning{animation:none}.iconbtn.spinning svg{animation:spin360 .9s linear infinite}
+.resv{background:#fff;border:1px solid var(--line,#e7e5e4);border-radius:14px;padding:8px 10px;margin:0 0 10px}.resv .rsh{font-size:.8rem;font-weight:700;color:#44403c;margin-bottom:6px}.resv .rsh .en{font-weight:400}.rsg{display:grid;grid-template-columns:repeat(6,1fr);gap:4px}.rsc{border:1px solid #e7e5e4;border-radius:8px;padding:3px 2px;text-align:center;font-size:.68rem;line-height:1.2;color:#44403c;background:#fafaf9}.rsc b{font-size:.9rem;color:#1c1917;display:block}.rsc small{display:block;font-size:.58rem;color:#78716c}.rsc.wo{background:#fdf2f8;border-color:#f9a8d4}
 .appver{text-align:center;color:var(--muted);font-size:.78rem;margin:18px 0 0}
 .appby{text-align:center;color:var(--muted);font-size:.74rem;margin:4px 0 0}.appby a{color:inherit;font-weight:700;text-decoration:none}
 .q.qh{cursor:pointer;margin-left:-6px;margin-right:-6px;padding:6px;border-radius:10px}.q.qh:active{background:#f5f5f4}
@@ -318,7 +319,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 19:30</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 20:00</b></div>
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1540,6 +1541,15 @@ function houseBtn(h, line2){
 function supLegend(o, total, rows, pre){
   return '<div class="slegD">'+SUPC.map(function(x){ var n=x[0]?o[x[0]]:o.na; return '<span'+(rows?drA((pre||'')+x[1], supOf(rows, x[0]||'')):'')+'><i style="background:'+x[2]+'"></i>'+x[1]+' <b>'+n+'</b>'+(total?' <small>'+pct(n,total)+'%</small>':'')+'</span>'; }).join('')+'</div>';
 }
+/* ward member reservations (panchayat election 2026) — shown small on the dashboard */
+var RESV = {1:'BC(W)',2:'UR(W)',3:'SC(W)',4:'UR(W)',5:'UR',6:'UR(W)',7:'UR',8:'UR',9:'SC',10:'SC',11:'SC(W)',12:'SC'};
+var RESV_TE = {UR:'జనరల్', SC:'ఎస్సీ', BC:'బీసీ', ST:'ఎస్టీ'};
+function resvTe(w){ var r=RESV[w]; if (!r) return ''; var cat=r.replace(/\(W\)/,''), wo=/\(W\)/.test(r); return (RESV_TE[cat]||cat)+(wo?' మహిళ':''); }
+function resvStrip(){
+  return '<div class="resv"><div class="rsh">🪑 వార్డు రిజర్వేషన్ <span class="en">Ward reservation · ♀ = women</span></div><div class="rsg">'+
+    Object.keys(RESV).map(function(w){ var r=RESV[w], wo=/\(W\)/.test(r), cat=r.replace(/\(W\)/,'');
+      return '<span class="rsc'+(wo?' wo':'')+'" title="Ward '+w+': '+r+'"><b>'+w+'</b> '+(RESV_TE[cat]||cat)+(wo?' ♀':'')+'<small>'+r+'</small></span>'; }).join('')+'</div></div>';
+}
 function renderDash(){
   DR = [];
   var sc=dashScope(), rows=sc.rows, hs=sc.hs, total=rows.length, visited=rows.filter(isDone).length, today=dayKey(Date.now());
@@ -1549,6 +1559,7 @@ function renderDash(){
   $('dSub').textContent = wtxt+' · '+total+' ఓటర్లు';
   var h='<div class="dview"><button class="'+(isChart()?'on':'')+'" data-dview="chart">📊 చార్ట్ <small>Chart</small></button><button class="'+(isChart()?'':'on')+'" data-dview="table">📋 పట్టిక <small>Table</small></button></div>';
   h += dfHtml();
+  h += resvStrip();
   // tiles
   var vToday = V ? V.filter(function(x){ return x[0]===today; }).length : null;
   h += '<div class="tiles">'+
@@ -1601,7 +1612,7 @@ function renderDash(){
   // ward / street / caste / surname
   var gw=groupBy(rows, function(v){ return hWard(v._h); });
   h += dTable('ward','📍 వార్డు వారీగా','By ward', Object.keys(gw).sort(function(a,b){ return (a==='none')-(b==='none') || a-b; })
-    .map(function(k){ return {label:k==='none'?'వార్డు లేదు':'వార్డు '+k, rows:gw[k]}; }), 'వార్డు', false);
+    .map(function(k){ return {label:k==='none'?'వార్డు లేదు':'వార్డు '+k, sub:k==='none'?'':'🪑 '+resvTe(k)+' · '+RESV[k], rows:gw[k]}; }), 'వార్డు', false);
   var gs=groupBy(rows, function(v){ return v.sec||'—'; });
   h += dTable('street','🛣️ వీధి వారీగా','By street / location', Object.keys(gs).map(function(k){ return {label:esc(k), rows:gs[k], sub:Object.keys(groupBy(gs[k],function(v){ return v._h.id; })).length+' ఇళ్ళు'}; })
     .sort(function(a,b){ return b.rows.length-a.rows.length; }), 'వీధి', false, 12);
