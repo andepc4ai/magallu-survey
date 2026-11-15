@@ -317,7 +317,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 16:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 18:00</b></div>
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1382,7 +1382,7 @@ function openPoll(){
 function pollRefresh(loud){
   if (DEMO) return;
   flush();
-  call('getVoters', S.user.name, S.user.pin).then(function(res){ LS.set('rows',res.rows); ingest(res.rows); if (!$('vPoll').classList.contains('hide')) renderPoll(); if (loud) toast('తాజా ✓'); }).catch(function(){ if (loud) toast('📵 ఇంటర్నెట్ లేదు'); });
+  syncRows().then(function(rows){ ingest(rows); if (!$('vPoll').classList.contains('hide')) renderPoll(); if (loud) toast('తాజా ✓'); }).catch(function(){ if (loud) toast('📵 ఇంటర్నెట్ లేదు'); });
 }
 function isSup(v){ return v.support==='Strong' || v.support==='Leaning'; }
 function renderPoll(){
@@ -1795,12 +1795,31 @@ function openFromLink(){
   if (h) { openHouse(h.id); setTimeout(function(){ var el=document.querySelector('[data-id="'+v.id+'"]'); if(el) el.scrollIntoView({block:'center'}); }, 50); }
 }
 window.addEventListener('hashchange', openFromLink);
+/* ask the server only for voters changed since our data version (other volunteers' visits included);
+   the server sends the full list whenever it is unsure, and we take a full list at least once an hour */
+function syncRows(){
+  var have=LS.get('rows'), ver=LS.get('ver'), fullAt=Number(LS.get('fullAt'))||0;
+  var useDelta = !!(have && have.length && ver && Date.now()-fullAt < 60*60000);
+  return call('getVoters', S.user.name, S.user.pin, useDelta ? ver : 0).then(function(res){
+    var rows = res.delta && useDelta ? mergeRows(have, res.rows||[], res.gone||[]) : res.rows;
+    if (!res.delta) LS.set('fullAt', Date.now());
+    LS.set('ver', res.ver || 0); LS.set('rows', rows);
+    return rows;
+  });
+}
+function mergeRows(have, rows, gone){
+  if (!rows.length && !gone.length) return have;
+  var key=function(a){ return a[0]+':'+a[10]; }, idx={}, drop={}, out=have.slice();
+  out.forEach(function(a,i){ idx[key(a)]=i; }); gone.forEach(function(g){ drop[g]=1; });
+  rows.forEach(function(a){ var k=key(a); if (k in idx) out[idx[k]]=a; else out.push(a); });
+  return out.filter(function(a){ return !drop[key(a)]; });
+}
 function loadData(force){
   if (!force && S.fresh){ var fr=S.fresh; S.fresh=null; ingest(fr); renderList(); openFromLink(); return Promise.resolve(); }
   var cached = LS.get('rows');
   if (cached && !force){ ingest(cached); renderList(); openFromLink(); }
-  return call('getVoters', S.user.name, S.user.pin).then(function(res){
-    LS.set('rows',res.rows); ingest(res.rows); renderList(); if(S.openHouse) renderHouse(); else openFromLink();
+  return syncRows().then(function(rows){
+    ingest(rows); renderList(); if(S.openHouse) renderHouse(); else openFromLink();
     refreshLists();
     S.online=true; renderSync(); if (force) toast('తాజా డేటా ✓');
   }).catch(function(err){
@@ -1823,7 +1842,7 @@ $('btnRefresh').onclick=function(){ flush(); loadData(true); };
 $('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); };
 
 function logout(msg){
-  S.user=null; LS.del('user'); LS.del('rows'); applyRO();
+  S.user=null; LS.del('user'); LS.del('rows'); LS.del('ver'); LS.del('fullAt'); applyRO();
   $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
   S.wsel=[]; LS.del('wsel'); LS.del('view'); S.lcaste=[]; LS.del('lcaste'); S.booth=[]; S.sec=[];
   $('vHome').classList.add('hide'); $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
@@ -1902,7 +1921,7 @@ $('lGo').onclick=function(){
   $('lGo').textContent='లోడ్ అవుతోంది… · Loading voters…';
   call('login',n,p,true).then(function(u){
     S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,myWards:u.myWards||[]}; LS.set('user',S.user);
-    if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); S.fresh=u.voters.rows; }
+    if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); LS.set('ver',u.voters.ver||0); LS.set('fullAt',Date.now()); S.fresh=u.voters.rows; }
     $('lGo').disabled=false; showApp();
   }).catch(function(err){
     $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';

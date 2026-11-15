@@ -215,8 +215,10 @@ function load(force){
   if (!SV.loaded){ var c0=LS.get('mvs_rows'); if (c0 && c0.length) svIngest(c0); }   // survey answers work offline too
   if (cached && !force){ DATA=cached; rebuild(); route(); }
   else $('flist').innerHTML='<div class="msg">కుటుంబాలు తయారవుతున్నాయి… · Building families…</div>';
-  return call('getFamilyData',[U.name,U.pin]).then(function(d){
-    DATA=d; LS.set('fam_data',d); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad();
+  // send the version we already have: the server answers {same:true} when nothing changed (no big download)
+  return call('getFamilyData',[U.name,U.pin, cached && !force ? (LS.get('fam_ver')||'') : '']).then(function(d){
+    if (d && d.same && DATA){ st('','✓ తాజా · Up to date'); svLoad(); if (window.logOpen) logOpen('family', U, call); return; }
+    DATA=d; LS.set('fam_data',d); LS.set('fam_ver', d.ver||''); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad();
     if (window.logOpen) logOpen('family', U, call);
   }).catch(function(e){
     if (String(e.message)==='WRONG_PIN'){ LS.set('mvs_user',null); U=null; showLogin('మళ్ళీ లాగిన్ అవ్వండి · Please log in again'); return; }
@@ -474,10 +476,20 @@ function svLoad(){
   var c = LS.get('mvs_rows'); if (c && c.length && !SV.loaded) svIngest(c);
   if (SV.loading || !U) return; SV.loading = true;
   svFlush();
-  call('getVoters',[U.name,U.pin]).then(function(res){
-    var rows = (res && res.rows) || res || []; SV.loading=false;
+  // same rule as the house screen: only voters changed since our version, full list when unsure or after an hour
+  var have = LS.get('mvs_rows'), ver = LS.get('mvs_ver'), fullAt = Number(LS.get('mvs_fullAt'))||0;
+  var useDelta = !!(have && have.length && ver && Date.now()-fullAt < 60*60000);
+  call('getVoters',[U.name,U.pin, useDelta ? ver : 0]).then(function(res){
+    SV.loading=false;
     if (Object.keys(LS.get('mvs_pending')||{}).length && SV.busy) return;   // a save is on its way; keep what we have
-    LS.set('mvs_rows', rows); svIngest(rows); svRedraw();
+    var rows = res.rows || [];
+    if (res.delta && useDelta){
+      var key=function(a){ return a[0]+':'+a[10]; }, idx={}, drop={}; rows = have.slice();
+      rows.forEach(function(a,i){ idx[key(a)]=i; }); (res.gone||[]).forEach(function(g){ drop[g]=1; });
+      (res.rows||[]).forEach(function(a){ var k=key(a); if (k in idx) rows[idx[k]]=a; else rows.push(a); });
+      rows = rows.filter(function(a){ return !drop[key(a)]; });
+    } else LS.set('mvs_fullAt', Date.now());
+    LS.set('mvs_ver', res.ver||0); LS.set('mvs_rows', rows); svIngest(rows); svRedraw();
   }).catch(function(){ SV.loading=false; svRedraw(); });
 }
 function svRedraw(){ var c=cur(); if (c.p && !document.activeElement.matches('[data-svin]')) renderPerson(c.p, false); }
