@@ -71,6 +71,7 @@ button,input,select{font:inherit;color:inherit}
 </div>
 <div class="st" id="st">—</div>
 <div class="ab hide" id="ab"><div class="t" id="abt"></div><button class="dis" id="abDis">✕ రద్దు</button><button class="app" id="abApp">✓ సేవ్ చేయండి</button></div>
+<script src="../usage.js"></script>
 <script>
 (function(){
 "use strict";
@@ -103,7 +104,7 @@ function ingest(rows){
 }
 function load(){
   st('busy','⏳ లోడ్ అవుతోంది… · Loading');
-  call('getWardHouses', who).then(function(rows){ ingest(rows||[]); st('','✓ తాజా · Up to date'); })
+  call('getWardHouses', who).then(function(rows){ ingest(rows||[]); st('','✓ తాజా · Up to date'); if (window.logOpen && who[0]) logOpen('wards', U, call); })
     .catch(function(e){ var m=String(e.message);
       if (m==='WRONG_PIN'){ who=['','']; load(); return; }
       $('list').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(m)+'<br><br><button class="all" onclick="location.reload()">⟳ మళ్ళీ ప్రయత్నించండి</button></div>'; st('bad','📵 ఇంటర్నెట్ లేదు · Offline'); });

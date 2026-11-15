@@ -159,6 +159,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 <script src="engine.js"></script>
 <script src="../fuzzy.js"></script>
 <script src="../survey.js"></script>
+<script src="../usage.js"></script>
 <script>
 (function(){
 "use strict";
@@ -216,6 +217,7 @@ function load(force){
   else $('flist').innerHTML='<div class="msg">కుటుంబాలు తయారవుతున్నాయి… · Building families…</div>';
   return call('getFamilyData',[U.name,U.pin]).then(function(d){
     DATA=d; LS.set('fam_data',d); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad();
+    if (window.logOpen) logOpen('family', U, call);
   }).catch(function(e){
     if (String(e.message)==='WRONG_PIN'){ LS.set('mvs_user',null); U=null; showLogin('మళ్ళీ లాగిన్ అవ్వండి · Please log in again'); return; }
     if (!DATA) $('flist').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'</div>';

@@ -136,6 +136,7 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .hleg{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:.75rem;color:#57534e;margin:2px 0 6px}.hleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
 .dt i.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
+.lnote{margin-top:14px;font-size:.78rem;color:var(--muted);line-height:1.4}
 .appver{text-align:center;color:var(--muted);font-size:.78rem;margin:18px 0 0}
 .appby{text-align:center;color:var(--muted);font-size:.74rem;margin:4px 0 0}.appby a{color:inherit;font-weight:700;text-decoration:none}
 .q.qh{cursor:pointer;margin-left:-6px;margin-right:-6px;padding:6px;border-radius:10px}.q.qh:active{background:#f5f5f4}
@@ -291,6 +292,7 @@ details.dcard[open]>summary{margin-bottom:10px}
     <input id="lPin" class="field pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
     <button id="lGo" class="big">లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span></button>
     <div id="lErr" class="err"></div>
+    <div class="lnote">🔒 లాగిన్ అయిన సమయం నమోదవుతుంది; ఫోన్ అనుమతిస్తే స్థానం కూడా. <span class="en">Login time (and location, if your phone allows) is recorded.</span></div>
   </div>
 </section>
 
@@ -315,7 +317,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 14:30</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 16:00</b></div>
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -425,6 +427,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 <div id="toast" class="toast"></div>
 
 <script src="survey.js"></script>
+<script src="usage.js"></script>
 <script>
 /* Forgiving search for Magallu pages: spelling variants, joined/split names, 1-2 typos, Telugu input. */
 var Fuzzy = (function () {
@@ -1663,13 +1666,14 @@ function renderDash(){
   // leaders
   var withL=hs.filter(function(x){ return topLeader(x.v); }).length;
   h += '<div class="dcard"><h3>నాయకులు <span class="en">Leaders</span></h3>'+withL+' / '+hs.length+' ఇళ్ళకు నాయకుడు ఉన్నాడు <span class="en">houses have a leader</span></div>';
+  if (S.user.admin) h += usageCard();
   h += rollCard;   // 📋 voter count at the end
   var keep=$('vDash').scrollTop; $('dBody').innerHTML=h; $('vDash').scrollTop=keep;
   [].forEach.call($('dBody').querySelectorAll('details[data-dk]'), function(d){ var k=d.dataset.dk; if (k in S.dashOpen) d.open=S.dashOpen[k]; });
 }
 $('dBody').addEventListener('change', function(e){ var t=e.target;
   });
-$('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk) S.dashOpen[d.dataset.dk]=d.open; }, true);
+$('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk){ S.dashOpen[d.dataset.dk]=d.open; if (d.dataset.dk==='usage' && d.open && !S.logins) loadLogins(); } }, true);
 $('dBody').onclick=function(e){
   var dw=e.target.closest('[data-dfw]'); if (dw){ var w=dw.dataset.dfw; if (w==='all') S.df.w=[]; else { var i=S.df.w.indexOf(w); if (i>=0) S.df.w.splice(i,1); else S.df.w.push(w); } LS.set('dfil',S.df); renderDash(); return; }
   if (e.target.closest('[data-dfclr]')){ S.df={w:[], b:[], s:[], c:[]}; LS.set('dfil',S.df); renderDash(); return; }
@@ -1709,6 +1713,32 @@ $('drList').onclick=function(e){
   if (e.target.closest('[data-drmore]')){ DRL.lim+=200; renderDrill(); return; }
   var d=e.target.closest('[data-drh]'); if (d && d.dataset.drh && S.hById[d.dataset.drh]) openHouse(d.dataset.drh);
 };
+// 👥 who used the app (admin only) — loaded from the server only when this card is opened
+function usageCard(){
+  var L=S.logins, body;
+  if (!L) body = '<div class="empty" style="padding:10px">'+(S.loginsBusy?'⏳ లోడ్ అవుతోంది…':'తెరిస్తే లోడ్ అవుతుంది · Opens on tap')+'</div>';
+  else if (L.err) body = '<div class="empty" style="padding:10px">📵 లోడ్ కాలేదు · '+esc(L.err)+'</div>';
+  else {
+    var by={}, today=dayKey(Date.now()), wk=Date.now()-7*DAY;
+    L.forEach(function(r){ var o=by[r[1]]||(by[r[1]]={n:0,w:0,t:0,last:null,loc:null,pages:{}}); o.n++; if (r[0]>=wk) o.w++; if (dayKey(r[0])===today) o.t++; o.pages[r[3]]=1; if (!o.last||r[0]>o.last[0]) o.last=r; if (r[5]!==''&&(!o.loc||r[0]>o.loc[0])) o.loc=r; });
+    var names=Object.keys(by).sort(function(a,b){ return by[b].last[0]-by[a].last[0]; });
+    var PG={app:'యాప్',family:'కుటుంబాలు',castes:'కులాలు',wards:'వార్డులు'};
+    var dt=function(t){ var d=new Date(t); return d.getDate()+'/'+(d.getMonth()+1)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); };
+    body = '<div class="tiles" style="margin:0 0 8px">'+tile(names.filter(function(n){ return by[n].t; }).length,'ఈ రోజు','People today')+tile(names.filter(function(n){ return by[n].w; }).length,'7 రోజుల్లో','People this week')+tile(L.length,'తెరిచారు','Opens · 14 days')+'</div>'+
+      names.map(function(n){ var o=by[n], r=o.last;
+        return '<div class="dh" style="cursor:default"><span class="dhl"><b>'+esc(n)+'</b> · '+esc(r[2])+' · చివరిసారి '+dt(r[0])+' ('+esc(PG[r[3]]||r[3])+')</span>'+
+          '<span class="dhs">ఈ రోజు '+o.t+' · 7 రోజుల్లో '+o.w+' సార్లు · 📱 '+esc(r[4]||'—')+
+          (o.loc?' · <a href="https://maps.google.com/?q='+o.loc[5]+','+o.loc[6]+'" target="_blank" rel="noopener">📍 స్థానం ('+dt(o.loc[0])+', ±'+o.loc[7]+' m)</a>':' · 📍 స్థానం లేదు')+'</span></div>'; }).join('')+
+      (names.length?'':'<div class="empty" style="padding:10px">ఇంకా ఎవరూ లేరు</div>')+
+      '<div class="dleg">పూర్తి వివరాలు షీట్‌లో “Login Log” · Full list in the sheet’s “Login Log” tab</div>';
+  }
+  return '<details class="dcard" data-dk="usage"><summary><h3>👥 యాప్ వాడకం <span class="en">Who used the app · admin only</span></h3></summary>'+body+'</details>';
+}
+function loadLogins(){
+  if (S.loginsBusy || DEMO) return; S.loginsBusy=true; renderDash();
+  call('getLogins', S.user.name, S.user.pin, 14).then(function(rows){ S.logins=rows||[]; }).catch(function(e){ S.logins={err:String(e&&e.message||e)}; })
+    .then(function(){ S.loginsBusy=false; if (!$('vDash').classList.contains('hide')) renderDash(); });
+}
 function tile(n,te,en,dr){ return '<div class="tile"'+(dr||'')+'><b>'+n+'</b><span>'+te+'</span><small>'+en+'</small></div>'; }
 // One shared screen: on the live app the 🏷 tile opens the /castes/ page
 
@@ -1852,6 +1882,7 @@ function showApp(){
   var savedBooth = LS.get('booth');
   S.booth = arr(savedBooth || (S.user.booth ? String(S.user.booth) : 'all'));
   renderSync(); loadData(false); scheduleFlush(500);
+  if (!DEMO && window.logOpen) logOpen('app', S.user, function(fn, a){ return call.apply(null, [fn].concat(a)); });   // quiet usage log (usage.js)
 }
 function initLogin(){
   call('listVolunteers').then(function(names){

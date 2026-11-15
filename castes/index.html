@@ -87,6 +87,7 @@ select.cs.big{width:100%;height:52px;font-size:1.05rem}
 <div id="st" class="st hide"></div>
 
 <script src="../fuzzy.js"></script>
+<script src="../usage.js"></script>
 <script>
 (function(){
 "use strict";
@@ -118,6 +119,7 @@ function casteOptions(cur){
 /* ---------- data ---------- */
 function load(){
   call('getSurnames',WHO).then(function(data){
+    if (window.logOpen && ME) logOpen('castes', ME, call);
     rows = data.filter(function(r){ return r[1] && r[1].toLowerCase()!=='total'; }); bySur = {}; rows.forEach(function(r){ bySur[r[1]] = r; });
     st('','✓ అన్నీ సేవ్ అయ్యాయి · All saved'); route();
   }).catch(function(e){
