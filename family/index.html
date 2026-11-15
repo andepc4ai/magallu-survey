@@ -461,7 +461,7 @@ $('ftree').onclick=function(e){ var b=e.target.closest('[data-p]'); if(!b) retur
 var SV = { byE:{}, loaded:false, loading:false, busy:false, open:'', card:true, link:false, vsure:{}, dirty:false };
 function svRow(a){ return {s:a[0], r:a[1], e:String(a[10]), visited:a[14]==='Visited', support:a[15]||'', issue:a[16]||'', notes:a[17]||'',
   mobile:a[20]?String(a[20]):'', caste:a[21]||'', occupation:a[22]||'', surname:a[23]||'', visits:Number(a[25])||0, lastVisit:Number(a[26])||0,
-  lastBy:a[27]?String(a[27]):'', issueStatus:a[28]?String(a[28]):'', pv:0}; }
+  lastBy:a[27]?String(a[27]):'', issueStatus:a[28]?String(a[28]):'', avail:a[34]?String(a[34]):'', pv:0}; }
 function svApply(v, f){ Object.keys(f).forEach(function(k){ if (k==='visits') v.pv=(v.pv||0)+f.visits.length; else if (k==='visited') v.visited = f.visited==='Visited'; else if (k!=='geo') v[k]=f[k]; }); }
 function svIngest(rows){
   SV.byE = {}; (rows||[]).forEach(function(a){ var v=svRow(a); SV.byE[v.e]=v; });
@@ -506,7 +506,7 @@ function svFlush(){
     rows.forEach(function(a){ byE[String(a[10])]=a; });
     batch.forEach(function(b){
       var c = pend[b.id], a = byE[String(b.u.e)], f = b.u.f, v = SV.byE[String(b.u.e)];
-      if (a){ var map={visited:14,support:15,issue:16,notes:17,mobile:20,caste:21,occupation:22,issueStatus:28};
+      if (a){ var map={visited:14,support:15,issue:16,notes:17,mobile:20,caste:21,occupation:22,issueStatus:28,avail:34};
         Object.keys(map).forEach(function(k){ if (k in f) a[map[k]] = f[k]; });
         if (f.visits && f.visits.length){ a[25]=(Number(a[25])||0)+f.visits.length; a[26]=Date.now(); a[27]=U.name; a[14]='Visited'; } }
       if (v && f.visits){ v.visits=(v.visits||0)+f.visits.length; v.pv=Math.max(0,(v.pv||0)-f.visits.length); v.lastVisit=Date.now(); v.lastBy=U.name; }

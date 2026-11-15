@@ -123,6 +123,7 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .wtog{width:100%;display:flex;align-items:center;gap:8px;min-height:46px;border:2px solid #e5dfd2;background:#fff;border-radius:12px;padding:0 12px;font-weight:700;font-size:.95rem;margin:2px 0 8px;text-align:left;cursor:pointer;color:inherit}.wtog .wv{flex:1;font-weight:400;color:#57534e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.wtog .wc{color:#78716c}.wtog.act{border-color:#ca8a04;background:#fef9c3}.wtog.act .wv{color:#1c1917;font-weight:700}
 .mchips{margin:-2px 0 10px}.mchips .chip{max-width:100%;white-space:normal;text-align:center}.mchips .mdone{background:#1c1917;color:#fff;border-color:#1c1917}
 .gpn{display:inline-block;background:#1c1917;color:#fde047;border-radius:6px;padding:0 5px;font-size:.72rem;font-weight:700;margin-right:5px;vertical-align:2px;white-space:nowrap}
+.pav{display:inline-block;font-size:.72rem;font-weight:700;border-radius:6px;padding:0 5px;vertical-align:2px}.pav.far{background:#dbeafe;color:#1d4ed8}.pav.no{background:#e7e5e4;color:#44403c}
 .dfil .wchips{margin-bottom:8px}.dfil summary h3 .en{font-size:.78rem}
 .dview{display:flex;gap:6px;margin:12px 0 4px;background:#e7e5e4;border-radius:12px;padding:4px}
 .dview button{flex:1;border:0;background:transparent;border-radius:9px;min-height:42px;font-weight:700;font-size:.95rem;color:#57534e}
@@ -136,6 +137,7 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .dt i.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .appver{text-align:center;color:var(--muted);font-size:.78rem;margin:18px 0 0}
+.appby{text-align:center;color:var(--muted);font-size:.74rem;margin:4px 0 0}.appby a{color:inherit;font-weight:700;text-decoration:none}
 .q.qh{cursor:pointer;margin-left:-6px;margin-right:-6px;padding:6px;border-radius:10px}.q.qh:active{background:#f5f5f4}
 .splitb{width:100%;margin:0 0 12px;min-height:46px;border:2px dashed #d6d0c2;background:transparent;border-radius:12px;font-weight:700;color:#57534e;font-size:.9rem}.splitb .en{font-weight:400}
 .splitbox{border:2px solid #f59e0b;background:#fffbeb}.splitbox .lq{margin-bottom:4px}
@@ -313,7 +315,8 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 12:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 14:30</b></div>
+    <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
 
@@ -643,7 +646,7 @@ function demoCall(fn,args){
     var rows = LS.get('demo_rows') || JSON.parse(JSON.stringify(DEMO_ROWS));
     args[2].forEach(function(u){ rows.forEach(function(r){ if(r[10]===u.e){
       var f=u.f; if('ward' in f) r[13]=f.ward; if('visited' in f) r[14]=f.visited; if('support' in f) r[15]=f.support;
-      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; if('issueStatus' in f) r[28]=f.issueStatus; if('voted' in f) r[29]=f.voted;
+      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; if('issueStatus' in f) r[28]=f.issueStatus; if('voted' in f) r[29]=f.voted; if('avail' in f) r[34]=f.avail;
       if(f.visits){ var dv=LS.get('demo_visits')||[]; f.visits.forEach(function(id){ dv.push({id:id,t:Date.now(),by:args[0],e:r[10]}); }); LS.set('demo_visits',dv); r[25]=(r[25]||0)+f.visits.length; r[26]=Date.now(); r[27]=args[0]; }
       r[18]=args[0]; }});});
     LS.set('demo_rows',rows);
@@ -656,7 +659,7 @@ var BOOTH_2025 = {207:204, 208:205, 209:206};   // show booths as on the 2025 ro
 function toObj(a){
   return {s:a[0],r:a[1],booth:BOOTH_2025[a[2]]||a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',hh:a[32]?String(a[32]):'',gp:a[33]!=null&&a[33]!==''?String(a[33]):'',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',hh:a[32]?String(a[32]):'',gp:a[33]!=null&&a[33]!==''?String(a[33]):'',avail:a[34]?String(a[34]):'',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
@@ -690,6 +693,7 @@ function applyLocal(v,f){
   if('issue' in f) v.issue = f.issue;
   if('notes' in f) v.notes = f.notes;
   if('mobile' in f) v.mobile = f.mobile;
+  if('avail' in f) v.avail = f.avail;
   if('caste' in f) v.caste = f.caste;
   if('occupation' in f) v.occupation = f.occupation;
   if('leader' in f) v.leader = f.leader;
@@ -1390,9 +1394,10 @@ function renderPoll(){
   var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(isSup), supV=sup.filter(function(v){ return v.voted; }).length;
   $('pTxt').innerHTML='ఓటు వేశారు <b>'+voted+' / '+inB.length+'</b> ('+pct(voted,inB.length)+'%) · మన వాళ్ళు <b>'+supV+' / '+sup.length+'</b>';
   $('pBar').style.width=pct(voted,inB.length)+'%';
-  var tabs=[['sup','🎯 మనవాళ్ళు — ఇంకా వేయలేదు', sup.length-supV],['not','ఇంకా వేయనివారు', inB.length-voted],['voted','✓ వేశారు', voted],['all','అందరూ', inB.length]];
+  var farN=inB.filter(function(v){ return v.avail==='Far' && !v.voted; }).length;
+  var tabs=[['sup','🎯 మనవాళ్ళు — ఇంకా వేయలేదు', sup.length-supV],['far','🚌 రప్పించాలి', farN],['not','ఇంకా వేయనివారు', inB.length-voted],['voted','✓ వేశారు', voted],['all','అందరూ', inB.length]];
   $('pTabs').innerHTML=tabs.map(function(t){ return '<button class="chip'+(P.tab===t[0]?' on':'')+'" data-pt="'+t[0]+'">'+t[1]+' <b>'+t[2]+'</b></button>'; }).join('');
-  var list=inB.filter(function(v){ return P.tab==='sup' ? isSup(v)&&!v.voted : P.tab==='not' ? !v.voted : P.tab==='voted' ? v.voted : true; });
+  var list=inB.filter(function(v){ return P.tab==='sup' ? isSup(v)&&!v.voted : P.tab==='far' ? v.avail==='Far'&&!v.voted : P.tab==='not' ? !v.voted : P.tab==='voted' ? v.voted : true; });
   var q=P.q;
   if (q){
     var num=/^\d+$/.test(q), Q=Fuzzy.query(q);
@@ -1405,6 +1410,7 @@ function renderPoll(){
   $('pList').innerHTML = list.slice(0,P.limit).map(function(v){
     var ask=P.ask===v.id, lv=leaderName(v.leader);
     return '<div class="pv'+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+esc(v.name)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
+      (v.avail==='Far'?' <span class="pav far">🚌 రప్పించాలి</span>':v.avail==='No'?' <span class="pav no">❌ రాలేరు</span>':'')+
       '<div class="pm">'+(v.gp?'GP <b>'+esc(v.gp)+'</b> · ':'')+'క్ర.సం. <b>'+esc(v.sr)+'</b> · బూత్ '+esc(v.booth)+' · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
       (v.mobile&&!v.voted?'<a class="pcall" href="tel:'+esc(v.mobile)+'">📞 '+esc(v.mobile)+'</a>':'')+'</div>'+
       '<button class="pvb'+(v.voted?' on':'')+(ask?' ask':'')+'" data-pvote="1">'+(ask?'తీసేయాలా? ✓':v.voted?'✓ వేశారు':'ఓటు<br>వేశారు')+'</button></div>';
@@ -1566,6 +1572,9 @@ function renderDash(){
   h += '<div class="dcard"><h3>మద్దతు <span class="en">Support</span></h3>'+(isChart()
     ? supBar(so,'sbarD',rows,'మద్దతు · ')+supLegend(so,total,rows,'మద్దతు · ')
     : '<table class="dt"><tr><th>మద్దతు</th><th>ఓటర్లు</th><th>%</th></tr>'+SUPC.map(function(x){ var n=x[0]?so[x[0]]:so.na; return '<tr'+drA('మద్దతు · '+x[1], supOf(rows, x[0]||''))+'><td><i class="sw" style="background:'+x[2]+'"></i>'+x[1]+'</td><td>'+n+'</td><td>'+pct(n,total)+'%</td></tr>'; }).join('')+'</table>')+'</div>';
+  // 🗳️ can they come and vote? (support split inside each bar — e.g. strong supporters who live far)
+  var AV=[['Yes','✅ వస్తారు','Will vote here'],['Far','🚌 దూరం — రప్పించాలి','Lives far, bring them'],['No','❌ రాలేరు','Not able to vote'],['','అడగలేదు','Not asked']];
+  h += dTable('avail','🗳️ ఓటు వేయగలరా?','Can they vote', AV.map(function(a){ return {label:a[1], sub:a[2], rows:rows.filter(function(v){ return (v.avail||'')===a[0]; })}; }), 'ఓటు వేయగలరా', true);
   // 🎯 main target voters
   var und=so.Undecided, lean=so.Leaning, na=so.na, nvis=total-visited,
       yng=rows.filter(function(v){ return isYoung(v) && targetScore(v); }).length;
