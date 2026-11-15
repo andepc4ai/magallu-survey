@@ -41,6 +41,7 @@ a{color:inherit}
 .warnb{display:inline-block;background:#fef3c7;color:#92400e;border-radius:999px;padding:1px 8px;font-size:.78rem;font-weight:700;margin-left:6px}
 .more{width:100%;height:50px;border:2px dashed #d6cfc0;background:transparent;border-radius:12px;font-weight:700;color:#6b665c}
 .card{background:#fff;border:1px solid #e9e2d5;border-radius:14px;padding:14px;margin-bottom:12px}
+.svcard{padding:10px 12px;border:2px solid #FACC15}.svhd{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}.svhd b{font-size:1rem}.svhd .sm{flex:1;min-width:0;font-size:.82rem;color:#57534e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.svhd .cv{flex:none;color:#78716c}.vrow{display:flex;align-items:center;gap:8px;margin:8px 0 2px;font-size:.88rem}.vrow .vt{flex:1;min-width:0}.vrow .vt b{color:#15803d}.vadd{flex:none;border:0;border-radius:10px;background:#FACC15;color:#1c1917;font-weight:700;padding:0 12px;min-height:40px;box-shadow:0 2px 0 #CA8A04}.vadd.sure{background:#fb923c}.svwait{color:#6b665c;font-size:.85rem;padding:6px 0}.fold2{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}.fold2 h3{flex:1;margin:0}.fold2 .cv{color:#78716c}.b.house.sm{min-height:40px;font-size:.9rem}
 .card h3{margin:0 0 8px;font-size:1rem}
 /* tree */
 .tree{margin:0;padding:0}
@@ -157,6 +158,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <script src="engine.js"></script>
 <script src="../fuzzy.js"></script>
+<script src="../survey.js"></script>
 <script>
 (function(){
 "use strict";
@@ -209,10 +211,11 @@ $('pin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('go').cli
 
 function load(force){
   var cached = LS.get('fam_data');
+  if (!SV.loaded){ var c0=LS.get('mvs_rows'); if (c0 && c0.length) svIngest(c0); }   // survey answers work offline too
   if (cached && !force){ DATA=cached; rebuild(); route(); }
   else $('flist').innerHTML='<div class="msg">కుటుంబాలు తయారవుతున్నాయి… · Building families…</div>';
   return call('getFamilyData',[U.name,U.pin]).then(function(d){
-    DATA=d; LS.set('fam_data',d); rebuild(); route(); st('','✓ తాజా · Up to date');
+    DATA=d; LS.set('fam_data',d); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad();
   }).catch(function(e){
     if (String(e.message)==='WRONG_PIN'){ LS.set('mvs_user',null); U=null; showLogin('మళ్ళీ లాగిన్ అవ్వండి · Please log in again'); return; }
     if (!DATA) $('flist').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'</div>';
@@ -450,6 +453,96 @@ $('ftree').onclick=function(e){ var b=e.target.closest('[data-p]'); if(!b) retur
   if (HPICK){ var f=M.byHead[cur().f]||famOf(cur().f); if (f && P(b.dataset.p).vote) setHead(f, b.dataset.p); return; }
   go('p='+encodeURIComponent(b.dataset.p)); };
 
+
+/* ---------- survey: the SAME questions (survey.js), data and save queue as the house screen ----------
+   data  = the app's voter rows kept on this phone (localStorage mvs_rows), refreshed with getVoters
+   saves = the app's queue (localStorage mvs_pending), sent by whichever page is open — so the house screen
+           and this page always show the same answers, and nothing typed offline is lost */
+var SV = { byE:{}, loaded:false, loading:false, busy:false, open:'', card:true, link:false, vsure:{}, dirty:false };
+function svRow(a){ return {s:a[0], r:a[1], e:String(a[10]), visited:a[14]==='Visited', support:a[15]||'', issue:a[16]||'', notes:a[17]||'',
+  mobile:a[20]?String(a[20]):'', caste:a[21]||'', occupation:a[22]||'', surname:a[23]||'', visits:Number(a[25])||0, lastVisit:Number(a[26])||0,
+  lastBy:a[27]?String(a[27]):'', issueStatus:a[28]?String(a[28]):'', pv:0}; }
+function svApply(v, f){ Object.keys(f).forEach(function(k){ if (k==='visits') v.pv=(v.pv||0)+f.visits.length; else if (k==='visited') v.visited = f.visited==='Visited'; else if (k!=='geo') v[k]=f[k]; }); }
+function svIngest(rows){
+  SV.byE = {}; (rows||[]).forEach(function(a){ var v=svRow(a); SV.byE[v.e]=v; });
+  var pend = LS.get('mvs_pending')||{}; Object.keys(pend).forEach(function(id){ var u=pend[id], v=SV.byE[String(u.e)]; if (v) svApply(v, u.f||{}); });
+  SV.loaded = true;
+}
+function svLoad(){
+  var c = LS.get('mvs_rows'); if (c && c.length && !SV.loaded) svIngest(c);
+  if (SV.loading || !U) return; SV.loading = true;
+  svFlush();
+  call('getVoters',[U.name,U.pin]).then(function(res){
+    var rows = (res && res.rows) || res || []; SV.loading=false;
+    if (Object.keys(LS.get('mvs_pending')||{}).length && SV.busy) return;   // a save is on its way; keep what we have
+    LS.set('mvs_rows', rows); svIngest(rows); svRedraw();
+  }).catch(function(){ SV.loading=false; svRedraw(); });
+}
+function svRedraw(){ var c=cur(); if (c.p && !document.activeElement.matches('[data-svin]')) renderPerson(c.p, false); }
+function svNewId(){ return 'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+function svEdit(e, f){
+  if (RO()) return false;
+  var v = SV.byE[e]; if (!v) return false;
+  if (f.visited==='Visited' && !f.visits && !v.visited && !(v.visits||v.pv)) f.visits=[svNewId()];
+  svApply(v, f);
+  var pend = LS.get('mvs_pending')||{}, id = v.s+':'+v.e, q = pend[id] || (pend[id] = {s:v.s, r:v.r, e:v.e, f:{}});
+  Object.keys(f).forEach(function(k){ q.f[k] = k==='visits' ? (q.f.visits||[]).concat(f.visits) : f[k]; });
+  LS.set('mvs_pending', pend);
+  // the family tree shows support / caste / mobile too
+  var r = DATA && DATA.voters.filter(function(x){ return String(x[0])===e; })[0];
+  if (r){ if ('support' in f) r[10]=f.support; if (f.visits || f.visited) r[11]='Visited'; if ('caste' in f) r[12]=f.caste; if ('mobile' in f) r[13]=f.mobile; LS.set('fam_data', DATA); }
+  var pp = P(e); if (pp){ ['support','caste','mobile'].forEach(function(k){ if (k in f) pp[k]=f[k]; }); }
+  SV.dirty = true;
+  st('busy','⏳ సేవ్ అవుతోంది… · Saving'); clearTimeout(SV.t); SV.t = setTimeout(svFlush, 700);
+  return true;
+}
+function svFlush(){
+  if (SV.busy || !U) return;
+  var pend = LS.get('mvs_pending')||{}, ids = Object.keys(pend); if (!ids.length) return;
+  SV.busy = true;
+  var batch = ids.slice(0,40).map(function(id){ return {id:id, u:JSON.parse(JSON.stringify(pend[id]))}; });
+  call('saveUpdates',[U.name, U.pin, batch.map(function(b){ return b.u; })]).then(function(res){
+    var pend = LS.get('mvs_pending')||{}, rows = LS.get('mvs_rows')||[], byE = {};
+    rows.forEach(function(a){ byE[String(a[10])]=a; });
+    batch.forEach(function(b){
+      var c = pend[b.id], a = byE[String(b.u.e)], f = b.u.f, v = SV.byE[String(b.u.e)];
+      if (a){ var map={visited:14,support:15,issue:16,notes:17,mobile:20,caste:21,occupation:22,issueStatus:28};
+        Object.keys(map).forEach(function(k){ if (k in f) a[map[k]] = f[k]; });
+        if (f.visits && f.visits.length){ a[25]=(Number(a[25])||0)+f.visits.length; a[26]=Date.now(); a[27]=U.name; a[14]='Visited'; } }
+      if (v && f.visits){ v.visits=(v.visits||0)+f.visits.length; v.pv=Math.max(0,(v.pv||0)-f.visits.length); v.lastVisit=Date.now(); v.lastBy=U.name; }
+      if (!c) return;
+      Object.keys(f).forEach(function(k){
+        if (k==='visits'){ c.f.visits=(c.f.visits||[]).filter(function(x){ return f.visits.indexOf(x)<0; }); if (!c.f.visits.length) delete c.f.visits; }
+        else if (c.f[k]===f[k]) delete c.f[k];
+      });
+      if (!Object.keys(c.f).length) delete pend[b.id];
+    });
+    LS.set('mvs_pending', pend); LS.set('mvs_rows', rows); SV.busy=false;
+    var left = Object.keys(pend).length;
+    st(left?'busy':'', left?'⏳ ఇంకా '+left+'…':((res&&res.failed&&res.failed.length)?'⚠️ '+res.failed.length+' సేవ్ కాలేదు':'✓ సేవ్ అయింది · Saved'));
+    if (left) svFlush();
+  }).catch(function(e){
+    SV.busy=false;
+    if (String(e.message)==='READ_ONLY'){ st('bad','👁 చూడటానికి మాత్రమే · View only'); return; }
+    st('bad','📵 ఫోన్‌లో ఉంచాం — ఇంటర్నెట్ వచ్చాక పంపుతాం · Saved on phone, will send'); setTimeout(svFlush, 8000);
+  });
+}
+window.addEventListener('online', svFlush);
+function svDate(t){ var d=new Date(t); return d.getDate()+'/'+(d.getMonth()+1); }
+function surveyHtml(p, f){
+  var v = SV.byE[p.id];
+  if (!v) return '<div class="card svcard"><div class="svhd"><b>📝 సర్వే</b><span class="sm"></span></div><div class="svwait">'+
+    (SV.loading||!SV.loaded ? '⏳ ఓటరు వివరాలు లోడ్ అవుతున్నాయి… · Loading' : 'ఈ ఓటరు మీ జాబితాలో లేరు · Not in your list')+'</div></div>';
+  var n = (v.visits||0)+(v.pv||0), sure = SV.vsure[v.e];
+  var famCaste = f && f.caste;
+  var h = '<div class="card svcard"><button class="svhd" data-svcard="1"><b>📝 సర్వే</b><span class="sm">'+Survey.summary(v)+'</span><span class="cv">'+(SV.card?'▴':'▾')+'</span></button>';
+  if (!SV.card) return h+'</div>';
+  h += '<div class="vrow"><span class="vt">'+(n ? '<b>✓ కలిశాం '+n+(n>1?' సార్లు':'')+'</b>'+(v.lastVisit?' · చివరిసారి '+svDate(v.lastVisit)+(v.lastBy?' · '+esc(v.lastBy):''):'') : 'ఇంకా కలవలేదు · Not visited')+'</span>'+
+    '<button class="vadd'+(sure?' sure':'')+'" data-svvisit="1">'+(sure?'ఇప్పుడే నమోదైంది — మళ్ళీనా? ✓':'➕ ఈ రోజు కలిశాం')+'</button></div>';
+  h += Survey.render(v, {open:SV.open, lists:{castes:Object.keys(CASTE_TE)}, hint:{caste: v.caste ? '' : (famCaste || '')}, ro:!!(U&&U.reader)}, v.e);
+  return h+'</div>';
+}
+
 /* ---------- person ---------- */
 function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)+'">'+esc(displayName(p))+(p.vote?'':' (ఓటు లేదు)')+'</button>':''; }
 function renderPerson(id, picking){
@@ -459,10 +552,12 @@ function renderPerson(id, picking){
   else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.vote){
-    h += '<a class="b house" href="../#v='+encodeURIComponent(id)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';
-    if (p.mobile) h += '<div class="card" style="display:flex;align-items:center;gap:10px"><span style="flex:1">📱 '+esc(p.mobile)+'</span><a class="callb" href="tel:'+esc(p.mobile)+'">📞 కాల్</a></div>';
-    var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt;
-    h += '<div class="card"><h3>జాబితాలో ఉన్న సంబంధం · As on voter list</h3>'+
+    if (id!==SV.last){ SV.last=id; SV.open=''; SV.link=false; }
+    h += surveyHtml(p, f);
+    h += '<a class="b house sm" href="../#v='+encodeURIComponent(id)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';
+    var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt, linkOpen = SV.link || picking || (r && !p.sure) || !r;
+    h += '<div class="card"><button class="fold2" data-linktog="1"><h3>🔗 జాబితాలో సంబంధం · Voter-list relation</h3><span class="cv">'+(linkOpen?'▴':(r?'✓ '+esc(displayName(r))+' ▾':'▾'))+'</span></button>';
+    if (linkOpen) h += '<div style="margin-top:8px">'+
       '<div>'+esc(relLbl)+': <b>'+esc(p.rn||'—')+'</b></div>'+
       (p.as&&p.as!==p.rt?'<div style="margin-top:4px;color:#6d28d9;font-weight:700">సరిచేసిన సంబంధం · Corrected: '+esc(REL[p.as]||p.as)+'</div>':'')+
       '<div class="relbox'+(r&&!p.sure?' chk':'')+'">'+
@@ -472,8 +567,8 @@ function renderPerson(id, picking){
       '</div>'+
       '<div class="btns">'+(r&&!p.sure?'<button class="b ok" data-ok="'+esc(id)+'">✓ సరైనది</button>':'')+
         '<button class="b ch" data-pick="">✏️ '+(r?'మార్చు · Change':'ఎంచుకో · Pick')+'</button></div>'+
-      (picking&&PK&&!PK.slot?pickerHtml(p):'')+
-      '</div>';
+      (picking&&PK&&!PK.slot?pickerHtml(p):'')+'</div>';
+    h += '</div>';
   }
   var rows = [];
   if (p.father) rows.push(['తండ్రి', plink(p.father)]);
@@ -516,6 +611,17 @@ function renderPick(id, q){
 }
 $('pbody').onclick=function(e){
   var t;
+  if (e.target.closest('a')) return;
+  if (e.target.closest('[data-svcard]')){ SV.card=!SV.card; renderPerson(cur().p, false); return; }
+  if (e.target.closest('[data-linktog]')){ SV.link=!SV.link; renderPerson(cur().p, false); return; }
+  if (e.target.closest('[data-svvisit]')){ var vv=SV.byE[cur().p]; if (!vv || RO()) return;
+    var recent = vv.lastVisit && vv.lastBy===U.name && Date.now()-vv.lastVisit < 10*60000 || vv.pv;
+    if (recent && !SV.vsure[vv.e]){ SV.vsure[vv.e]=1; renderPerson(cur().p, false); return; }
+    delete SV.vsure[vv.e]; svEdit(vv.e, {visits:[svNewId()], visited:'Visited'}); renderPerson(cur().p, false); return; }
+  var svr = e.target.closest('.sv[data-svid]');
+  if (svr){ var sv=SV.byE[svr.dataset.svid]; if (sv){ var ui={open:SV.open, ro:!!(U&&U.reader)};
+    var again = Survey.click(e, sv, ui, function(fx){ if (!fx){ RO(); return false; } return svEdit(sv.e, fx); });
+    SV.open = ui.open; if (again) renderPerson(cur().p, false); return; } }
   if ((t=e.target.closest('[data-p]'))) { go('p='+encodeURIComponent(t.dataset.p)); return; }
   if ((t=e.target.closest('[data-fam]'))) { go('f='+encodeURIComponent(t.dataset.fam)+'&me='+encodeURIComponent(cur().p||'')); return; }
   if ((t=e.target.closest('[data-ok]'))) { var p=P(t.dataset.ok); setLink(p, p.rel, true); return; }
@@ -574,6 +680,7 @@ document.addEventListener('click',function(e){ if(e.target.closest('[data-home]'
 function route(){
   if (!M) return;
   var c=cur(); ['vList','vFam','vPerson'].forEach(function(v){ $(v).classList.add('hide'); });
+  if (SV.dirty && !c.p){ SV.dirty=false; rebuild(); }
   if (c.p){ $('vPerson').classList.remove('hide'); renderPerson(c.p, false); }
   else if (c.f){ $('vFam').classList.remove('hide'); renderFam(c.f, c.me); }
   else { if (c.s!==undefined){ F.sur=c.s; F.size=1; F.check=false; } $('vList').classList.remove('hide'); renderList(); }

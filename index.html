@@ -313,7 +313,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 10:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 12:00</b></div>
   </div>
 </section>
 
@@ -421,6 +421,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 <div id="sync" class="sync ok hide"></div>
 <div id="toast" class="toast"></div>
 
+<script src="survey.js"></script>
 <script>
 /* Forgiving search for Magallu pages: spelling variants, joined/split names, 1-2 typos, Telugu input. */
 var Fuzzy = (function () {
@@ -571,6 +572,7 @@ var S = {
   inflight: false, online: navigator.onLine !== false,
   openHouse: null, wards: 14,
   open: {},          // sections the volunteer opened again with "మార్చు"
+  svOpen: {},        // shared survey (survey.js): which question is open per voter
   vopen: {}, vis: {}, vsure: {}, vdel: null, hpick: null, hhist: false, revDays: 7, geo: null,   // visit history panels, loaded visits, double-tap guards
 };
 function issues(v){ return String(v.issue||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }
@@ -1011,8 +1013,7 @@ function renderHouse(){
     return '<div class="vc ex '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+head+r26Html(v)+
       '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(v.relN)+'<br>'+(v.gp?'GP క్ర.సం. <b>'+esc(v.gp)+'</b> · ':'')+esc(v.e)+' · క్ర.సం. '+esc(v.sr)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
       visitHtml(v)+
-      supportHtml(v)+occupationHtml(v)+personCasteHtml(v, hc, sameCaste)+
-      mobileHtml(v)+issueHtml(v)+notesHtml(v)+
+      Survey.render(v, svUI(v, hc), v.id)+   // the same survey as the families page (survey.js)
     '</div>';
   }).join('');
   html += goneHtml(h) + splitHtml(h);
@@ -1178,9 +1179,15 @@ function nextHouseIndex(h){
   var list = S.houses.filter(inScope);
   var i = list.indexOf(h); return i>=0 && i<list.length-1 ? S.houses.indexOf(list[i+1]) : -1;
 }
+// shared survey (survey.js) settings for one voter: open question, lists, caste hint (house caste or surname caste)
+function svUI(v, hc){ return {open:S.svOpen[v.id]||'', lists:lists(), hint:{caste: v.caste ? '' : (hc || suggestCaste(v.surname))}, ro:isRO()}; }
 $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
   if (e.target.closest('a')) return;                       // call / family links work as links
+  var svr = e.target.closest('.sv[data-svid]');
+  if (svr){ var sv=S.byId[svr.dataset.svid];
+    if (sv){ var ui=svUI(sv, ''); var again=Survey.click(e, sv, ui, function(f){ if (!f || isRO()){ roToast(); return false; } edit(sv, f); if ('support' in f && f.support) toast('✓ సేవ్'); });
+      S.svOpen[sv.id]=ui.open; if (again) renderHouse(); return; } }
   if (e.target.closest('[data-split]')){ if (isRO()){ roToast(); return; } S.split={ids:{}, name:'', typed:false}; renderHouse(); return; }
   if (e.target.closest('[data-spcancel]')){ S.split=null; renderHouse(); return; }
   var sp=e.target.closest('[data-sp]');
