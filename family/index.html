@@ -210,6 +210,21 @@ $('go').onclick=function(){
 };
 $('pin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('go').click(); });
 
+/* quiet refresh when coming back to the page and every 3 minutes: families only re-download when something changed */
+var FQ = {t: Date.now(), busy: false};
+function famQuiet(){
+  if (!U || !DATA || FQ.busy || document.hidden || !navigator.onLine || Date.now()-FQ.t < 60000) return;
+  FQ.busy = true; FQ.t = Date.now();
+  call('getFamilyData',[U.name, U.pin, LS.get('fam_ver')||'']).then(function(d){
+    FQ.busy = false; svLoad();
+    if (!d || d.same) return;
+    DATA = d; LS.set('fam_data', d); LS.set('fam_ver', d.ver||'');
+    var a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) { SV.dirty = true; return; }
+    rebuild(); route();
+  }).catch(function(){ FQ.busy = false; });
+}
+document.addEventListener('visibilitychange', function(){ if (!document.hidden) famQuiet(); });
+setInterval(famQuiet, 3*60000);
 function load(force){
   var cached = LS.get('fam_data');
   if (!SV.loaded){ var c0=LS.get('mvs_rows'); if (c0 && c0.length) svIngest(c0); }   // survey answers work offline too
