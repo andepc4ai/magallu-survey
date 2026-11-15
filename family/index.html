@@ -232,8 +232,8 @@ function load(force){
   else $('flist').innerHTML='<div class="msg">కుటుంబాలు తయారవుతున్నాయి… · Building families…</div>';
   // send the version we already have: the server answers {same:true} when nothing changed (no big download)
   return call('getFamilyData',[U.name,U.pin, cached && !force ? (LS.get('fam_ver')||'') : '']).then(function(d){
-    if (d && d.same && DATA){ st('','✓ తాజా · Up to date'); svLoad(); if (window.logOpen) logOpen('family', U, call); return; }
-    DATA=d; LS.set('fam_data',d); LS.set('fam_ver', d.ver||''); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad();
+    if (d && d.same && DATA){ st('','✓ తాజా · Up to date'); svLoad(force); if (window.logOpen) logOpen('family', U, call); return; }
+    DATA=d; LS.set('fam_data',d); LS.set('fam_ver', d.ver||''); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad(force);
     if (window.logOpen) logOpen('family', U, call);
   }).catch(function(e){
     if (String(e.message)==='WRONG_PIN'){ LS.set('mvs_user',null); U=null; showLogin('మళ్ళీ లాగిన్ అవ్వండి · Please log in again'); return; }
@@ -253,7 +253,7 @@ function allExtras(){
     var a=(ex[q.e]||[]).filter(function(x){ return x.slot!==q.slot; }); if (q.to && q.to!=='none') a.push({to:q.to, as:q.as, slot:q.slot}); ex[q.e]=a; });
   return ex;
 }
-$('reload').onclick=function(){ load(true); };
+$('reload').onclick=function(){ st('busy','⏳ తాజా చేస్తున్నాం… · Refreshing'); load(true); };
 
 /* ---------- helpers ---------- */
 function P(id){ return M.P[id]; }
@@ -487,13 +487,13 @@ function svIngest(rows){
   var pend = LS.get('mvs_pending')||{}; Object.keys(pend).forEach(function(id){ var u=pend[id], v=SV.byE[String(u.e)]; if (v) svApply(v, u.f||{}); });
   SV.loaded = true;
 }
-function svLoad(){
+function svLoad(full){
   var c = LS.get('mvs_rows'); if (c && c.length && !SV.loaded) svIngest(c);
   if (SV.loading || !U) return; SV.loading = true;
   svFlush();
   // same rule as the house screen: only voters changed since our version, full list when unsure or after an hour
   var have = LS.get('mvs_rows'), ver = LS.get('mvs_ver'), fullAt = Number(LS.get('mvs_fullAt'))||0;
-  var useDelta = !!(have && have.length && ver && Date.now()-fullAt < 60*60000);
+  var useDelta = !full && !!(have && have.length && ver && Date.now()-fullAt < 60*60000);
   call('getVoters',[U.name,U.pin, useDelta ? ver : 0]).then(function(res){
     SV.loading=false;
     if (Object.keys(LS.get('mvs_pending')||{}).length && SV.busy) return;   // a save is on its way; keep what we have

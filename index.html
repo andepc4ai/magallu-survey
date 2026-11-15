@@ -137,6 +137,7 @@ select.field{height:50px;font-size:1rem;margin-bottom:8px}
 .dt i.sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .lnote{margin-top:14px;font-size:.78rem;color:var(--muted);line-height:1.4}
+@keyframes spin360{to{transform:rotate(360deg)}}.spinning svg,.spinning{animation:spin360 .9s linear infinite}.iconbtn.spinning{animation:none}.iconbtn.spinning svg{animation:spin360 .9s linear infinite}
 .appver{text-align:center;color:var(--muted);font-size:.78rem;margin:18px 0 0}
 .appby{text-align:center;color:var(--muted);font-size:.74rem;margin:4px 0 0}.appby a{color:inherit;font-weight:700;text-decoration:none}
 .q.qh{cursor:pointer;margin-left:-6px;margin-right:-6px;padding:6px;border-radius:10px}.q.qh:active{background:#f5f5f4}
@@ -317,7 +318,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 19:00</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 19:30</b></div>
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1382,7 +1383,9 @@ function openPoll(){
 function pollRefresh(loud){
   if (DEMO) return;
   flush();
-  syncRows().then(function(rows){ ingest(rows); if (!$('vPoll').classList.contains('hide')) renderPoll(); if (loud) toast('తాజా ✓'); }).catch(function(){ if (loud) toast('📵 ఇంటర్నెట్ లేదు'); });
+  if (loud){ $('btnPollRef').classList.add('spinning'); toast('⏳ తాజా చేస్తున్నాం…'); }
+  syncRows(loud).then(function(rows){ ingest(rows); if (!$('vPoll').classList.contains('hide')) renderPoll(); if (loud) toast('తాజా ✓ · '+S.rows.length+' ఓటర్లు'); }).catch(function(){ if (loud) toast('📵 ఇంటర్నెట్ లేదు'); })
+    .then(function(){ $('btnPollRef').classList.remove('spinning'); });
 }
 function isSup(v){ return v.support==='Strong' || v.support==='Leaning'; }
 function renderPoll(){
@@ -1797,9 +1800,9 @@ function openFromLink(){
 window.addEventListener('hashchange', openFromLink);
 /* ask the server only for voters changed since our data version (other volunteers' visits included);
    the server sends the full list whenever it is unsure, and we take a full list at least once an hour */
-function syncRows(){
+function syncRows(full){   // full = true for a manual ⟳: always the complete, freshest list
   var have=LS.get('rows'), ver=LS.get('ver'), fullAt=Number(LS.get('fullAt'))||0;
-  var useDelta = !!(have && have.length && ver && Date.now()-fullAt < 60*60000);
+  var useDelta = !full && !!(have && have.length && ver && Date.now()-fullAt < 60*60000);
   return call('getVoters', S.user.name, S.user.pin, useDelta ? ver : 0).then(function(res){
     var rows = res.delta && useDelta ? mergeRows(have, res.rows||[], res.gone||[]) : res.rows;
     if (!res.delta) LS.set('fullAt', Date.now());
@@ -1818,10 +1821,10 @@ function loadData(force){
   if (!force && S.fresh){ var fr=S.fresh; S.fresh=null; ingest(fr); renderList(); openFromLink(); return Promise.resolve(); }
   var cached = LS.get('rows');
   if (cached && !force){ ingest(cached); renderList(); openFromLink(); }
-  return syncRows().then(function(rows){
-    ingest(rows); renderList(); if(S.openHouse) renderHouse(); else openFromLink();
+  return syncRows(force).then(function(rows){
+    ingest(rows); renderList(); renderHome(); if(S.openHouse) renderHouse(); else openFromLink();
     refreshLists();
-    S.online=true; renderSync(); if (force) toast('తాజా డేటా ✓');
+    S.online=true; renderSync(); if (force) toast('తాజా డేటా ✓ · '+S.rows.length+' ఓటర్లు');
   }).catch(function(err){
     if (String(err && err.message).indexOf('WRONG_PIN')>=0){ logout('పిన్ మారింది. మళ్ళీ లాగిన్ అవ్వండి'); return; }
     S.online=false; renderSync();
@@ -1855,7 +1858,7 @@ function quietSync(){
 }
 document.addEventListener('visibilitychange', function(){ if (!document.hidden) quietSync(); });
 setInterval(quietSync, 3*60000);
-$('btnRefresh').onclick=function(){ flush(); loadData(true); };
+$('btnRefresh').onclick=function(){ manualRefresh(this); };
 $('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); };
 
 function logout(msg){
@@ -1906,7 +1909,13 @@ window.addEventListener('popstate', function(){
   for (var i=0; i<LAYERS.length; i++){ if (isOpen(LAYERS[i][0])){ $(LAYERS[i][1]).click(); return; } }
   if (isOpen('vList')) $('btnHome').click();
 });
-$('btnListRef').onclick=function(){ flush(); loadData(true); };
+$('btnListRef').onclick=function(){ manualRefresh(this); };
+// ⟳ : spin the icon, say we are on it, then load the full list (not just changes)
+function manualRefresh(btn){
+  if (btn.classList.contains('spinning')) return;
+  btn.classList.add('spinning'); toast('⏳ తాజా చేస్తున్నాం… · Refreshing');
+  flush(); loadData(true).then(function(){ btn.classList.remove('spinning'); }, function(){ btn.classList.remove('spinning'); });
+}
 function showApp(){
   $('vLogin').classList.add('hide');
   $('who').textContent = '👤 '+S.user.name;
