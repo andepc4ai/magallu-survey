@@ -1702,12 +1702,12 @@ function renderDash(){
   var gc=groupBy(rows, function(v){ return v.caste||''; });
   h += dTable('caste','🏷️ కులం వారీగా','By caste', Object.keys(gc).map(function(k){ return {label:k?esc(CASTE_TE[k]||k):'కులం నమోదు కాలేదు', sub:k?(CASTE_TE[k]?esc(k):''):'Caste not updated', rows:gc[k], last:k?0:1}; })
     .sort(function(a,b){ return (a.last-b.last) || b.rows.length-a.rows.length; }), 'కులం', false);
-  h += tgtH;   // 🎯 target voters sit right after caste (Anudeep's order, 16 Nov)
   var gn=groupBy(rows, function(v){ return String(v.surname||'').trim(); });
   h += dTable('sur','👪 ఇంటిపేరు వారీగా','By surname', Object.keys(gn).map(function(k){
       var c=groupBy(gn[k],function(v){ return v.caste||''; }), top=Object.keys(c).filter(String).sort(function(a,b){ return c[b].length-c[a].length; })[0];
       return {label:k?esc(k):'ఇంటిపేరు లేదు', sub:top?esc(CASTE_TE[top]||top):'', rows:gn[k], last:k?0:1}; })
     .sort(function(a,b){ return (a.last-b.last) || b.rows.length-a.rows.length; }), 'ఇంటిపేరు', false, 15);
+  h += tgtH;   // 🎯 target voters sit right after surname (Anudeep's order, 16 Nov evening)
   // 🏠 houses by size
   var bands=[[1,1,'1 ఓటరు'],[2,3,'2–3'],[4,6,'4–6'],[7,10,'7–10'],[11,999,'11+']];
   var big = hs.slice().sort(function(a,b){ return b.v.length-a.v.length; });
@@ -1765,7 +1765,7 @@ function renderDash(){
   // leaders
   var withL=hs.filter(function(x){ return topLeader(x.v); }).length;
   h += '<details class="dcard" data-dk="lead"><summary><h3>నాయకులు <span class="en">Leaders</span></h3></summary>'+withL+' / '+hs.length+' ఇళ్ళకు నాయకుడు ఉన్నాడు <span class="en">houses have a leader</span></details>';
-  if (S.user.admin) h += usageCard();
+  if (S.user.admin && /^admin$/i.test(String(S.user.name||'').trim())) h += usageCard();   // usage report: only the login named "Admin" (server checks too)
   h += rollCard;   // 📋 voter count at the end
   var keep=$('vDash').scrollTop; $('dBody').innerHTML=h; $('vDash').scrollTop=keep;
   [].forEach.call($('dBody').querySelectorAll('details[data-dk]'), function(d){ var k=d.dataset.dk; if (k in S.dashOpen) d.open=S.dashOpen[k]; });
