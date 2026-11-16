@@ -321,7 +321,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 16 Nov · 13:00 -->
+    <!-- app version: 16 Nov · 18:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1632,13 +1632,33 @@ function renderDash(){
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
   S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
   var rG=(S.gone||[]).length, gr={}; (S.gone||[]).forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); o.g=(o.g||0)+1; var k=goneTe(v.gone).split(' · ')[0]; gr[k]=(gr[k]||0)+1; });
+  // by ward — same layout as the Excel Summary ward table, plus a 'no ward yet' row so every voter is accounted for
+  var wk={}, wsum={l:0,x:0,m:0,c:0};
+  function wo(w){ var k=(w===''||w==null)?'none':String(w); return wk[k]||(wk[k]={l:0,x:0,m:0,c:0,rows:[]}); }
+  S.rows.forEach(function(v){ var o=wo(v.ward); o.l++; o.c++; o.rows.push(v); if (v.r26) o.m++; });
+  (S.gone||[]).forEach(function(v){ var o=wo(v.ward); o.l++; o.x++; });
+  var wkeys=Object.keys(wk).filter(function(k){ return k!=='none'; }).sort(function(a,b){ return a-b; });
+  var noW=wk.none||{l:0,x:0,m:0,c:0,rows:[]}, withW=rA+rN-noW.c;
+  var R=function(t,n,cls,attr){ return '<tr'+(cls?' class="'+cls+'"':'')+(attr||'')+'><td>'+t+'</td><td style="text-align:right"><b>'+n+'</b></td></tr>'; };
   var rollCard = '<details class="dcard" data-dk="roll"><summary><h3>📋 ఓటర్ల లెక్క <span class="en">How we reach '+(rA+rN)+' voters</span></h3></summary>'+
-    (rG?'<table class="dt"><tr><td>2025 జాబితాలో మొత్తం <small>rows in “All Voters”</small></td><td style="text-align:right"><b>'+(rA+rG)+'</b></td></tr>'+
-      '<tr class="goner2"><td>➖ ఓటు లేనివారు <small>No vote · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', ')+'</small></td><td style="text-align:right"><b>'+rG+'</b></td></tr></table>':'')+
-    '<table class="dt"><tr><td>2025 ఓటర్ల జాబితా <small>“All Voters”</small></td><td style="text-align:right"><b>'+rA+'</b></td></tr>'+
-    (rR?'<tr class="r26row"><td>ఇందులో ⚠ 2026లో తొలగించినా ఓటు ఉన్నవారు <small>removed in 2026, still vote (2025 list)</small></td><td style="text-align:right"><b>'+rR+'</b></td></tr>':'')+
-    '<tr><td>➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small></td><td style="text-align:right"><b>'+rN+'</b></td></tr>'+
-    '<tr><td><b>= మొత్తం ఓటర్లు</b> <small>Total in the app</small></td><td style="text-align:right"><b>'+(rA+rN)+'</b></td></tr></table>'+
+    '<table class="dt">'+
+    R('2025 ఓటర్ల జాబితా <small>rows in “All Voters”</small>', rA+rG)+
+    R('➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small>', rN)+
+    R('= జాబితాలో మొత్తం పేర్లు <small>Names on the lists</small>', rA+rG+rN)+
+    (rG?R('➖ మరణించినవారు <small>Expired — not counted'+(Object.keys(gr).length>1?' · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', '):'')+'</small>', rG, 'goner2'):'')+
+    R('<b>= మొత్తం ఓటర్లు</b> <small>Voters in the app — every one counts</small>', rA+rN)+
+    '</table><div class="dsubh">ఈ '+(rA+rN)+' మందిలో <span class="en">Of these</span></div><table class="dt">'+
+    R('✓ వార్డు ఉన్నవారు <small>Have a ward (Excel “Can vote”)</small>', withW)+
+    (noW.c?R('⚠ వార్డు ఇంకా ఇవ్వలేదు <small>No ward yet — tap to see · '+noW.rows.filter(function(v){ return v.isNew; }).length+' new 2026, '+noW.rows.filter(function(v){ return !v.isNew; }).length+' from 2025 list</small>', noW.c, 'r26row', drA('వార్డు ఇంకా ఇవ్వలేదు · No ward yet', noW.rows)):'')+
+    (rR?R('⚠ 2026లో తొలగించినా ఓటు ఉన్నవారు <small>Moved / duplicate in 2026, still vote on the 2025 list — trace them</small>', rR, 'r26row', drA('2026లో తొలగించినా ఓటు ఉంది · Moved / duplicate', S.rows.filter(function(v){ return v.r26; }))):'')+
+    '</table>'+
+    '<div class="dsubh">వార్డు వారీగా <span class="en">By ward · tap a ward to see its voters</span></div>'+
+    '<table class="dt"><tr><th>వార్డు</th><th>జాబితా<br><small>On roll</small></th><th style="color:#b91c1c">✕ మరణం<br><small>Expired</small></th><th style="color:#c2410c">⚠ తొలగింపు<br><small>Moved/dup</small></th><th>✓ ఓటర్లు<br><small>Can vote</small></th></tr>'+
+    wkeys.concat(noW.l?['none']:[]).map(function(k){ var o=wk[k]; wsum.l+=o.l; wsum.x+=o.x; wsum.m+=o.m; wsum.c+=o.c;
+      return '<tr'+drA((k==='none'?'వార్డు లేదు':'వార్డు '+k)+' · ఓటర్లు', o.rows)+(k==='none'?' class="r26row"':'')+'><td>'+(k==='none'?'⚠ లేదు':'<b>'+esc(k)+'</b>')+'</td><td>'+o.l+'</td><td style="color:#b91c1c">'+o.x+'</td><td style="color:#c2410c">'+o.m+'</td><td><b>'+o.c+'</b></td></tr>'; }).join('')+
+    '<tr><td><b>మొత్తం</b></td><td><b>'+wsum.l+'</b></td><td style="color:#b91c1c"><b>'+wsum.x+'</b></td><td style="color:#c2410c"><b>'+wsum.m+'</b></td><td><b>'+wsum.c+'</b></td></tr></table>'+
+    '<div class="dleg">✓ ఓటర్లు = జాబితా − మరణించినవారు. తొలగింపు (⚠) వారికి ఓటు ఉంది, వారు ✓ ఓటర్లలో ఉన్నారు. '+
+    'Can vote = on roll − expired; moved/duplicate voters still vote and are inside “Can vote”.'+(noW.c?' Excel shows '+withW+' because it leaves out the '+noW.c+' voters with no ward yet; '+withW+' + '+noW.c+' = '+(rA+rN)+'.':'')+'</div>'+
     '<div class="dsubh">బూత్ వారీగా <span class="en">By booth</span></div>'+
     '<table class="dt"><tr><th>బూత్</th><th>2025</th><th>కొత్త</th><th>మొత్తం</th>'+(rG?'<th style="color:#b91c1c">✕ తొలగింపు</th>':'')+'</tr>'+
     Object.keys(rb).sort().map(function(b){ var o=rb[b]; return '<tr><td>బూత్ '+esc(b)+'</td><td>'+o.a+'</td><td>'+o.n+'</td><td><b>'+(o.a+o.n)+'</b></td>'+(rG?'<td style="color:#b91c1c">'+(o.g||0)+'</td>':'')+'</tr>'; }).join('')+'</table>'+
