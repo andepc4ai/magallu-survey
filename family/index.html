@@ -131,6 +131,8 @@ label{display:block;font-weight:700;margin:14px 0 6px}
       <div class="chips" id="boothChips"></div>
       <button class="wtog" id="wtogFam"></button>
       <div class="chips wchips hide" id="wardChips"></div>
+      <select class="f" id="surSel" style="margin-top:8px"></select>
+      <select class="f" id="casSel" style="margin-top:8px"></select>
     </div>
     <button class="wtog" id="sortTog"></button>
     <div class="chips hide" id="sortChips"></div>
@@ -192,7 +194,7 @@ function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text
 
 var U = LS.get('mvs_user');           // shared with the volunteer app
 var TE = {}, DATA = null, M = null, links = {}, queue = {}, busy = false, PK = null;  // PK = open picker {slot, as}
-var F = { q:'', size:1, booth:'all', wsel:[], check:false, sur:'', limit:40, sort:'v', fopen:false, sopen:false }, scrolls = {};
+var F = { q:'', size:1, booth:'all', wsel:[], check:false, sur:'', cas:'', limit:40, sort:'v', fopen:false, sopen:false }, scrolls = {};
 // house numbers in natural order: 2-5 before 2-10, empty last
 function hnCmp(a,b){ a=String(a||''); b=String(b||''); if (!a!==!b) return a?-1:1;
   var x=a.match(/\d+/g)||[], y=b.match(/\d+/g)||[]; for (var i=0;i<Math.max(x.length,y.length);i++){ var d=(+x[i]||0)-(+y[i]||0); if (d) return d; } return a.localeCompare(b); }
@@ -381,7 +383,10 @@ function renderList(){
   var multi = fams.filter(function(f){ return f.voters>=2; });
   $('lsub').textContent = multi.length+' కుటుంబాలు (2+ ఓటర్లు) · '+multi.reduce(function(a,f){return a+f.voters;},0)+' ఓటర్లు';
   var checks = fams.reduce(function(a,f){ return a+f.check; },0);
-  var fsum = [F.size>1?F.size+'+ ఓటర్లు':'', F.check?'⚠':'', F.swing?'🎯':'', F.booth!=='all'?'బూత్ '+F.booth:'', F.wsel.length?'వార్డు '+F.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(','):''].filter(String);
+  var fsum = [F.size>1?F.size+'+ ఓటర్లు':'', F.check?'⚠':'', F.swing?'🎯':'', F.booth!=='all'?'బూత్ '+F.booth:'', F.wsel.length?'వార్డు '+F.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(','):'', F.sur?(tes(F.sur)||F.sur):'', F.cas?(F.cas==='none'?'కులం లేదు':cte(F.cas)):''].filter(String);
+  var sc={}, cc={}, nc=0; fams.forEach(function(f){ var s={}; f.members.forEach(function(id){ var p=P(id); if(p.sur) s[p.sur]=1; }); Object.keys(s).forEach(function(k){ sc[k]=(sc[k]||0)+1; }); if (f.caste) cc[f.caste]=(cc[f.caste]||0)+1; else nc++; });
+  $('surSel').innerHTML='<option value="">👪 ఇంటిపేరు · Surname: అన్నీ</option>'+Object.keys(sc).sort(function(a,b){ return (tes(a)||a).localeCompare(tes(b)||b); }).map(function(k){ return '<option value="'+esc(k)+'"'+(F.sur===k?' selected':'')+'>'+esc(tes(k)||k)+(tes(k)?' · '+esc(k):'')+' ('+sc[k]+')</option>'; }).join('');
+  $('casSel').innerHTML='<option value="">🏷️ కులం · Caste: అన్నీ</option>'+Object.keys(cc).sort(function(a,b){ return cte(a).localeCompare(cte(b)); }).map(function(k){ return '<option value="'+esc(k)+'"'+(F.cas===k?' selected':'')+'>'+esc(cte(k))+' ('+cc[k]+')</option>'; }).join('')+'<option value="none"'+(F.cas==='none'?' selected':'')+'>కులం నమోదు కాలేదు · Not recorded ('+nc+')</option>';
   $('filTog').className='wtog'+(fsum.length?' act':'');
   $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+(fsum.length?fsum.join(' · '):'అన్నీ ఓటర్లు · All')+'</span><span class="wc">'+(F.fopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('filBox').classList.toggle('hide', !F.fopen);
@@ -415,6 +420,7 @@ function renderList(){
     var ms = f.members.map(P);
     if (F.booth!=='all' && !ms.some(function(p){ return p.vote && String(p.booth)===String(F.booth); })) return false;
     if (F.sur && !ms.some(function(p){ return p.sur===F.sur; })) return false;
+    if (F.cas && (F.cas==='none' ? f.caste : f.caste!==F.cas)) return false;
     if (q){
       var Q=F.Q, best=0, hit=null;
       ms.forEach(function(p){
@@ -473,6 +479,8 @@ $('viewChips').onclick=function(e){ var b=e.target.closest('[data-view]'); if(!b
 $('sortChips').onclick=function(e){ var b=e.target.closest('[data-sort]'); if(!b) return; F.sort=b.dataset.sort; F.sopen=false; F.limit=40; renderList(); };
 $('wardChips').onclick=function(e){ var b=e.target.closest('[data-fw]'); if(!b) return; var w=b.dataset.fw;
   if (w==='all') F.wsel=[]; else { var i=F.wsel.indexOf(w); if (i>=0) F.wsel.splice(i,1); else F.wsel.push(w); } F.limit=40; renderList(); };
+$('surSel').onchange=function(){ F.sur=this.value; F.limit=40; renderList(); };
+$('casSel').onchange=function(){ F.cas=this.value; F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
 var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.Q=Fuzzy.query(F.q); F.limit=40; renderList(); },200); };
 $('flist').onclick=function(e){
