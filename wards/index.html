@@ -36,6 +36,7 @@ button,input,select{font:inherit;color:inherit}
 .hs .hn{flex:1;min-width:0}.hs .hn b{display:block;font-size:1.02rem}.hs .hn span{display:block;color:#6b665c;font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wb{flex:none;min-width:58px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:700;border:2px dashed #d6d0c2;color:#a8a29e;font-size:.85rem}
 .wb.set{border:2px solid #16a34a;background:#dcfce7;color:#14532d;font-size:1.05rem}
+.hs .hn span.mixw{white-space:normal;color:#92400e;margin-top:2px}.hs .hn span.mixw b{display:inline;font-size:.8rem}
 .wb.mix{border:2px solid #d97706;background:#fef3c7;color:#92400e;font-size:.8rem}
 .hs.flash{background:#dcfce7}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
@@ -99,7 +100,7 @@ function hWard(h){ return h.w; }
 
 // rows: [booth, house, street, ward ('' | '3' | 'mix'), voters, names]
 function ingest(rows){
-  H = rows.map(function(r){ var h = {id:r[0]+'|'+r[1], booth:r[0], house:String(r[1]), sec:String(r[2]||''), w:String(r[3]==null?'':r[3]), n:r[4], names:String(r[5]||'')};
+  H = rows.map(function(r){ var h = {id:r[0]+'|'+r[1], booth:r[0], house:String(r[1]), sec:String(r[2]||''), w:String(r[3]==null?'':r[3]), n:r[4], names:String(r[5]||''), mix:r[6]||null};
     if (h.id in queue) h.w = queue[h.id]; h.w0 = h.w; if (h.id in staged){ if (staged[h.id]===h.w) delete staged[h.id]; else h.w = staged[h.id]; } h.sk = natKey(h.house); return h; })
     .sort(function(a,b){ return a.sec<b.sec?-1:a.sec>b.sec?1:(a.sk<b.sk?-1:a.sk>b.sk?1:0); });
   byId = {}; H.forEach(function(h){ byId[h.id]=h; });
@@ -193,7 +194,8 @@ function render(){
       (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
       g.hs.map(function(h){ var w=hWard(h), ch=(h.id in staged);
         return '<button class="hs'+(ch?' chg':'')+'" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(bd(h.booth))+' · '+h.n+' ఓటర్లు</span></b>'+
-          '<span>'+esc(h.names)+'</span></span>'+
+          (w==='mix'&&h.mix ? h.mix.map(function(m){ return '<span class="mixw"><b>'+(m[0]?'వార్డు '+esc(m[0]):'వార్డు లేదు')+' ('+m[1].length+'):</b> '+esc(m[1].join(', '))+'</span>'; }).join('')
+            : '<span>'+esc(h.names)+'</span>')+'</span>'+
           (ch ? '<span class="wb chg">'+(w||'✕')+'<small>'+(h.w0&&h.w0!=='mix'?'ముందు '+h.w0:h.w0==='mix'?'ముందు కలగలుపు':'కొత్త')+'</small></span>'
               : '<span class="wb'+(w==='mix'?' mix':w?' set':'')+'">'+(w==='mix'?'కలగలుపు':w?w:'—')+'</span>')+'</button>'; }).join('')+'</div>';
   }).join('') + (list.length>F.limit ? '<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>' : '');
