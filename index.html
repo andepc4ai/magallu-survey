@@ -245,7 +245,7 @@ select.chip{appearance:auto;font-weight:700}
 .dt small{color:var(--muted)}
 #vHouse{z-index:22}#vDrill{z-index:21}
 [data-dr]{cursor:pointer}.hr[data-dr]:active,tr[data-dr]:active,.tile[data-dr]:active{background:#fef9c3}
-.tile[data-dr] small::after,.hr[data-dr] .hv small::after{content:' ›'}
+.tile[data-ftree]{cursor:pointer}.tile[data-ftree] small::after,.tile[data-dr] small::after,.hr[data-dr] .hv small::after{content:' ›'}
 .dv{display:block;width:100%;text-align:left;background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:8px 10px;margin:0 0 6px;font:inherit;color:inherit;cursor:pointer}
 .dv .l1{display:flex;align-items:center;gap:6px;min-width:0}.dv .l1 .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
 .dv .l2{font-size:.82rem;color:#57534e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
@@ -1626,7 +1626,7 @@ function renderDash(){
   // tiles
   var vToday = V ? V.filter(function(x){ return x[0]===today; }).length : null;
   h += '<div class="tiles">'+
-    tile(total,'ఓటర్లు','Voters · '+hs.length+' ఇళ్ళు', drA('అందరూ ఓటర్లు · All voters', rows))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
+    tile(total,'ఓటర్లు','Voters · '+hs.length+' ఇళ్ళు', (HAS_API?' data-ftree="1"':drA('అందరూ ఓటర్లు · All voters', rows)))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
@@ -1757,6 +1757,7 @@ $('dBody').onclick=function(e){
   var dw=e.target.closest('[data-dfw]'); if (dw){ var w=dw.dataset.dfw; if (w==='all') S.df.w=[]; else { var i=S.df.w.indexOf(w); if (i>=0) S.df.w.splice(i,1); else S.df.w.push(w); } LS.set('dfil',S.df); renderDash(); return; }
   if (e.target.closest('[data-dfclr]')){ S.df={w:[], b:[], s:[], c:[]}; LS.set('dfil',S.df); renderDash(); return; }
   var dv=e.target.closest('[data-dview]'); if (dv){ S.dview=dv.dataset.dview; LS.set('dview',S.dview); renderDash(); return; }
+  if (e.target.closest('[data-ftree]')){ location.href='family/#t=1&o=h'+(S.df.w.length?'&w='+encodeURIComponent(S.df.w.join(',')):''); return; }   // All voters → family trees
   var dr=e.target.closest('[data-dr]'); if (dr && DR[dr.dataset.dr]){ openDrill(DR[dr.dataset.dr]); return; }
   var tp=e.target.closest('[data-tip]'); if (tp){ toast(tp.dataset.tip); return; }
   if (e.target.closest('[data-wclr]')){ S.wsel=[]; LS.set('wsel',S.wsel); buildFilters(); renderList(); renderDash(); return; }
