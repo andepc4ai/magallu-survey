@@ -1626,7 +1626,7 @@ function renderDash(){
   // tiles
   var vToday = V ? V.filter(function(x){ return x[0]===today; }).length : null;
   h += '<div class="tiles">'+
-    tile(total,'ఓటర్లు','Voters · '+hs.length+' ఇళ్ళు', (HAS_API?' data-ftree="1"':drA('అందరూ ఓటర్లు · All voters', rows)))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
+    tile(total,'అందరూ ఓటర్లు','All voters · 🌳 కుటుంబ చెట్లు', (HAS_API?' data-ftree="1"':drA('అందరూ ఓటర్లు · All voters', rows)))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
