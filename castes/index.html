@@ -56,20 +56,25 @@ select.cs.big{width:100%;height:52px;font-size:1.05rem}
 <!-- LIST -->
 <section id="vList">
   <div class="top">
-    <div class="r"><a class="back" href="../" style="display:flex;align-items:center;text-decoration:none">🏠 యాప్</a><h1>ఇంటిపేరు → కులం</h1><a class="back" href="../family/" style="display:flex;align-items:center;text-decoration:none">👪</a></div>
+    <div class="r"><a class="back" href="../" style="display:flex;align-items:center;text-decoration:none">🏠 హోమ్</a><h1>ఇంటిపేరు → కులం</h1><a class="back" href="../family/" style="display:flex;align-items:center;text-decoration:none">👪</a></div>
     <div class="p"><span id="prog">—</span><div class="bar"><i id="pbar"></i></div></div>
   </div>
   <div class="wrap">
     <input id="q" class="f" type="search" placeholder="ఇంటిపేరు వెతకండి · Search">
+    <button class="wtog" id="filTog"></button>
+    <div id="filBox" class="hide">
     <button class="wtog" id="wtogC"></button>
     <div class="wchips hide" id="wardC"></div>
     <button class="wtog" id="ctogC"></button>
     <div class="wchips hide" id="casteC"></div>
     <div class="tabs">
-      <button class="tab on" data-m="missing">కులం నమోదు కాలేదు</button>
-      <button class="tab" data-m="all">అన్నీ</button>
+      <button class="tab on" data-m="all">అన్నీ</button>
+      <button class="tab" data-m="missing">కులం నమోదు కాలేదు</button>
       <button class="tab" data-m="done">ఉన్నవి</button>
     </div>
+    </div>
+    <button class="wtog" id="sortTog"></button>
+    <div class="wchips hide" id="sortC"></div>
     <div id="list"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
 </section>
@@ -111,7 +116,7 @@ function call(fn, args){
 }
 var CS = [], COPEN = false;   // caste filter: chosen castes ('none' = not set yet), chips open
 var W = [], WOPEN = false, SW = null;   // ward filter: chosen wards, chips open, {surname: {ward: voters}}
-var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'missing', q = '', queue = {}, busy = false, listScroll = 0;
+var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'all', SORT = 'v', FOPEN = false, SOPEN = false, q = '', queue = {}, busy = false, listScroll = 0;
 function te(s){ return TE[s] || ''; }
 function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
 function casteOptions(cur){
@@ -179,8 +184,28 @@ $('casteC').onclick=function(e){
 try{ CS = JSON.parse(localStorage.getItem('cs_csel')) || []; }catch(x){ CS=[]; }
 
 /* ---------- list view ---------- */
+var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['w','వార్డు','Ward'],['c','కులం','Caste'],['a','ఇంటిపేరు A-Z','Surname']];
+function cTe(c){ var x=CASTES.filter(function(k){ return k[0]===c; })[0]; return x?x[1]:String(c); }
+// surname's main ward = the ward with most of its voters (99 = no ward yet)
+function mainW(s){ var o=SW&&SW[s]||{}, best='none', n=-1; Object.keys(o).forEach(function(w){ if (w!=='none' && o[w]>n){ n=o[w]; best=w; } }); return best==='none'?99:Number(best); }
+function renderFold(){
+  var lbl={all:'అన్ని ఇంటిపేర్లు',missing:'కులం నమోదు కాలేదు',done:'కులం ఉన్నవి'};
+  var sum=[lbl[mode], W.length?'వార్డు '+W.map(wName).join(','):'', CS.length?CS.length+' కులం':''].filter(String);
+  $('filTog').className='wtog'+(W.length||CS.length||mode!=='all'?' act':'');
+  $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+sum.join(' · ')+'</span><span class="wc">'+(FOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('filBox').classList.toggle('hide', !FOPEN);
+  var so=SORTS.filter(function(x){ return x[0]===SORT; })[0];
+  $('sortTog').className='wtog'+(SORT!=='v'?' act':'');
+  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+so[1]+' · '+so[2]+'</span><span class="wc">'+(SOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('sortC').classList.toggle('hide', !SOPEN);
+  $('sortC').innerHTML=SORTS.map(function(x){ return '<button class="chip'+(SORT===x[0]?' on':'')+'" data-so="'+x[0]+'">'+x[1]+'<small>'+x[2]+'</small></button>'; }).join('');
+}
+$('filTog').onclick=function(){ FOPEN=!FOPEN; renderFold(); };
+$('sortTog').onclick=function(){ SOPEN=!SOPEN; renderFold(); };
+$('sortC').onclick=function(e){ var b=e.target.closest('[data-so]'); if(!b) return; SORT=b.dataset.so; SOPEN=false;
+  if (SORT==='w' && !voters){ renderFold(); loadVoters().then(renderList); return; } renderList(); };
 function renderList(){
-  renderWard(); renderCaste();
+  renderWard(); renderCaste(); renderFold();
   if (W.length && !voters){ $('list').innerHTML='<div class="msg">వార్డుల వివరాలు లోడ్ అవుతున్నాయి… · Loading wards…</div>'; loadVoters().then(function(){ renderList(); }); return; }
   var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
   var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
@@ -199,8 +224,12 @@ function renderList(){
     r._s = Fuzzy.score(r[1], Q) + (r[1].toLowerCase()===q||te(r[1])===q ? 50 : (r[1].toLowerCase().indexOf(q)===0||te(r[1]).indexOf(q)===0) ? 20 : (r[1].toLowerCase().indexOf(q)>=0||te(r[1]).indexOf(q)>=0) ? 8 : 0);
     return r._s>0;
   });
+  var nV=function(r){ return W.length?wCount(r[1]):r[2]; }, byV=function(a,b){ return nV(b)-nV(a); };
   if (q) list.sort(function(a,b){ return b._s-a._s || b[2]-a[2]; });
-  else if (W.length) list.sort(function(a,b){ return wCount(b[1])-wCount(a[1]); });
+  else if (SORT==='w') list.sort(function(a,b){ return mainW(a[1])-mainW(b[1]) || byV(a,b); });
+  else if (SORT==='c') list.sort(function(a,b){ var x=cOf(a), y=cOf(b); return (x==='none')-(y==='none') || cTe(x).localeCompare(cTe(y)) || byV(a,b); });
+  else if (SORT==='a') list.sort(function(a,b){ return String(a[1]).localeCompare(String(b[1])); });
+  else list.sort(byV);
   if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'&&!q?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
   $('list').innerHTML = list.slice(0,200).map(function(r){
     var cur=r[3], ok=NAMES.indexOf(cur)>=0;

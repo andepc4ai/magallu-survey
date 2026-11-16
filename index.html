@@ -320,7 +320,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>15 Nov · 20:30</b></div>
+    <div class="appver">యాప్ వెర్షన్ · App version: <b>16 Nov · 12:00</b></div>
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -329,7 +329,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 <section id="vList" class="hide">
   <div class="top">
     <div class="row">
-      <button class="iconbtn" id="btnHome">← హోమ్</button>
+      <button class="iconbtn" id="btnHome">🏠 హోమ్</button>
       <h1>🏠 ఇళ్ళు · ఓటర్లు</h1>
       <button class="iconbtn sq" id="btnListRef" title="Refresh" aria-label="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
     </div>
@@ -340,10 +340,15 @@ details.dcard[open]>summary{margin-bottom:10px}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="q" type="search" placeholder="పేరు / ఇంటి నం. / ఓటర్ ID వెతకండి">
     </div>
-    <button class="wtog" id="wtogList" data-wtog="list"></button>
-    <div class="chips wchips hide" id="wardChips"></div>
-    <div id="lFil"></div>
-    <div class="chips" id="statChips"></div>
+    <button class="wtog" id="lFilTog"></button>
+    <div id="lFilBox" class="hide">
+      <button class="wtog" id="wtogList" data-wtog="list"></button>
+      <div class="chips wchips hide" id="wardChips"></div>
+      <div id="lFil"></div>
+      <div class="chips" id="statChips"></div>
+    </div>
+    <button class="wtog" id="lSortTog"></button>
+    <div class="chips hide" id="lSortChips"></div>
     <div class="count" id="count"></div>
     <div id="list"><div class="loading"><div class="spin"></div>డేటా లోడ్ అవుతోంది… <br><span class="en">Loading voters…</span></div></div>
   </div>
@@ -719,8 +724,21 @@ function isDone(v){ return !!v.visited || (v.visits||0)>0 || pendingVisits(v).le
 
 /* ---------- edits & sync ---------- */
 /* ---------- GPS: location is saved with each visit when the phone allows it ---------- */
-function requestGeo(){
+/* Location is asked ONCE, right after login (askGeoOnce). Later screens only read it when the phone already
+   allows it — they never pop the question again. A tap on the yellow location note asks again on purpose. */
+function requestGeo(force){
   if (!navigator.geolocation || S.geoAsking) return;
+  if (!force && navigator.permissions && navigator.permissions.query){
+    navigator.permissions.query({name:'geolocation'}).then(function(p){
+      if (p.state==='granted') getGeo_();
+      else { S.geoErr = p.state==='denied' ? 'denied' : 'off'; if (S.hpick && S.openHouse) renderHouse(); }
+    }).catch(getGeo_);
+    return;
+  }
+  getGeo_();
+}
+function askGeoOnce(){ try { requestGeo(true); } catch(e){} }
+function getGeo_(){
   S.geoAsking = true;
   navigator.geolocation.getCurrentPosition(function(p){
     S.geoAsking=false; S.geo={lat:p.coords.latitude, lng:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()}; S.geoErr=null;
@@ -730,6 +748,7 @@ function requestGeo(){
 }
 function geoNote(){
   if (S.geo && Date.now()-S.geo.t < 5*60000) return '<div class="geo ok">📍 స్థానం నమోదవుతుంది <span class="en">Location ±'+Math.round(S.geo.acc)+' m</span></div>';
+  if (S.geoErr==='off') return '<div class="geo" data-geoask="1" role="button">📍 స్థానం కోసం ఇక్కడ నొక్కండి <span class="en">Tap to allow location</span></div>';
   if (S.geoErr==='denied') return '<div class="geo">📍 స్థానం అనుమతి లేదు — ఫోన్ సెట్టింగ్స్‌లో Location అనుమతించండి <span class="en">Location blocked</span></div>';
   return '<div class="geo">📍 స్థానం వెతుకుతోంది… <span class="en">Finding location</span></div>';
 }
@@ -873,7 +892,29 @@ function buildFilters(){
   $('statChips').innerHTML = st.map(function(x){ return '<button class="chip'+(S.stat===x[0]?' on':'')+'" data-s="'+x[0]+'">'+x[1]+' <span class="en" style="color:inherit;opacity:.7">'+x[2]+'</span></button>'; }).join('')+
     (S.stat==='revisit'?'<select id="revDays" class="chip">'+[3,7,14,30].map(function(d){ return '<option value="'+d+'"'+(S.revDays===d?' selected':'')+'>'+d+'+ రోజులు</option>'; }).join('')+'</select>':'');
   var rd=$('revDays'); if (rd) rd.onchange=function(){ S.revDays=Number(this.value); S.limit=40; renderList(); };
+  lFoldBars(st);
 }
+// folded "🔎 ఫిల్టర్లు" and "↕️ క్రమం" lines on the house list (both closed by default)
+var LSORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward']];
+function hnCmp(a,b){ a=String(a||''); b=String(b||''); if (!a!==!b) return a?-1:1;
+  var x=a.match(/\d+/g)||[], y=b.match(/\d+/g)||[]; for (var i=0;i<Math.max(x.length,y.length);i++){ var d=(+x[i]||0)-(+y[i]||0); if (d) return d; } return a.localeCompare(b); }
+function lFoldBars(st){
+  var sl = (st||[]).filter(function(x){ return x[0]===S.stat; })[0];
+  var sum = [S.wsel.length?'వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(','):'', S.booth.length?'బూత్ '+S.booth.join(','):'',
+    S.sec.length?S.sec.length+' వీధి':'', S.lcaste.length?S.lcaste.length+' కులం':'', sl?sl[1]:''].filter(String);
+  var on = S.wsel.length||S.booth.length||S.sec.length||S.lcaste.length;
+  $('lFilTog').className='wtog'+(on?' act':'');
+  $('lFilTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+sum.join(' · ')+'</span><span class="wc">'+(S.lfo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('lFilBox').classList.toggle('hide', !S.lfo);
+  var srt = S.lsort||'v', so = LSORTS.filter(function(s){ return s[0]===srt; })[0];
+  $('lSortTog').className='wtog'+(srt!=='v'?' act':'');
+  $('lSortTog').innerHTML='↕️ క్రమం <span class="wv">'+so[1]+' · '+so[2]+'</span><span class="wc">'+(S.lso?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('lSortChips').classList.toggle('hide', !S.lso);
+  $('lSortChips').innerHTML = LSORTS.map(function(s){ return '<button class="chip'+(srt===s[0]?' on':'')+'" data-ls="'+s[0]+'">'+s[1]+'</button>'; }).join('');
+}
+$('lFilTog').onclick=function(){ S.lfo=!S.lfo; buildFilters(); };
+$('lSortTog').onclick=function(){ S.lso=!S.lso; buildFilters(); };
+$('lSortChips').onclick=function(e){ var b=e.target.closest('[data-ls]'); if(!b) return; S.lsort=b.dataset.ls; S.lso=false; S.limit=40; buildFilters(); renderList(); };
 $('wardChips').onclick=function(e){ var b=e.target.closest('[data-wd]'); if(!b) return; var w=b.dataset.wd;
   if (w==='all') S.wsel=[]; else { var i=S.wsel.indexOf(w); if (i>=0) S.wsel.splice(i,1); else S.wsel.push(w); }
   S.limit=40; LS.set('wsel',S.wsel); buildFilters(); renderList(); };
@@ -916,6 +957,8 @@ function renderList(){
   if (S.q) hs = hs.slice().sort(function(a,b){ return (b._score||0)-(a._score||0); });   // best matches first
   else if (S.stat==='revisit') hs = hs.slice().sort(function(a,b){            // longest without a visit first, undecided before leaning
     function k(h){ return Math.min.apply(null,h.v.map(lastSeen)) - (h.v.some(function(v){return v.support==='Undecided';})?2*DAY:0); } return k(a)-k(b); });
+  else if (S.lsort==='h') hs = hs.slice().sort(function(a,b){ return hnCmp(a.house,b.house) || b.v.length-a.v.length; });
+  else if (S.lsort==='w') hs = hs.slice().sort(function(a,b){ var x=hWard(a), y=hWard(b); return (x==='none'?99:+x||98)-(y==='none'?99:+y||98) || b.v.length-a.v.length || hnCmp(a.house,b.house); });
   var scope = []; S.houses.forEach(function(h){ if (inScope(h)) scope = scope.concat(h.v); });
   var vis = scope.filter(isDone).length;
   $('progTxt').textContent = 'పూర్తి '+vis+' / '+scope.length;
@@ -1230,6 +1273,7 @@ $('hBody').onclick=function(e){
   if (e.target.closest('[data-lclr]')){ setHouseLeader(h, ''); return; }
   var hcb=e.target.closest('[data-hcaste]');
   if (hcb){ var c=hcb.dataset.hcaste; h.v.forEach(function(v){ if(v.caste!==c) edit(v,{caste:c}); delete S.open[v.id+':caste']; }); delete S.open['house:caste']; toast('కులం: '+(CASTE_TE[c]||c)+' ✓'); renderHouse(); return; }
+  if (e.target.closest('[data-geoask]')){ requestGeo(true); return; }
   if (e.target.closest('[data-allv]')){ requestGeo(); S.hpick={}; h.v.forEach(function(v){ var recent=v.lastVisit && v.lastBy===S.user.name && Date.now()-v.lastVisit<10*60000; if(!recent) S.hpick[v.id]=1; }); renderHouse(); return; }
   var hp=e.target.closest('[data-hvp]'); if (hp){ var k=hp.dataset.hvp; if (S.hpick[k]) delete S.hpick[k]; else S.hpick[k]=1; renderHouse(); return; }
   if (e.target.closest('[data-hvcancel]')){ S.hpick=null; renderHouse(); return; }
@@ -1963,7 +2007,7 @@ $('lGo').onclick=function(){
   call('login',n,p,true).then(function(u){
     S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,myWards:u.myWards||[]}; LS.set('user',S.user);
     if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); LS.set('ver',u.voters.ver||0); LS.set('fullAt',Date.now()); S.fresh=u.voters.rows; }
-    $('lGo').disabled=false; showApp();
+    $('lGo').disabled=false; showApp(); askGeoOnce();
   }).catch(function(err){
     $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
     $('lErr').textContent = String(err && err.message).indexOf('WRONG_PIN')>=0 ? 'పిన్ తప్పు · Wrong PIN' : 'ఇంటర్నెట్ చెక్ చేయండి · Check internet';

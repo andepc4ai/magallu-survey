@@ -120,15 +120,20 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <section id="vList" class="hide">
   <div class="top">
-    <div class="r"><a class="tb" href="../">🏠 యాప్</a><h1>👪 కుటుంబాలు</h1><button class="tb" id="reload" title="Refresh">⟳</button></div>
+    <div class="r"><a class="tb" href="../">🏠 హోమ్</a><h1>👪 కుటుంబాలు</h1><button class="tb" id="reload" title="Refresh">⟳</button></div>
     <div class="sub" id="lsub">—</div>
   </div>
   <div class="wrap">
     <input id="q" class="f" type="search" placeholder="పేరు / ఇంటిపేరు / ఇంటి నం. వెతకండి">
-    <div class="chips" id="sizeChips"></div>
-    <div class="chips" id="boothChips"></div>
-    <button class="wtog" id="wtogFam"></button>
-    <div class="chips wchips hide" id="wardChips"></div>
+    <button class="wtog" id="filTog" style="margin-top:10px"></button>
+    <div id="filBox" class="hide">
+      <div class="chips" id="sizeChips"></div>
+      <div class="chips" id="boothChips"></div>
+      <button class="wtog" id="wtogFam"></button>
+      <div class="chips wchips hide" id="wardChips"></div>
+    </div>
+    <button class="wtog" id="sortTog"></button>
+    <div class="chips hide" id="sortChips"></div>
     <div class="count" id="lcount"></div>
     <div id="flist"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
@@ -136,7 +141,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <section id="vFam" class="hide">
   <div class="top">
-    <div class="r"><button class="tb" data-back title="Back">←</button><h1 id="ftitle"></h1><button class="tb" data-home>👪 కుటుంబాలు</button></div>
+    <div class="r"><button class="tb" data-back title="Back">← వెనక్కి</button><h1 id="ftitle"></h1><button class="tb" data-home title="Families">👪</button></div>
     <div class="sub" id="fsub"></div>
   </div>
   <div class="wrap">
@@ -148,7 +153,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <section id="vPerson" class="hide">
   <div class="top">
-    <div class="r"><button class="tb" data-back title="Back">←</button><h1 id="ptitle"></h1><button class="tb" data-home>👪 కుటుంబాలు</button></div>
+    <div class="r"><button class="tb" data-back title="Back">← వెనక్కి</button><h1 id="ptitle"></h1><button class="tb" data-home title="Families">👪</button></div>
     <div class="sub" id="psub"></div>
   </div>
   <div class="wrap" id="pbody"></div>
@@ -186,7 +191,11 @@ function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text
 
 var U = LS.get('mvs_user');           // shared with the volunteer app
 var TE = {}, DATA = null, M = null, links = {}, queue = {}, busy = false, PK = null;  // PK = open picker {slot, as}
-var F = { q:'', size:2, booth:'all', wsel:[], check:false, sur:'', limit:40 }, scrolls = {};
+var F = { q:'', size:1, booth:'all', wsel:[], check:false, sur:'', limit:40, sort:'v', fopen:false, sopen:false }, scrolls = {};
+// house numbers in natural order: 2-5 before 2-10, empty last
+function hnCmp(a,b){ a=String(a||''); b=String(b||''); if (!a!==!b) return a?-1:1;
+  var x=a.match(/\d+/g)||[], y=b.match(/\d+/g)||[]; for (var i=0;i<Math.max(x.length,y.length);i++){ var d=(+x[i]||0)-(+y[i]||0); if (d) return d; } return a.localeCompare(b); }
+var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['n','ఇళ్ళు ఎక్కువ','Most houses']];
 
 fetch('te_surnames.json').then(function(r){ return r.json(); }).then(function(j){ TE=j; if (M) route(); }).catch(function(){});
 function tes(s){ return TE[s] || ''; }
@@ -371,7 +380,16 @@ function renderList(){
   var multi = fams.filter(function(f){ return f.voters>=2; });
   $('lsub').textContent = multi.length+' కుటుంబాలు (2+ ఓటర్లు) · '+multi.reduce(function(a,f){return a+f.voters;},0)+' ఓటర్లు';
   var checks = fams.reduce(function(a,f){ return a+f.check; },0);
-  $('sizeChips').innerHTML = [[2,'2+'],[5,'5+'],[10,'10+'],[1,'అన్నీ']].map(function(x){
+  var fsum = [F.size>1?F.size+'+ ఓటర్లు':'', F.check?'⚠':'', F.swing?'🎯':'', F.booth!=='all'?'బూత్ '+F.booth:'', F.wsel.length?'వార్డు '+F.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(','):''].filter(String);
+  $('filTog').className='wtog'+(fsum.length?' act':'');
+  $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+(fsum.length?fsum.join(' · '):'అన్నీ ఓటర్లు · All')+'</span><span class="wc">'+(F.fopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('filBox').classList.toggle('hide', !F.fopen);
+  var so = SORTS.filter(function(s){ return s[0]===F.sort; })[0];
+  $('sortTog').className='wtog'+(F.sort!=='v'?' act':'');
+  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+so[1]+' · '+so[2]+'</span><span class="wc">'+(F.sopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('sortChips').classList.toggle('hide', !F.sopen);
+  $('sortChips').innerHTML = SORTS.map(function(s){ return '<button class="chip'+(F.sort===s[0]?' on':'')+'" data-sort="'+s[0]+'">'+s[1]+'</button>'; }).join('');
+  $('sizeChips').innerHTML = [[1,'అన్నీ'],[2,'2+'],[5,'5+'],[10,'10+']].map(function(x){
     return '<button class="chip'+(F.size===x[0]&&!F.check&&!F.swing?' on':'')+'" data-size="'+x[0]+'">'+x[1]+' ఓటర్లు</button>'; }).join('')+
     '<button class="chip warn'+(F.check?' on':'')+'" data-chk="1">⚠ సరిచూడాలి ('+checks+')</button>'+
     '<button class="chip'+(F.swing?' on':'')+'" data-swing="1">🎯 తేల్చనివారు ('+fams.filter(function(f){return undecided(f)>0;}).length+')</button>';
@@ -408,7 +426,15 @@ function renderList(){
     }
     return true;
   });
-  if (F.wsel.length && !q && !F.swing) list = list.slice().sort(function(a,b){ return subFam(b).voters-subFam(a).voters; });
+  if (!q && !F.swing){
+    var fw=function(f){ var k=Object.keys(famWards(f)).filter(inSelW).sort(wOrd)[0]; return k&&k!=='none'?Number(k):99; };
+    var fh=function(f){ var h=famHead(f)||P(f.head); return h.house||''; };
+    var byV=function(a,b){ return subFam(b).voters-subFam(a).voters || b.houseCount-a.houseCount; };
+    var cmp = F.sort==='h' ? function(a,b){ return hnCmp(fh(a),fh(b)) || byV(a,b); }
+      : F.sort==='w' ? function(a,b){ return fw(a)-fw(b) || byV(a,b); }
+      : F.sort==='n' ? function(a,b){ return b.houseCount-a.houseCount || byV(a,b); } : byV;
+    list = list.slice().sort(cmp);
+  }
   if (q && !F.swing) list = list.slice().sort(function(a,b){ return (b._score||0)-(a._score||0) || b.voters-a.voters; });
   if (F.swing) list = list.slice().sort(function(a,b){ return undecided(subFam(b))-undecided(subFam(a)) || b.voters-a.voters; });
   $('lcount').innerHTML = list.length+' కుటుంబాలు'+(F.swing?' · ఎక్కువ తేల్చనివారు ముందు':'')+(F.sur?' · ఇంటిపేరు: <b>'+esc(tes(F.sur)||F.sur)+'</b> <button class="lnk" id="clrSur">✕</button>':'');
@@ -425,6 +451,10 @@ $('sizeChips').onclick=function(e){ var b=e.target.closest('button'); if(!b) ret
   if (b.dataset.swing){ F.swing=!F.swing; F.check=false; }
   else if (b.dataset.chk){ F.check=!F.check; F.swing=false; } else { F.size=Number(b.dataset.size); F.check=false; F.swing=false; } F.limit=40; renderList(); };
 $('wtogFam').onclick=function(){ F.wopen=!F.wopen; renderList(); };
+function inSelW(w){ return !F.wsel.length || F.wsel.indexOf(w)>=0; }
+$('filTog').onclick=function(){ F.fopen=!F.fopen; renderList(); };
+$('sortTog').onclick=function(){ F.sopen=!F.sopen; renderList(); };
+$('sortChips').onclick=function(e){ var b=e.target.closest('[data-sort]'); if(!b) return; F.sort=b.dataset.sort; F.sopen=false; F.limit=40; renderList(); };
 $('wardChips').onclick=function(e){ var b=e.target.closest('[data-fw]'); if(!b) return; var w=b.dataset.fw;
   if (w==='all') F.wsel=[]; else { var i=F.wsel.indexOf(w); if (i>=0) F.wsel.splice(i,1); else F.wsel.push(w); } F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
@@ -437,7 +467,7 @@ $('flist').onclick=function(e){
   if (f && f.members.length===1) go('p='+encodeURIComponent(f.head));
   else go('f='+encodeURIComponent(b.dataset.fam)+(b.dataset.me?'&me='+encodeURIComponent(b.dataset.me):''));
 };
-$('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=2; go(''); } };
+$('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=1; go(''); } };
 
 /* ---------- family tree ---------- */
 function pcard(p, me){
@@ -578,7 +608,7 @@ function renderPerson(id, picking){
   var p=P(id); if(!p){ go(''); return; }
   $('ptitle').textContent = displayName(p);
   if (p.gone){ $('psub').textContent = '✕ 2026 జాబితా నుండి తొలగించారు: '+goneTe(p.gone)+' · Removed from the 2026 roll: '+p.gone+(p.house?' · 🏠 '+p.house:''); }
-  else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
+  else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 📍 వార్డు '+(p.ward||'—')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.vote){
     if (id!==SV.last){ SV.last=id; SV.open=''; SV.link=false; }
