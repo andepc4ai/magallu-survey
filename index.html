@@ -1660,7 +1660,7 @@ function renderDash(){
       yng=rows.filter(function(v){ return isYoung(v) && targetScore(v); }).length;
   var th = hs.map(function(x){ var t=x.v.filter(targetScore); return {h:x, t:t, s:t.reduce(function(a,v){ return a+targetScore(v); },0)}; })
     .filter(function(x){ return x.s; }).sort(function(a,b){ return b.s-a.s || b.h.v.length-a.h.v.length; });
-  h += '<details class="dcard" data-dk="tgt"><summary><h3>🎯 దృష్టి పెట్టాల్సిన ఓటర్లు <span class="en">Main target voters · '+so.tg+'</span></h3></summary>'+
+  var tgtH = '<details class="dcard" data-dk="tgt"><summary><h3>🎯 దృష్టి పెట్టాల్సిన ఓటర్లు <span class="en">Main target voters · '+so.tg+'</span></h3></summary>'+
     (function(){ var r26n=rows.filter(function(v){ return v.r26 && targetScore(v); }).length;
       var T=[['తేల్చలేదు','Undecided',und,'#f97316',supOf(rows,'Undecided')],['మొగ్గు','Leaning',lean,'#a3e635',supOf(rows,'Leaning')],['అడగలేదు','Not asked',na,'#94a3b8',supOf(rows,'')],
         ['కలవలేదు','Not visited',nvis,'#b45309',rows.filter(function(v){ return !isDone(v); })],['కొత్త / యువ','New / under 30',yng,'#7c3aed',rows.filter(function(v){ return isYoung(v) && targetScore(v); })],
@@ -1677,11 +1677,12 @@ function renderDash(){
   h += dTable('ward','📍 వార్డు వారీగా','By ward', Object.keys(gw).sort(function(a,b){ return (a==='none')-(b==='none') || a-b; })
     .map(function(k){ return {label:k==='none'?'వార్డు లేదు':'వార్డు '+k, sub:k==='none'?'':'🪑 '+resvTe(k)+' · '+RESV[k], rows:gw[k]}; }), 'వార్డు', false);
   var gs=groupBy(rows, function(v){ return v.sec||'—'; });
-  h += dTable('street','🛣️ వీధి వారీగా','By street / location', Object.keys(gs).map(function(k){ return {label:esc(k), rows:gs[k], sub:Object.keys(groupBy(gs[k],function(v){ return v._h.id; })).length+' ఇళ్ళు'}; })
+  var streetH = dTable('street','🛣️ వీధి వారీగా','By street / location', Object.keys(gs).map(function(k){ return {label:esc(k), rows:gs[k], sub:Object.keys(groupBy(gs[k],function(v){ return v._h.id; })).length+' ఇళ్ళు'}; })
     .sort(function(a,b){ return b.rows.length-a.rows.length; }), 'వీధి', false, 12);
   var gc=groupBy(rows, function(v){ return v.caste||''; });
   h += dTable('caste','🏷️ కులం వారీగా','By caste', Object.keys(gc).map(function(k){ return {label:k?esc(CASTE_TE[k]||k):'కులం నమోదు కాలేదు', sub:k?(CASTE_TE[k]?esc(k):''):'Caste not updated', rows:gc[k], last:k?0:1}; })
     .sort(function(a,b){ return (a.last-b.last) || b.rows.length-a.rows.length; }), 'కులం', false);
+  h += tgtH;   // 🎯 target voters sit right after caste (Anudeep's order, 16 Nov)
   var gn=groupBy(rows, function(v){ return String(v.surname||'').trim(); });
   h += dTable('sur','👪 ఇంటిపేరు వారీగా','By surname', Object.keys(gn).map(function(k){
       var c=groupBy(gn[k],function(v){ return v.caste||''; }), top=Object.keys(c).filter(String).sort(function(a,b){ return c[b].length-c[a].length; })[0];
@@ -1698,6 +1699,7 @@ function renderDash(){
     '<div class="dsubh">పెద్ద ఇళ్ళు <span class="en">Biggest houses — one visit, many votes</span></div>'+
     big.slice(0, S.dashMore.house?40:8).map(function(x){ var o=stat(x.v); return houseBtn(x, x.v.length+' ఓటర్లు · కలిశాం '+o.vis+(o.tg?' · 🎯 '+o.tg:'')); }).join('')+
     moreBtn('house', Math.min(big.length,40), 8, 'ఇంకా చూపించు')+'</details>';
+  h += streetH;   // 🛣️ street just before 👑 heads
   // 👑 family heads
   var heads=rows.filter(function(v){ return v.fhead; }), ho=stat(heads);
   var hw=heads.filter(targetScore).sort(function(a,b){ return targetScore(b)-targetScore(a) || b._h.v.length-a._h.v.length; });
