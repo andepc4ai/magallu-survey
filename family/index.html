@@ -109,7 +109,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
   <div class="box">
     <h2 style="margin:0">👪 కుటుంబాలు</h2>
     <div style="color:#6b665c">Magallu families · volunteer login</div>
-    <label>మీ పేరు · Name</label>
+    <label>User Name</label>
     <select id="who" class="f"><option value="">— Select —</option></select>
     <label>పిన్ · PIN</label>
     <input id="pin" class="f pin" type="password" inputmode="numeric" maxlength="6">
@@ -120,7 +120,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 
 <section id="vList" class="hide">
   <div class="top">
-    <div class="r"><a class="tb" href="../">🏠 హోమ్</a><h1>👪 కుటుంబాలు</h1><button class="tb" id="reload" title="Refresh">⟳</button></div>
+    <div class="r"><a class="tb" href="../">🏠 హోమ్</a><h1>👪 కుటుంబాలు</h1><button class="tb" id="reload" title="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button><a class="tb" href="../#logout" title="Logout" aria-label="Logout"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg></a></div>
     <div class="sub" id="lsub">—</div>
   </div>
   <div class="wrap">
@@ -613,7 +613,7 @@ function renderPerson(id, picking){
   if (p.vote){
     if (id!==SV.last){ SV.last=id; SV.open=''; SV.link=false; }
     h += surveyHtml(p, f);
-    h += '<a class="b house sm" href="../#v='+encodeURIComponent(id)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';
+    h += '<a class="b house sm" href="../#v='+encodeURIComponent(id)+'&b='+encodeURIComponent(location.hash)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';
     var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt, linkOpen = SV.link || picking || (r && !p.sure) || !r;
     h += '<div class="card"><button class="fold2" data-linktog="1"><h3>🔗 జాబితాలో సంబంధం · Voter-list relation</h3><span class="cv">'+(linkOpen?'▴':(r?'✓ '+esc(displayName(r))+' ▾':'▾'))+'</span></button>';
     if (linkOpen) h += '<div style="margin-top:8px">'+

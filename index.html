@@ -195,6 +195,7 @@ textarea:focus{outline:none;border-color:var(--brand)}
 .qh{display:flex;justify-content:space-between;align-items:center}
 .done{border:0;background:var(--ink);color:#fff;border-radius:8px;padding:4px 10px;font-weight:700;font-size:.8rem}
 .csel{width:100%;height:46px;border:2px solid var(--line);border-radius:10px;background:#fff;padding:0 8px}
+.nav2{display:flex;gap:8px}.nav2 .next{flex:1;font-size:.95rem;line-height:1.15}.nav2 .next small{display:block;font-weight:400;font-size:.75rem;opacity:.8}.next[disabled]{opacity:.35}
 .next{width:100%;height:56px;border:0;border-radius:14px;background:var(--ink);color:#fff;font-weight:700;font-size:1.05rem;margin:4px 0 20px}
 
 /* status bar */
@@ -289,7 +290,7 @@ details.dcard[open]>summary{margin-bottom:10px}
   <div class="box">
     <h2>మగల్లు ఓటర్ సర్వే</h2>
     <p>Magallu Voter Survey</p>
-    <label class="lb">మీ పేరు <span class="en">Your name</span></label>
+    <label class="lb">User Name</label>
     <select id="lName" class="field"><option value="">— ఎంచుకోండి / Select —</option></select>
     <label class="lb">పిన్ <span class="en">4-digit PIN</span></label>
     <input id="lPin" class="field pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off">
@@ -320,7 +321,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <div class="appver">యాప్ వెర్షన్ · App version: <b>16 Nov · 12:00</b></div>
+    <!-- app version: 16 Nov · 13:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -332,6 +333,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <button class="iconbtn" id="btnHome">🏠 హోమ్</button>
       <h1>🏠 ఇళ్ళు · ఓటర్లు</h1>
       <button class="iconbtn sq" id="btnListRef" title="Refresh" aria-label="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
+      <button class="iconbtn sq" data-out="1" title="Logout" aria-label="Logout"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg></button>
     </div>
     <div class="prog"><span id="progTxt">—</span><div class="bar"><i id="progBar"></i></div></div>
   </div>
@@ -370,9 +372,10 @@ details.dcard[open]>summary{margin-bottom:10px}
 <section id="vPoll" class="sheet hide">
   <div class="top">
     <div class="row">
-      <button class="iconbtn" id="btnPollBack">← వెనక్కి</button>
+      <button class="iconbtn" id="btnPollBack">🏠 హోమ్</button>
       <h1>🗳️ పోలింగ్ రోజు</h1>
-      <button class="iconbtn" id="btnPollRef" title="Refresh">⟳</button>
+      <button class="iconbtn sq" id="btnPollRef" title="Refresh" aria-label="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
+      <button class="iconbtn sq" data-out="1" title="Logout" aria-label="Logout"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg></button>
     </div>
     <div class="prog"><span id="pTxt">—</span><div class="bar"><i id="pBar"></i></div></div>
   </div>
@@ -392,8 +395,10 @@ details.dcard[open]>summary{margin-bottom:10px}
 <section id="vDash" class="sheet hide">
   <div class="top">
     <div class="row">
-      <button class="iconbtn" id="btnDashBack">← వెనక్కి</button>
+      <button class="iconbtn" id="btnDashBack">🏠 హోమ్</button>
       <h1>📊 డాష్‌బోర్డ్</h1>
+      <button class="iconbtn sq" id="btnDashRef" title="Refresh" aria-label="Refresh"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></button>
+      <button class="iconbtn sq" data-out="1" title="Logout" aria-label="Logout"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4"/><path d="M10 8l-4 4 4 4"/><path d="M6 12h10"/></svg></button>
     </div>
     <div class="prog" id="dSub"></div>
   </div>
@@ -951,14 +956,18 @@ function houseMatches(h){
   }
   return true;
 }
+function sortHouses(hs){
+  if (S.lsort==='h') return hs.slice().sort(function(a,b){ return hnCmp(a.house,b.house) || b.v.length-a.v.length; });
+  if (S.lsort==='w') return hs.slice().sort(function(a,b){ var x=hWard(a), y=hWard(b); return (x==='none'?99:+x||98)-(y==='none'?99:+y||98) || b.v.length-a.v.length || hnCmp(a.house,b.house); });
+  return hs;
+}
 function renderList(){
   buildWardChips();
   var hs = S.houses.filter(houseMatches);
   if (S.q) hs = hs.slice().sort(function(a,b){ return (b._score||0)-(a._score||0); });   // best matches first
   else if (S.stat==='revisit') hs = hs.slice().sort(function(a,b){            // longest without a visit first, undecided before leaning
     function k(h){ return Math.min.apply(null,h.v.map(lastSeen)) - (h.v.some(function(v){return v.support==='Undecided';})?2*DAY:0); } return k(a)-k(b); });
-  else if (S.lsort==='h') hs = hs.slice().sort(function(a,b){ return hnCmp(a.house,b.house) || b.v.length-a.v.length; });
-  else if (S.lsort==='w') hs = hs.slice().sort(function(a,b){ var x=hWard(a), y=hWard(b); return (x==='none'?99:+x||98)-(y==='none'?99:+y||98) || b.v.length-a.v.length || hnCmp(a.house,b.house); });
+  else hs = sortHouses(hs);
   var scope = []; S.houses.forEach(function(h){ if (inScope(h)) scope = scope.concat(h.v); });
   var vis = scope.filter(isDone).length;
   $('progTxt').textContent = 'పూర్తి '+vis+' / '+scope.length;
@@ -998,6 +1007,7 @@ function openHouse(hid){
   setTimeout(function(){ if (typeof navSync==='function') navSync(); }, 0);   // also when opened from a shared link
 }
 function closeHouse(){
+  if (S.famBack!=null){ var b=S.famBack; S.famBack=null; location.href='family/'+b; return; }   // opened from the Families page: go back there
   S.hpick=null; S.hhist=false; S.vdel=null;
   S.openHouse=null; $('vHouse').classList.add('hide'); document.body.style.overflow=''; renderList();
 }
@@ -1075,8 +1085,9 @@ function renderHouse(){
     '</div>';
   }).join('');
   html += goneHtml(h) + splitHtml(h);
-  var idx = nextHouseIndex(h);
-  html += '<button class="next" data-next="1">'+(idx>=0?'తర్వాతి ఇల్లు → <span style="font-weight:400">Next house</span>':'← జాబితాకు వెళ్ళండి · Back to list')+'</button>';
+  var idx = nextHouseIndex(h), pdx = nextHouseIndex(h, -1);
+  html += (idx<0 && pdx<0) ? '<button class="next" data-back="1">← వెనక్కి · Back</button>'
+    : '<div class="nav2"><button class="next"'+(pdx<0?' disabled':'')+' data-prev="1">← ముందు ఇల్లు <small>Previous</small></button><button class="next"'+(idx<0?' disabled':'')+' data-next="1">తర్వాతి ఇల్లు → <small>Next</small></button></div>';
   $('hBody').innerHTML = html;
 }
 /* ---------- visits: many per voter; wrong ones can be deleted ---------- */
@@ -1233,9 +1244,10 @@ function issueHtml(v){
     '<button class="done" data-fold="'+esc(k)+'">'+(cur.length?'✓ అయింది':'మూసివేయి')+'</button></div><div class="iss">'+
     ISS.map(function(x){return '<button class="tb'+(cur.indexOf(x.v)>=0?' on':'')+'" data-issue="'+x.v+'">'+x.te+'<small>'+x.en+'</small></button>';}).join('')+'</div>';
 }
-function nextHouseIndex(h){
-  var list = S.houses.filter(inScope);
-  var i = list.indexOf(h); return i>=0 && i<list.length-1 ? S.houses.indexOf(list[i+1]) : -1;
+// next / previous house in the list exactly as shown (same filters and sort); dir -1 = previous
+function nextHouseIndex(h, dir){
+  var list = sortHouses(S.houses.filter(inScope)), j = list.indexOf(h) + (dir||1);
+  return list.indexOf(h)>=0 && j>=0 && j<list.length ? S.houses.indexOf(list[j]) : -1;
 }
 // shared survey (survey.js) settings for one voter: open question, lists, caste hint (house caste or surname caste)
 function svUI(v, hc){ return {open:S.svOpen[v.id]||'', lists:lists(), hint:{caste: v.caste ? '' : (hc || suggestCaste(v.surname))}, ro:isRO()}; }
@@ -1328,6 +1340,8 @@ $('hBody').onclick=function(e){
   var pcb=e.target.closest('[data-pc]');
   if (pcb){ var vp=S.byId[pcb.closest('[data-id]').dataset.id]; edit(vp,{caste:pcb.dataset.pc}); delete S.open[vp.id+':caste']; toast('కులం ✓'); renderHouse(); return; }
   if (e.target.closest('[data-next]')){ var i=nextHouseIndex(h); if(i>=0) openHouse(S.houses[i].id); else closeHouse(); return; }
+  if (e.target.closest('[data-prev]')){ var k=nextHouseIndex(h,-1); if(k>=0) openHouse(S.houses[k].id); return; }
+  if (e.target.closest('[data-back]')){ closeHouse(); return; }
   var b=e.target.closest('[data-f]'); if(!b) return;
   var v=S.byId[b.closest('[data-id]').dataset.id], f=b.dataset.f, val=b.dataset.v, ch={};
   if (f==='visited'){ ch.visited=val; if(val==='Not Visited'){ /* keep answers, just mark */ } }
@@ -1424,7 +1438,7 @@ function surFlush(){
 /* ---------- polling day: tick who has voted; chase supporters who haven't ---------- */
 var P = { booth:null, tab:'sup', q:'', limit:60, ask:null, timer:null };
 $('tPoll').onclick=function(e){ e.preventDefault(); openPoll(); };
-$('btnPollBack').onclick=function(){ $('vPoll').classList.add('hide'); document.body.style.overflow=''; clearInterval(P.timer); renderList(); };
+$('btnPollBack').onclick=function(){ $('vPoll').classList.add('hide'); document.body.style.overflow=''; clearInterval(P.timer); renderList(); showView('home'); };
 $('btnPollRef').onclick=function(){ pollRefresh(true); };
 function openPoll(){
   $('vPoll').classList.remove('hide'); $('vPoll').scrollTop=0; document.body.style.overflow='hidden';
@@ -1490,7 +1504,8 @@ var pT; $('pq').oninput=function(){ clearTimeout(pT); var x=this; pT=setTimeout(
 $('pWard').onclick=function(e){ var b=e.target.closest('[data-pw]'); if(!b) return; var w=b.dataset.pw; P.wsel=P.wsel||[];
   if (w==='all') P.wsel=[]; else { var i=P.wsel.indexOf(w); if (i>=0) P.wsel.splice(i,1); else P.wsel.push(w); } P.limit=60; renderPoll(); };
 $('tDash').onclick=function(e){ e.preventDefault(); openDash(); };
-$('btnDashBack').onclick=function(){ $('vDash').classList.add('hide'); document.body.style.overflow=''; };
+$('btnDashBack').onclick=function(){ $('vDash').classList.add('hide'); document.body.style.overflow=''; showView('home'); };
+$('btnDashRef').onclick=function(){ manualRefresh(this); };
 
 /* ---------- dashboard: admin sees everything, a volunteer sees their wards ---------- */
 // dashboard chart colours (validated for colour-blind separation; house-screen buttons keep their own colours)
@@ -1850,7 +1865,8 @@ var tT; function toast(m){ var t=$('toast'); t.textContent=m; t.classList.add('s
 // Deep link from the Families page: index.html#v=<EPIC> opens that voter's house
 function openFromLink(){
   var m = location.hash.match(/v=([^&]+)/); if (!m || !S.rows.length) return;
-  var e = decodeURIComponent(m[1]), v = S.byId['A:'+e] || S.byId['N:'+e];
+  var e = decodeURIComponent(m[1]), v = S.byId['A:'+e] || S.byId['N:'+e], bk = location.hash.match(/[&#]b=([^&]*)/);
+  S.famBack = bk ? decodeURIComponent(bk[1]) : null;
   try { history.replaceState(null, '', location.pathname + location.search); } catch(err){ location.hash=''; }
   if (!v) { toast('ఓటరు దొరకలేదు'); return; }
   var h = S.houses.filter(function(x){ return x.v.indexOf(v)>=0; })[0];
@@ -1918,13 +1934,15 @@ function quietSync(){
 document.addEventListener('visibilitychange', function(){ if (!document.hidden) quietSync(); });
 setInterval(quietSync, 3*60000);
 $('btnRefresh').onclick=function(){ manualRefresh(this); };
-$('btnOut').onclick=function(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); };
+function tryLogout(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); }
+$('btnOut').onclick=tryLogout;
+document.addEventListener('click', function(e){ if (e.target.closest('[data-out]')) tryLogout(); });
 
 function logout(msg){
   S.user=null; LS.del('user'); LS.del('rows'); LS.del('ver'); LS.del('fullAt'); applyRO();
   $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
   S.wsel=[]; LS.del('wsel'); LS.del('view'); S.lcaste=[]; LS.del('lcaste'); S.booth=[]; S.sec=[];
-  $('vHome').classList.add('hide'); $('vList').classList.add('hide'); $('vHouse').classList.add('hide'); $('vLogin').classList.remove('hide');
+  ['vHome','vList','vHouse','vPoll','vDash','vDrill','vSur'].forEach(function(id){ $(id).classList.add('hide'); }); document.body.style.overflow=''; S.openHouse=null; if (window.P && P.timer) clearInterval(P.timer); $('vLogin').classList.remove('hide');
   $('lErr').textContent = msg||''; renderSync(); initLogin();
 }
 /* ---------- home page (big icon tiles) ↔ house list ---------- */
@@ -1973,7 +1991,7 @@ $('btnListRef').onclick=function(){ manualRefresh(this); };
 function manualRefresh(btn){
   if (btn.classList.contains('spinning')) return;
   btn.classList.add('spinning'); toast('⏳ తాజా చేస్తున్నాం… · Refreshing');
-  flush(); loadData(true).then(function(){ btn.classList.remove('spinning'); }, function(){ btn.classList.remove('spinning'); });
+  flush(); loadData(true).then(function(){ btn.classList.remove('spinning'); if (isOpen('vDash')) renderDash(); if (isOpen('vPoll')) renderPoll(); }, function(){ btn.classList.remove('spinning'); });
 }
 function showApp(){
   $('vLogin').classList.add('hide');
@@ -2016,7 +2034,8 @@ $('lGo').onclick=function(){
 $('lPin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lGo').click(); });
 
 if (DEMO) $('demoBar').classList.remove('hide');
-if (S.user) showApp(); else initLogin();
+if (/^#logout/.test(location.hash)){ try { history.replaceState(null, '', location.pathname); } catch(e){} if (S.user) logout(''); else initLogin(); }
+else if (S.user) showApp(); else initLogin();
 })();
 </script>
 </body>
