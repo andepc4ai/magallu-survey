@@ -1564,6 +1564,7 @@ var AGEG=[[18,21,'18-21'],[22,25,'22-25'],[26,35,'26-35'],[36,45,'36-45'],[46,60
 function ageG(v){ var a=Number(v.age); for (var i=0;i<AGEG.length;i++){ if (a>=AGEG[i][0] && a<=AGEG[i][1]) return AGEG[i][2]+' ఏళ్ళు'; } return 'వయసు లేదు'; }
 var PDIM = {   // key: [label, English, value of a voter, natural order?]
   ward:  ['📍 వార్డు','Ward', function(v){ var w=hWard(v._h); return w==='none'?'వార్డు లేదు':'వార్డు '+w; }, 1],
+  resv:  ['🪑 వార్డు రిజర్వేషన్','Ward reservation', function(v){ var w=hWard(v._h); return RESV[w] ? resvTe(w)+' · '+RESV[w] : 'వార్డు లేదు'; }],
   gender:['👫 లింగం','Gender', function(v){ return v.gen==='Female'?'👩 స్త్రీ':v.gen==='Male'?'👨 పురుషుడు':'నమోదు కాలేదు'; }, 1],
   age:   ['🎂 వయసు','Age', ageG, 1],
   caste: ['🏷️ కులం','Caste', function(v){ return v.caste?(CASTE_TE[v.caste]||v.caste):'కులం నమోదు కాలేదు'; }],
@@ -1579,7 +1580,8 @@ var PDIM = {   // key: [label, English, value of a voter, natural order?]
 // Excel-style pivot: you pick the fields (in order); one row per combination with its voter count.
 function pvViews(){ return LS.get('pvViews2')||[]; }
 function pvKey(f){ return PDIM[f] && f!=='none'; }
-function pvCmp(f){ return PDIM[f][3] ? function(a,b){ return a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return a.localeCompare(b); }; }
+function pvCmp(f){ var nl=function(x){ return /లేదు|కాలేదు|^—$/.test(x)?1:0; };   // 'no ward' / 'not recorded' always last
+  return PDIM[f][3] ? function(a,b){ return nl(a)-nl(b) || a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return nl(a)-nl(b) || a.localeCompare(b); }; }
 function pvLab(x){ return String(x).replace(/^\d\.\s/,''); }
 function pivotCard(rows){
   var p=S.pv, fs=(p.f||[]).filter(pvKey);
