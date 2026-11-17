@@ -271,6 +271,8 @@ details.dcard[open]>summary{margin-bottom:10px}
 .pvf select.chip{padding:6px 8px;font-size:.85rem;border-radius:10px;width:100%}
 .pvw{overflow-x:auto;margin:0 -4px}.pvt th,.pvt td{text-align:right;white-space:nowrap}.pvt th:first-child,.pvt td:first-child{text-align:left;white-space:normal;min-width:90px;position:sticky;left:0;background:#fff}
 .pvt td[data-dr]{cursor:pointer;text-decoration:underline dotted #a8a29e}.pvt .pvtot td{border-top:2px solid #e7e5e4;background:#fafaf9}
+.pvt th,.pvt td{text-align:left;white-space:normal}.pvt td.pvc,.pvt td.shr,.pvt th:nth-last-child(-n+2),.pvt .pvsub td:nth-last-child(-n+2),.pvt .pvtot td:nth-last-child(-n+2){text-align:right;white-space:nowrap}
+.pvt .pvsub td{background:#fefce8;font-size:.8rem;color:#854d0e}.pvn{display:inline-block;background:#fde047;color:#1c1917;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:.72rem}
 .dmore{width:100%;margin-top:8px;height:42px;border:2px dashed var(--line);background:transparent;border-radius:10px;font-weight:600;color:var(--muted)}
 .dleg{font-size:.75rem;color:var(--muted);margin-top:6px}.dnote{background:#fef9c3;border-radius:10px;padding:8px 12px;margin-top:12px;font-size:.85rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dnote>span{flex:1;min-width:140px}
 .dclr{border:0;background:#1c1917;color:#FACC15;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.85rem}
@@ -326,7 +328,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 17 Nov · 13:00 -->
+    <!-- app version: 17 Nov · 15:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -589,7 +591,7 @@ var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్�
 var S = {
   user: LS.get('user'),           // {name,pin,booth,wards}
   rows: [], byId:{}, houses:[], hById:{},
-  pv: Object.assign({r:'caste', c:'gender', m:'n', d:'n', v:'p1'}, LS.get('pv') || {}),
+  pv: (function(){ var p=Object.assign({f:['caste'], s:'f', v:''}, LS.get('pv2') || {}); if (!Array.isArray(p.f)) p.f=[]; return p; })(),
   df: (function(){ var d=Object.assign({w:[], b:[], s:[], c:[], g:''}, LS.get('dfil') || {}); d.b=arr(d.b); d.s=arr(d.s); d.c=arr(d.c); d.g=(d.g==='F'||d.g==='M')?d.g:''; return d; })(),
   dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
   booth: [], sec: [], lcaste: arr(LS.get('lcaste')), wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
@@ -1574,63 +1576,47 @@ var PDIM = {   // key: [label, English, value of a voter, natural order?]
   newv:  ['🆕 కొత్త ఓటరా','New voter', function(v){ return v.isNew?'🆕 2026 కొత్త':'2025 జాబితా'; }, 1],
   none:  ['— ఏదీ వద్దు','None', function(){ return 'మొత్తం'; }, 1]
 };
-var PMEAS = {   // what each cell counts
-  n:   ['👥 ఓటర్లు','Voters', function(){ return true; }],
-  vis: ['🚶 కలిశాం','Visited', isDone],
-  sup: ['💚 మద్దతు (పూర్తి+మొగ్గు)','Strong + Leaning', isSup],
-  und: ['🟠 తేల్చలేదు','Undecided', function(v){ return v.support==='Undecided'; }],
-  opp: ['🔴 వ్యతిరేకం','Opposed', function(v){ return v.support==='Opposed'; }],
-  tg:  ['🎯 టార్గెట్','Target voters', function(v){ return !!targetScore(v); }],
-  mob: ['📞 ఫోన్ ఉంది','Has phone no.', function(v){ return !!v.mobile; }]
-};
-var PSHOW = [['n','సంఖ్య','Count'],['t','మొత్తంలో వాటా %','Share of total'],['r','వరుసలో %','% of row'],['c','ఆ గడిలో ఓటర్లలో %','% of voters in cell']];
-var PVIEWS = [   // ready-made views
-  {id:'p1', name:'కులం × లింగం', r:'caste', c:'gender', m:'n', d:'n'},
-  {id:'p2', name:'వార్డు × వయసు', r:'ward', c:'age', m:'n', d:'n'},
-  {id:'p3', name:'కులం × మద్దతు', r:'caste', c:'sup', m:'n', d:'r'},
-  {id:'p4', name:'వార్డు × కలిశామా', r:'ward', c:'vis', m:'n', d:'r'},
-  {id:'p5', name:'వార్డు × కులం', r:'ward', c:'caste', m:'n', d:'n'},
-  {id:'p6', name:'వయసు × మద్దతు', r:'age', c:'sup', m:'n', d:'r'}
-];
-function pvViews(){ return PVIEWS.concat(LS.get('pvViews')||[]); }
-function pvSel(key, map, val){
-  var list = Array.isArray(map) ? map : Object.keys(map).map(function(k){ return [k, map[k][0], map[k][1]]; });
-  return '<select class="chip" data-pvk="'+key+'" style="max-width:100%">'+list.map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===val?' selected':'')+'>'+esc(x[1])+' · '+esc(x[2])+'</option>'; }).join('')+'</select>';
-}
-function pvOrder(dim, groups){
-  var ks=Object.keys(groups);
-  return PDIM[dim][3] ? ks.sort(function(a,b){ return a.localeCompare(b, undefined, {numeric:true}); })
-    : ks.sort(function(a,b){ return groups[b].length-groups[a].length; });
-}
+// Excel-style pivot: you pick the fields (in order); one row per combination with its voter count.
+function pvViews(){ return LS.get('pvViews2')||[]; }
+function pvKey(f){ return PDIM[f] && f!=='none'; }
+function pvCmp(f){ return PDIM[f][3] ? function(a,b){ return a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return a.localeCompare(b); }; }
+function pvLab(x){ return String(x).replace(/^\d\.\s/,''); }
 function pivotCard(rows){
-  var p=S.pv, rd=PDIM[p.r]||PDIM.caste, cd=PDIM[p.c]||PDIM.none, me=PMEAS[p.m]||PMEAS.n, mf=me[2];
-  if (p.d==='c' && p.m==='n') p.d='n';
-  var gr=groupBy(rows, function(v){ return rd[2](v); }), gc=groupBy(rows, function(v){ return cd[2](v); });
-  var rk=pvOrder(p.r, gr), ck=pvOrder(p.c, gc), other=false;
-  if (ck.length>8){ var keep=PDIM[p.c][3]?ck:ck.slice(0,7); if (keep.length<ck.length){ other=true; var kset={}; keep.forEach(function(k){ kset[k]=1; }); ck=keep.concat(['ఇతరులు']); } }
-  var colOf=function(v){ var k=cd[2](v); return (other && ck.indexOf(k)<0) ? 'ఇతరులు' : k; };
-  var M=function(list){ var n=0; list.forEach(function(v){ if (mf(v)) n++; }); return n; };
-  var mAll=M(rows);
-  var cell=function(list, rowTot){ var n=M(list);
-    var txt = p.d==='t' ? share1(n,mAll)+'%' : p.d==='r' ? share1(n,rowTot)+'%' : p.d==='c' ? share1(n,list.length)+'%' : String(n);
-    return {n:n, txt:txt}; };
-  var lim = S.dashMore.pv ? rk.length : 15;
-  var head = '<tr><th>'+esc(rd[0])+'</th>'+(p.c==='none'?'':ck.map(function(k){ return '<th>'+esc(k.replace(/^\d\.\s/,''))+'</th>'; }).join(''))+'<th>మొత్తం</th><th>వాటా</th></tr>';
-  var body = rk.slice(0,lim).map(function(k){ var list=gr[k], rt=M(list), byc=groupBy(list, colOf);
-    return '<tr><td><b>'+esc(k.replace(/^\d\.\s/,''))+'</b></td>'+(p.c==='none'?'':ck.map(function(c){ var l=byc[c]||[], o=cell(l, rt);
-        return '<td'+(o.n?drA(k.replace(/^\d\.\s/,'')+' · '+c.replace(/^\d\.\s/,'')+' · '+me[0], l.filter(mf)):'')+'>'+(o.n?o.txt:'<span style="color:#d6d3d1">0</span>')+'</td>'; }).join(''))+
-      '<td'+drA(k.replace(/^\d\.\s/,'')+' · '+me[0], list.filter(mf))+'><b>'+(p.d==='c'?share1(rt,list.length)+'%':rt)+'</b></td><td class="shr">'+share1(rt,mAll)+'%</td></tr>'; }).join('');
-  var foot = '<tr class="pvtot"><td><b>మొత్తం</b></td>'+(p.c==='none'?'':ck.map(function(c){ var l=rows.filter(function(v){ return colOf(v)===c; }), n=M(l);
-      return '<td><b>'+(p.d==='c'?share1(n,l.length)+'%':p.d==='n'?n:share1(n,mAll)+'%')+'</b></td>'; }).join(''))+'<td><b>'+mAll+'</b></td><td class="shr">100%</td></tr>';
-  var views = pvViews();
-  return '<details class="dcard" data-dk="pv"'+(S.dashOpen.pv?' open':'')+'><summary><h3>🧮 మీ పట్టిక <span class="en">Custom table · '+esc(rd[1])+(p.c!=='none'?' × '+esc(cd[1]):'')+' · '+esc(me[1])+'</span></h3></summary>'+
-    '<div class="chips" style="flex-wrap:wrap">'+views.map(function(x){ return '<button class="chip'+(p.v===x.id?' on':'')+'" data-pvv="'+x.id+'">'+esc(x.name)+'</button>'+
-      (x.id.charAt(0)==='u'&&p.v===x.id?'<button class="chip" data-pvdel="'+x.id+'" title="Delete">✕</button>':''); }).join('')+
-      '<button class="chip" data-pvsave="1" style="border-style:dashed">➕ ఇది సేవ్ చేయి · Save</button></div>'+
-    '<div class="pvf"><label>వరుసలు · Rows'+pvSel('r', PDIM, p.r)+'</label><label>నిలువు · Columns'+pvSel('c', PDIM, p.c)+'</label>'+
-    '<label>లెక్క · Count'+pvSel('m', PMEAS, p.m)+'</label><label>చూపు · Show'+pvSel('d', PSHOW.filter(function(x){ return x[0]!=='c' || p.m!=='n'; }), p.d)+'</label></div>'+
-    '<div class="pvw"><table class="dt pvt">'+head+body+foot+'</table></div>'+moreBtn('pv', rk.length, 15)+
-    '<div class="dleg">గడి నొక్కితే ఆ ఓటర్లు కనిపిస్తారు · Tap a number to see those voters. వాటా = మొత్తం '+mAll+' లో ఎంత శాతం'+(dfActive()?' (ఫిల్టర్ ప్రకారం · filtered)':'')+'. సేవ్ చేసినవి ఈ ఫోన్‌లో మాత్రమే · Saved views stay on this phone.</div></details>';
+  var p=S.pv, fs=(p.f||[]).filter(pvKey);
+  var chips='<div class="chips" style="flex-wrap:wrap">'+Object.keys(PDIM).filter(pvKey).map(function(k){ var i=fs.indexOf(k);
+    return '<button class="chip'+(i>=0?' on':'')+'" data-pvf="'+k+'">'+(i>=0?'<b class="pvn">'+(i+1)+'</b> ':'')+esc(PDIM[k][0])+'</button>'; }).join('')+'</div>';
+  var views=pvViews(), vh='';
+  if (views.length || fs.length) vh='<div class="chips" style="flex-wrap:wrap">'+views.map(function(x){ return '<button class="chip'+(p.v===x.id?' on':'')+'" data-pvv="'+x.id+'">📌 '+esc(x.name)+'</button>'+
+      (p.v===x.id?'<button class="chip" data-pvdel="'+x.id+'" title="Delete">✕</button>':''); }).join('')+
+    (fs.length?'<button class="chip" data-pvsave="1" style="border-style:dashed">➕ సేవ్ · Save</button>':'')+'</div>';
+  var tbl='';
+  if (!fs.length) tbl='<div class="msg" style="padding:14px">పైన కులం / వార్డు / లింగం… ఎంచుకోండి — ఎంచుకున్న క్రమంలో నిలువు వరుసలు వస్తాయి.<br><small>Pick fields above; columns follow the order you tap them.</small></div>';
+  else {
+    var g={}; rows.forEach(function(v){ var key=fs.map(function(f){ return PDIM[f][2](v); }); var k=key.join('\u0001'); (g[k]||(g[k]={key:key, rows:[]})).rows.push(v); });
+    var list=Object.keys(g).map(function(k){ return g[k]; }), cmps=fs.map(pvCmp), tot=rows.length;
+    var first={}; list.forEach(function(o){ first[o.key[0]]=(first[o.key[0]]||0)+o.rows.length; });
+    list.sort(function(a,b){
+      if (p.s==='n'){ return fs.length>1 ? (first[b.key[0]]-first[a.key[0]] || cmps[0](a.key[0],b.key[0]) || b.rows.length-a.rows.length) : b.rows.length-a.rows.length; }
+      for (var i=0;i<fs.length;i++){ var c=cmps[i](a.key[i],b.key[i]); if (c) return c; } return 0; });
+    var lim=S.dashMore.pv?list.length:60, out=[], prev=[], shown=0;
+    for (var j=0;j<list.length && shown<lim;j++){ var o=list[j];
+      if (fs.length>1 && j>0 && o.key[0]!==list[j-1].key[0]) out.push(pvSub(list[j-1].key[0], first[list[j-1].key[0]], tot, fs.length, rows, fs[0]));
+      out.push('<tr>'+o.key.map(function(x,i){ var same=prev.length && prev.slice(0,i+1).join('\u0001')===o.key.slice(0,i+1).join('\u0001');
+          return '<td>'+(same?'':'<b>'+esc(pvLab(x))+'</b>')+'</td>'; }).join('')+
+        '<td class="pvc"'+drA(o.key.map(pvLab).join(' · '), o.rows)+'><b>'+o.rows.length+'</b></td><td class="shr">'+share1(o.rows.length,tot)+'%</td></tr>');
+      prev=o.key; shown++; }
+    if (fs.length>1 && shown===list.length && list.length) out.push(pvSub(list[list.length-1].key[0], first[list[list.length-1].key[0]], tot, fs.length, rows, fs[0]));
+    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f){ return '<th>'+esc(PDIM[f][0])+'</th>'; }).join('')+'<th>ఓటర్లు<br><small>Count</small></th><th>వాటా<br><small>Share</small></th></tr>'+out.join('')+
+      '<tr class="pvtot"><td colspan="'+fs.length+'"><b>మొత్తం · Grand total</b></td><td><b>'+tot+'</b></td><td class="shr">100%</td></tr></table></div>'+
+      moreBtn('pv', list.length, 60, 'అన్ని వరుసలు')+
+      '<div class="chips" style="margin-top:6px"><button class="chip'+(p.s!=='n'?' on':'')+'" data-pvs="f">↕️ పేరు క్రమం · A-Z</button><button class="chip'+(p.s==='n'?' on':'')+'" data-pvs="n">↕️ ఎక్కువ ఓటర్లు ముందు · Most first</button></div>';
+  }
+  return '<details class="dcard" data-dk="pv"'+(S.dashOpen.pv?' open':'')+'><summary><h3>🧮 మీ పట్టిక <span class="en">Custom table'+(fs.length?' · '+fs.map(function(f){ return PDIM[f][1]; }).join(' × '):'')+'</span></h3></summary>'+
+    chips+vh+tbl+
+    '<div class="dleg">సంఖ్య నొక్కితే ఆ ఓటర్లు కనిపిస్తారు · Tap a count to see those voters. వాటా = మొత్తం '+rows.length+' లో ఎంత శాతం'+(dfActive()?' (ఫిల్టర్ ప్రకారం · filtered)':'')+'. సేవ్ చేసినవి ఈ ఫోన్‌లో మాత్రమే · Saved on this phone only.</div></details>';
+}
+function pvSub(k, n, tot, cols, rows, f){
+  return '<tr class="pvsub"><td colspan="'+cols+'">'+esc(pvLab(k))+' మొత్తం · total</td><td'+drA(pvLab(k), rows.filter(function(v){ return PDIM[f][2](v)===k; }))+'><b>'+n+'</b></td><td class="shr">'+share1(n,tot)+'%</td></tr>';
 }
 function share1(n,d){ return d ? Math.round(n*1000/d)/10 : 0; }
 function stat(list){
@@ -1716,7 +1702,6 @@ function renderDash(){
   h += '<div class="tiles">'+
     tile(total,'అందరూ ఓటర్లు','All voters · 🌳 కుటుంబ చెట్లు', ((HAS_API||DEMO)?' data-ftree="1"':drA('అందరూ ఓటర్లు · All voters', rows)))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
-  h += pivotCard(rows);
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
   S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
@@ -1864,19 +1849,21 @@ function renderDash(){
   var withL=hs.filter(function(x){ return topLeader(x.v); }).length;
   h += '<details class="dcard" data-dk="lead"><summary><h3>నాయకులు <span class="en">Leaders</span></h3></summary>'+withL+' / '+hs.length+' ఇళ్ళకు నాయకుడు ఉన్నాడు <span class="en">houses have a leader</span></details>';
   if (S.user.admin && /^admin$/i.test(String(S.user.name||'').trim())) h += usageCard();   // usage report: only the login named "Admin" (server checks too)
-  h += rollCard;   // 📋 voter count at the end
+  h += rollCard;   // 📋 voter count near the end
+  h += pivotCard(rows);   // 🧮 custom table is the very last card (Anudeep, 17 Nov)
   var keep=$('vDash').scrollTop; $('dBody').innerHTML=h; $('vDash').scrollTop=keep;
   [].forEach.call($('dBody').querySelectorAll('details[data-dk]'), function(d){ var k=d.dataset.dk; if (k in S.dashOpen) d.open=S.dashOpen[k]; });
 }
 $('dBody').addEventListener('change', function(e){ var t=e.target;
-    if (t.dataset && t.dataset.pvk){ S.pv[t.dataset.pvk]=t.value; S.pv.v=''; if (S.pv.r===S.pv.c && S.pv.c!=='none') S.pv.c='none'; LS.set('pv',S.pv); S.dashMore.pv=false; renderDash(); }
   });
 $('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk){ S.dashOpen[d.dataset.dk]=d.open; if (d.dataset.dk==='usage' && d.open && !S.logins) loadLogins(); } }, true);
 $('dBody').onclick=function(e){
-  var pv=e.target.closest('[data-pvv]'); if (pv){ var all=pvViews(), x=all.filter(function(o){ return o.id===pv.dataset.pvv; })[0]; if (x){ S.pv={r:x.r,c:x.c,m:x.m,d:x.d,v:x.id}; LS.set('pv',S.pv); S.dashMore.pv=false; renderDash(); } return; }
-  if (e.target.closest('[data-pvsave]')){ var nm=prompt('ఈ పట్టికకు పేరు · Name for this view', PDIM[S.pv.r][0].replace(/^\S+\s/,'')+(S.pv.c!=='none'?' × '+PDIM[S.pv.c][0].replace(/^\S+\s/,''):''));
-    if (nm && nm.trim()){ var mine=LS.get('pvViews')||[], id='u'+Date.now(); mine.push({id:id,name:nm.trim().slice(0,30),r:S.pv.r,c:S.pv.c,m:S.pv.m,d:S.pv.d}); LS.set('pvViews',mine); S.pv.v=id; LS.set('pv',S.pv); renderDash(); } return; }
-  var pd=e.target.closest('[data-pvdel]'); if (pd){ if (confirm('ఈ పట్టిక తీసేయాలా? · Delete this saved view?')){ LS.set('pvViews',(LS.get('pvViews')||[]).filter(function(o){ return o.id!==pd.dataset.pvdel; })); S.pv.v=''; LS.set('pv',S.pv); renderDash(); } return; }
+  var pf=e.target.closest('[data-pvf]'); if (pf){ var f=pf.dataset.pvf, i=S.pv.f.indexOf(f); if (i>=0) S.pv.f.splice(i,1); else S.pv.f.push(f); S.pv.v=''; LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); return; }
+  var ps=e.target.closest('[data-pvs]'); if (ps){ S.pv.s=ps.dataset.pvs; LS.set('pv2',S.pv); renderDash(); return; }
+  var pv=e.target.closest('[data-pvv]'); if (pv){ var x=pvViews().filter(function(o){ return o.id===pv.dataset.pvv; })[0]; if (x){ S.pv={f:x.f.slice(), s:x.s||'f', v:x.id}; LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); } return; }
+  if (e.target.closest('[data-pvsave]')){ var nm=prompt('ఈ పట్టికకు పేరు · Name for this view', S.pv.f.map(function(k){ return PDIM[k][0].replace(/^\S+\s/,''); }).join(' × '));
+    if (nm && nm.trim()){ var mine=pvViews(), id='u'+Date.now(); mine.push({id:id, name:nm.trim().slice(0,30), f:S.pv.f.slice(), s:S.pv.s}); LS.set('pvViews2',mine); S.pv.v=id; LS.set('pv2',S.pv); renderDash(); } return; }
+  var pd=e.target.closest('[data-pvdel]'); if (pd){ if (confirm('ఈ పట్టిక తీసేయాలా? · Delete this saved view?')){ LS.set('pvViews2',pvViews().filter(function(o){ return o.id!==pd.dataset.pvdel; })); S.pv.v=''; LS.set('pv2',S.pv); renderDash(); } return; }
   var dw=e.target.closest('[data-dfw]'); if (dw){ var w=dw.dataset.dfw; if (w==='all') S.df.w=[]; else { var i=S.df.w.indexOf(w); if (i>=0) S.df.w.splice(i,1); else S.df.w.push(w); } LS.set('dfil',S.df); renderDash(); return; }
   var dg=e.target.closest('[data-dfg]'); if (dg){ S.df.g=dg.dataset.dfg; LS.set('dfil',S.df); renderDash(); return; }
   if (e.target.closest('[data-dfclr]')){ S.df={w:[], b:[], s:[], c:[], g:''}; LS.set('dfil',S.df); renderDash(); return; }
