@@ -272,6 +272,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 .pvw{overflow-x:auto;margin:0 -4px}.pvt th,.pvt td{text-align:right;white-space:nowrap}.pvt th:first-child,.pvt td:first-child{text-align:left;white-space:normal;min-width:90px;position:sticky;left:0;background:#fff}
 .pvt td[data-dr]{cursor:pointer;text-decoration:underline dotted #a8a29e}.pvt .pvtot td{border-top:2px solid #e7e5e4;background:#fafaf9}
 .pvt th,.pvt td{text-align:left;white-space:normal}.pvt td.pvc,.pvt td.shr,.pvt th:nth-last-child(-n+2),.pvt .pvsub td:nth-last-child(-n+2),.pvt .pvtot td:nth-last-child(-n+2){text-align:right;white-space:nowrap}
+.pvt th[data-pvh]{cursor:pointer;color:var(--ink)}.pva{font-size:.75rem;color:#a8a29e}.pva.on{color:#ca8a04}
 .pvt .pvsub td{background:#fefce8;font-size:.8rem;color:#854d0e}.pvn{display:inline-block;background:#fde047;color:#1c1917;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;font-size:.72rem}
 .dmore{width:100%;margin-top:8px;height:42px;border:2px dashed var(--line);background:transparent;border-radius:10px;font-weight:600;color:var(--muted)}
 .dleg{font-size:.75rem;color:var(--muted);margin-top:6px}.dnote{background:#fef9c3;border-radius:10px;padding:8px 12px;margin-top:12px;font-size:.85rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dnote>span{flex:1;min-width:140px}
@@ -328,7 +329,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 17 Nov · 15:00 -->
+    <!-- app version: 17 Nov · 17:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -591,7 +592,7 @@ var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్�
 var S = {
   user: LS.get('user'),           // {name,pin,booth,wards}
   rows: [], byId:{}, houses:[], hById:{},
-  pv: (function(){ var p=Object.assign({f:['caste'], s:'f', v:''}, LS.get('pv2') || {}); if (!Array.isArray(p.f)) p.f=[]; return p; })(),
+  pv: (function(){ var p=Object.assign({f:['caste'], sk:-1, sd:1, v:''}, LS.get('pv2') || {}); if (!Array.isArray(p.f)) p.f=[]; if (p.s==='n' && p.sk===undefined){ p.sk='n'; p.sd=-1; } delete p.s; return p; })(),
   df: (function(){ var d=Object.assign({w:[], b:[], s:[], c:[], g:''}, LS.get('dfil') || {}); d.b=arr(d.b); d.s=arr(d.s); d.c=arr(d.c); d.g=(d.g==='F'||d.g==='M')?d.g:''; return d; })(),
   dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
   booth: [], sec: [], lcaste: arr(LS.get('lcaste')), wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
@@ -1580,8 +1581,8 @@ var PDIM = {   // key: [label, English, value of a voter, natural order?]
 // Excel-style pivot: you pick the fields (in order); one row per combination with its voter count.
 function pvViews(){ return LS.get('pvViews2')||[]; }
 function pvKey(f){ return PDIM[f] && f!=='none'; }
-function pvCmp(f){ var nl=function(x){ return /లేదు|కాలేదు|^—$/.test(x)?1:0; };   // 'no ward' / 'not recorded' always last
-  return PDIM[f][3] ? function(a,b){ return nl(a)-nl(b) || a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return nl(a)-nl(b) || a.localeCompare(b); }; }
+function pvNl(x){ return /లేదు|కాలేదు|^—$/.test(x)?1:0; }   // 'no ward' / 'not recorded' always last when sorting by name
+function pvCmp(f){ return PDIM[f][3] ? function(a,b){ return a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return a.localeCompare(b); }; }
 function pvLab(x){ return String(x).replace(/^\d\.\s/,''); }
 function pivotCard(rows){
   var p=S.pv, fs=(p.f||[]).filter(pvKey);
@@ -1597,9 +1598,15 @@ function pivotCard(rows){
     var g={}; rows.forEach(function(v){ var key=fs.map(function(f){ return PDIM[f][2](v); }); var k=key.join('\u0001'); (g[k]||(g[k]={key:key, rows:[]})).rows.push(v); });
     var list=Object.keys(g).map(function(k){ return g[k]; }), cmps=fs.map(pvCmp), tot=rows.length;
     var first={}; list.forEach(function(o){ first[o.key[0]]=(first[o.key[0]]||0)+o.rows.length; });
+    // header sort (like Excel): sk = column index or 'n' (count), sd = 1 up / -1 down. Items are sorted inside their parent group,
+    // so subtotals stay together; sorting by count orders every level by its own total.
+    var sk=(p.sk==='n'||(p.sk>=0&&p.sk<fs.length))?p.sk:-1, sd=p.sd===-1?-1:1, ptot={};
+    list.forEach(function(o){ for (var i=0;i<fs.length;i++){ var k=o.key.slice(0,i+1).join('\u0001'); ptot[k]=(ptot[k]||0)+o.rows.length; } });
     list.sort(function(a,b){
-      if (p.s==='n'){ return fs.length>1 ? (first[b.key[0]]-first[a.key[0]] || cmps[0](a.key[0],b.key[0]) || b.rows.length-a.rows.length) : b.rows.length-a.rows.length; }
-      for (var i=0;i<fs.length;i++){ var c=cmps[i](a.key[i],b.key[i]); if (c) return c; } return 0; });
+      for (var i=0;i<fs.length;i++){ if (a.key[i]===b.key[i]) continue;
+        if (sk==='n'){ var d=ptot[a.key.slice(0,i+1).join('\u0001')]-ptot[b.key.slice(0,i+1).join('\u0001')]; if (d) return d*sd; }
+        return (pvNl(a.key[i])-pvNl(b.key[i])) || cmps[i](a.key[i],b.key[i])*(sk===i?sd:1); }
+      return 0; });
     var lim=S.dashMore.pv?list.length:60, out=[], prev=[], shown=0;
     for (var j=0;j<list.length && shown<lim;j++){ var o=list[j];
       if (fs.length>1 && j>0 && o.key[0]!==list[j-1].key[0]) out.push(pvSub(list[j-1].key[0], first[list[j-1].key[0]], tot, fs.length, rows, fs[0]));
@@ -1608,10 +1615,11 @@ function pivotCard(rows){
         '<td class="pvc"'+drA(o.key.map(pvLab).join(' · '), o.rows)+'><b>'+o.rows.length+'</b></td><td class="shr">'+share1(o.rows.length,tot)+'%</td></tr>');
       prev=o.key; shown++; }
     if (fs.length>1 && shown===list.length && list.length) out.push(pvSub(list[list.length-1].key[0], first[list[list.length-1].key[0]], tot, fs.length, rows, fs[0]));
-    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f){ return '<th>'+esc(PDIM[f][0])+'</th>'; }).join('')+'<th>ఓటర్లు<br><small>Count</small></th><th>వాటా<br><small>Share</small></th></tr>'+out.join('')+
+    var arr=function(k){ return '<span class="pva'+(sk===k?' on':'')+'">'+(sk===k?(sd===1?'▲':'▼'):'↕')+'</span>'; };
+    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f,i){ return '<th data-pvh="'+i+'">'+esc(PDIM[f][0])+' '+arr(i)+'</th>'; }).join('')+'<th data-pvh="n">ఓటర్లు '+arr('n')+'<br><small>Count</small></th><th>వాటా<br><small>Share</small></th></tr>'+out.join('')+
       '<tr class="pvtot"><td colspan="'+fs.length+'"><b>మొత్తం · Grand total</b></td><td><b>'+tot+'</b></td><td class="shr">100%</td></tr></table></div>'+
       moreBtn('pv', list.length, 60, 'అన్ని వరుసలు')+
-      '<div class="chips" style="margin-top:6px"><button class="chip'+(p.s!=='n'?' on':'')+'" data-pvs="f">↕️ పేరు క్రమం · A-Z</button><button class="chip'+(p.s==='n'?' on':'')+'" data-pvs="n">↕️ ఎక్కువ ఓటర్లు ముందు · Most first</button></div>';
+      '<div class="dleg" style="margin-top:4px">↕ నిలువు పేరు నొక్కితే ఆ క్రమంలో · Tap a column name to sort (tap again to reverse)</div>';
   }
   return '<details class="dcard" data-dk="pv"'+(S.dashOpen.pv?' open':'')+'><summary><h3>🧮 మీ పట్టిక <span class="en">Custom table'+(fs.length?' · '+fs.map(function(f){ return PDIM[f][1]; }).join(' × '):'')+'</span></h3></summary>'+
     chips+vh+tbl+
@@ -1860,11 +1868,13 @@ $('dBody').addEventListener('change', function(e){ var t=e.target;
   });
 $('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk){ S.dashOpen[d.dataset.dk]=d.open; if (d.dataset.dk==='usage' && d.open && !S.logins) loadLogins(); } }, true);
 $('dBody').onclick=function(e){
-  var pf=e.target.closest('[data-pvf]'); if (pf){ var f=pf.dataset.pvf, i=S.pv.f.indexOf(f); if (i>=0) S.pv.f.splice(i,1); else S.pv.f.push(f); S.pv.v=''; LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); return; }
-  var ps=e.target.closest('[data-pvs]'); if (ps){ S.pv.s=ps.dataset.pvs; LS.set('pv2',S.pv); renderDash(); return; }
-  var pv=e.target.closest('[data-pvv]'); if (pv){ var x=pvViews().filter(function(o){ return o.id===pv.dataset.pvv; })[0]; if (x){ S.pv={f:x.f.slice(), s:x.s||'f', v:x.id}; LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); } return; }
+  var pf=e.target.closest('[data-pvf]'); if (pf){ var f=pf.dataset.pvf, i=S.pv.f.indexOf(f); if (i>=0) S.pv.f.splice(i,1); else S.pv.f.push(f); S.pv.v=''; if (S.pv.sk!=='n'){ S.pv.sk=-1; S.pv.sd=1; } LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); return; }
+  var ph=e.target.closest('[data-pvh]'); if (ph){ var k=ph.dataset.pvh==='n'?'n':Number(ph.dataset.pvh);
+    if (S.pv.sk===k) S.pv.sd = S.pv.sd===-1 ? 1 : -1; else { S.pv.sk=k; S.pv.sd = k==='n' ? -1 : 1; }   // count starts biggest-first
+    LS.set('pv2',S.pv); renderDash(); return; }
+  var pv=e.target.closest('[data-pvv]'); if (pv){ var x=pvViews().filter(function(o){ return o.id===pv.dataset.pvv; })[0]; if (x){ S.pv={f:x.f.slice(), sk:x.sk!==undefined?x.sk:(x.s==='n'?'n':-1), sd:x.sd||(x.s==='n'?-1:1), v:x.id}; LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); } return; }
   if (e.target.closest('[data-pvsave]')){ var nm=prompt('ఈ పట్టికకు పేరు · Name for this view', S.pv.f.map(function(k){ return PDIM[k][0].replace(/^\S+\s/,''); }).join(' × '));
-    if (nm && nm.trim()){ var mine=pvViews(), id='u'+Date.now(); mine.push({id:id, name:nm.trim().slice(0,30), f:S.pv.f.slice(), s:S.pv.s}); LS.set('pvViews2',mine); S.pv.v=id; LS.set('pv2',S.pv); renderDash(); } return; }
+    if (nm && nm.trim()){ var mine=pvViews(), id='u'+Date.now(); mine.push({id:id, name:nm.trim().slice(0,30), f:S.pv.f.slice(), sk:S.pv.sk, sd:S.pv.sd}); LS.set('pvViews2',mine); S.pv.v=id; LS.set('pv2',S.pv); renderDash(); } return; }
   var pd=e.target.closest('[data-pvdel]'); if (pd){ if (confirm('ఈ పట్టిక తీసేయాలా? · Delete this saved view?')){ LS.set('pvViews2',pvViews().filter(function(o){ return o.id!==pd.dataset.pvdel; })); S.pv.v=''; LS.set('pv2',S.pv); renderDash(); } return; }
   var dw=e.target.closest('[data-dfw]'); if (dw){ var w=dw.dataset.dfw; if (w==='all') S.df.w=[]; else { var i=S.df.w.indexOf(w); if (i>=0) S.df.w.splice(i,1); else S.df.w.push(w); } LS.set('dfil',S.df); renderDash(); return; }
   var dg=e.target.closest('[data-dfg]'); if (dg){ S.df.g=dg.dataset.dfg; LS.set('dfil',S.df); renderDash(); return; }
