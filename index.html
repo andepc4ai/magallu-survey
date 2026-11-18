@@ -2157,6 +2157,7 @@ $('lGo').onclick=function(){
   call('login',n,p,true).then(function(u){
     S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,myWards:u.myWards||[]}; LS.set('user',S.user);
     if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); LS.set('ver',u.voters.ver||0); LS.set('fullAt',Date.now()); S.fresh=u.voters.rows; }
+    if (window.mvsIdleMark) mvsIdleMark();   // a fresh login starts a fresh hour (idle.js)
     $('lGo').disabled=false; showApp(); askGeoOnce();
   }).catch(function(err){
     $('lGo').disabled=false; $('lGo').innerHTML='లోపలికి వెళ్ళండి <span style="font-weight:400">· Enter</span>';
@@ -2166,9 +2167,19 @@ $('lGo').onclick=function(){
 $('lPin').addEventListener('keydown',function(e){ if(e.key==='Enter') $('lGo').click(); });
 
 if (DEMO) $('demoBar').classList.remove('hide');
-if (/^#logout/.test(location.hash)){ try { history.replaceState(null, '', location.pathname); } catch(e){} if (S.user) logout(''); else initLogin(); }
+/* ⏱ auto log-off after 1 hour without a touch (idle.js calls this). Unsaved edits are sent first (waits up to 2 min
+   while online); anything still unsent stays on the phone and goes at the next login, as before. */
+window.mvsIdleLogout = function(msg){
+  if (!S.user) return;
+  var n = Object.keys(S.pending).length;
+  if (n && navigator.onLine && (!S.idleWait || Date.now()-S.idleWait < 120000)){ S.idleWait = S.idleWait || Date.now(); flush(); setTimeout(function(){ window.mvsIdleLogout(msg); }, 15000); return; }
+  S.idleWait = 0; logout(msg);
+};
+if (/^#logout/.test(location.hash)){ var idleOut=/idle/.test(location.hash); try { history.replaceState(null, '', location.pathname); } catch(e){}
+  if (S.user) logout(idleOut?'⏱ 1 గంట వాడకపోవడంతో లాగ్ అవుట్ అయ్యారు. మళ్ళీ లాగిన్ అవ్వండి · Logged out after 1 hour of no use':''); else initLogin(); }
 else if (S.user) showApp(); else initLogin();
 })();
 </script>
+<script src="idle.js"></script>
 </body>
 </html>

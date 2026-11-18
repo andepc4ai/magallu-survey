@@ -216,7 +216,7 @@ $('go').onclick=function(){
   $('go').disabled=true; $('go').textContent='లోడ్ అవుతోంది…';
   call('login',[n,p]).then(function(u){
     U = Object.assign(LS.get('mvs_user')||{}, {name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader});
-    LS.set('mvs_user',U); $('vLogin').classList.add('hide'); load(true);
+    LS.set('mvs_user',U); if (window.mvsIdleMark) mvsIdleMark(); $('vLogin').classList.add('hide'); load(true);
   }).catch(function(e){ $('err').textContent = String(e.message)==='WRONG_PIN' ? 'పిన్ తప్పు · Wrong PIN' : 'లోడ్ కాలేదు · '+e.message; })
     .then(function(){ $('go').disabled=false; $('go').textContent='లోపలికి · Enter'; });
 };
@@ -789,5 +789,6 @@ addClear($('q'));
 if (U && U.name && U.pin) load(false); else showLogin('');
 })();
 </script>
+<script src="../idle.js"></script>
 </body>
 </html>
