@@ -5,7 +5,7 @@
    otherwise the page goes to the main app with #logout, which logs out there. */
 (function () {
   var LIMIT = 60 * 60000, KEY = 'mvs_act', mine = 0;
-  var MSG = '⏱ 1 గంట వాడకపోవడంతో లాగ్ అవుట్ అయ్యారు. మళ్ళీ లాగిన్ అవ్వండి · Logged out after 1 hour of no use';
+  var MSG = '';   // no message on the login screen (Anudeep, 18 Nov: keep it clean)
   function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function loggedIn() { var u = get('mvs_user'); return !!u && u !== 'null'; }
   function last() { return Math.max(mine, Number(get(KEY)) || 0); }

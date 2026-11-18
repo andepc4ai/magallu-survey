@@ -2175,8 +2175,8 @@ window.mvsIdleLogout = function(msg){
   if (n && navigator.onLine && (!S.idleWait || Date.now()-S.idleWait < 120000)){ S.idleWait = S.idleWait || Date.now(); flush(); setTimeout(function(){ window.mvsIdleLogout(msg); }, 15000); return; }
   S.idleWait = 0; logout(msg);
 };
-if (/^#logout/.test(location.hash)){ var idleOut=/idle/.test(location.hash); try { history.replaceState(null, '', location.pathname); } catch(e){}
-  if (S.user) logout(idleOut?'⏱ 1 గంట వాడకపోవడంతో లాగ్ అవుట్ అయ్యారు. మళ్ళీ లాగిన్ అవ్వండి · Logged out after 1 hour of no use':''); else initLogin(); }
+if (/^#logout/.test(location.hash)){ try { history.replaceState(null, '', location.pathname); } catch(e){}
+  if (S.user) logout(''); else initLogin(); }
 else if (S.user) showApp(); else initLogin();
 })();
 </script>
