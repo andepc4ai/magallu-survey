@@ -329,7 +329,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 17 Nov · 17:00 -->
+    <!-- app version: 18 Nov · 10:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -2042,23 +2042,29 @@ function refreshLists(){
   }).catch(function(){});
 }
 window.addEventListener('pageshow', function(e){ if (e.persisted) refreshLists(); });
-/* quiet refresh: when the volunteer comes back to the app, and every 3 minutes while it is open, ask for changes
-   (cheap: only changed voters come back). Never redraws while something is being typed. */
+/* quiet refresh: when the volunteer comes back to the app, and every 30 seconds while it is open on screen, ask for changes
+   (cheap: 'no change' is an empty answer; otherwise only changed voters come back). Never redraws while something is
+   being typed, and keeps every screen's scroll position so nothing jumps. (Was 3 minutes until 18 Nov.) */
+var SYNC_MS = 30000;
 function quietSync(){
   if (DEMO || !S.user || S.quiet || document.hidden || !navigator.onLine) return;
-  if (S.lastSync && Date.now()-S.lastSync < 60000) return;
+  if (S.lastSync && Date.now()-S.lastSync < SYNC_MS-5000) return;
   S.quiet = true; flush();
+  var ver0 = LS.get('ver');
   syncRows().then(function(rows){
     S.quiet = false;
+    if (LS.get('ver') === ver0) return;                          // nothing changed on the server: no redraw at all
     var a = document.activeElement; if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;   // keep what is being typed; the data is saved, screens redraw next time
+    var keep = ['vList','vHouse','vDash','vPoll','vDrill'].map(function(id){ var el=$(id); return [el, el?el.scrollTop:0]; }), ws = window.scrollY;
     ingest(rows); renderList(); renderHome();
     if (S.openHouse && S.hById[S.openHouse]) renderHouse();
     if (!$('vPoll').classList.contains('hide')) renderPoll();
     if (!$('vDash').classList.contains('hide')) renderDash();
+    keep.forEach(function(k){ if (k[0]) k[0].scrollTop = k[1]; }); window.scrollTo(0, ws);
   }).catch(function(){ S.quiet = false; });
 }
 document.addEventListener('visibilitychange', function(){ if (!document.hidden) quietSync(); });
-setInterval(quietSync, 3*60000);
+setInterval(quietSync, SYNC_MS);
 $('btnRefresh').onclick=function(){ manualRefresh(this); };
 function tryLogout(){ if(Object.keys(S.pending).length){ toast('ముందు సేవ్ అవ్వనివ్వండి…'); flush(); return; } logout(''); }
 $('btnOut').onclick=tryLogout;
