@@ -278,6 +278,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 .dleg{font-size:.75rem;color:var(--muted);margin-top:6px}.dnote{background:#fef9c3;border-radius:10px;padding:8px 12px;margin-top:12px;font-size:.85rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.dnote>span{flex:1;min-width:140px}
 .dclr{border:0;background:#1c1917;color:#FACC15;border-radius:8px;padding:8px 12px;font-weight:700;font-size:.85rem}
 .dsubh{font-weight:700;font-size:.9rem;margin:12px 0 6px}
+.drsel label{font-weight:700;font-size:.9rem;color:var(--ink)}.drsel select.chip{height:46px;margin-top:6px}
 .dh{display:block;width:100%;text-align:left;background:#faf8f3;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:6px}
 .dh .dhl{display:block;font-size:.92rem}.dh .dhs{display:block;font-size:.8rem;color:var(--muted);margin-top:2px}
 .tiles.t5{grid-template-columns:repeat(3,1fr);gap:6px;margin:0 0 4px}.tiles.t5 .tile{padding:8px;background:#fffbeb}.tiles.t5 .tile b{font-size:1.25rem}.tiles.t5 .tile span{font-size:.82rem}.mini{height:4px;background:#f1f5f9;border-radius:2px;margin-top:3px}.mini i{display:block;height:100%;background:var(--strong);border-radius:2px}
@@ -1958,11 +1959,11 @@ function drFilHtml(){
   var wk=Object.keys(cw).sort(function(a,b){ return (a==='none')-(b==='none') || a-b; });
   return '<div class="dsubh">📍 వార్డు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drw','all',!f.w.length,'అన్నీ')+wk.map(function(w){ return chip('data-drw',w,f.w.indexOf(w)>=0,(w==='none'?'లేదు':w)+' <small>('+cw[w]+')</small>'); }).join('')+'</div>'+
     '<div class="dsubh">💪 మద్దతు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drsup','all',!f.sup.length,'అన్నీ')+SUPC.map(function(x){ var k=x[0]||'none'; return cu[k]?chip('data-drsup',k,f.sup.indexOf(k)>=0,'<i class="sd" style="background:'+x[2]+'"></i>'+x[1]+' <small>('+cu[k]+')</small>'):''; }).join('')+'</div>'+
-    '<div class="chips" style="flex-wrap:wrap;margin-top:6px">'+chip('data-drg','',!f.g,'👫 అందరూ')+chip('data-drg','F',f.g==='F','👩 స్త్రీలు')+chip('data-drg','M',f.g==='M','👨 పురుషులు')+
-      chip('data-drv','',!f.vis,'🚶 అందరూ')+chip('data-drv','y',f.vis==='y','✓ కలిశాం')+chip('data-drv','n',f.vis==='n','✗ కలవలేదు')+'</div>'+
-    '<div class="pvf" style="margin-top:6px"><label>🏷️ కులం · Caste<select class="chip" data-drsel="c"><option value="">అన్నీ · All</option>'+
+    '<div class="dsubh">👫 లింగం</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drg','',!f.g,'అందరూ')+chip('data-drg','F',f.g==='F','👩 స్త్రీలు')+chip('data-drg','M',f.g==='M','👨 పురుషులు')+'</div>'+
+    '<div class="dsubh">🚶 కలిశామా</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drv','',!f.vis,'అందరూ')+chip('data-drv','y',f.vis==='y','✓ కలిశాం')+chip('data-drv','n',f.vis==='n','✗ కలవలేదు')+'</div>'+
+    '<div class="pvf drsel" style="margin-top:6px"><label>🏷️ కులం<select class="chip" data-drsel="c"><option value="">అన్నీ · All</option>'+
       Object.keys(cc).sort(function(a,b){ return (a==='none')-(b==='none') || (CASTE_TE[a]||a).localeCompare(CASTE_TE[b]||b); }).map(function(k){ return '<option value="'+esc(k)+'"'+(f.c===k?' selected':'')+'>'+esc(k==='none'?'కులం నమోదు కాలేదు':(CASTE_TE[k]||k))+' ('+cc[k]+')</option>'; }).join('')+'</select></label>'+
-    '<label>👪 ఇంటిపేరు · Surname<select class="chip" data-drsel="s"><option value="">అన్నీ · All</option>'+
+    '<label>👪 ఇంటిపేరు<select class="chip" data-drsel="s"><option value="">అన్నీ · All</option>'+
       Object.keys(cs).filter(String).sort().map(function(k){ return '<option value="'+esc(k)+'"'+(f.s===k?' selected':'')+'>'+esc(k)+' ('+cs[k]+')</option>'; }).join('')+'</select></label></div>'+
     (drFActive()?'<button class="dclr" data-drclr="1" style="width:100%;margin:4px 0 8px">✕ ఫిల్టర్లు తీసేయి · Clear filters</button>':'');
 }
