@@ -294,6 +294,16 @@ function barHtml(f){ var c=supCounts(f), t=f.voters||1;
 function legHtml(f){ var c=supCounts(f); return SUP.filter(function(s){ return c[s[0]]; }).map(function(s){ return '<span class="c-'+s[0]+'" style="background:none">'+s[1]+' '+c[s[0]]+'</span>'; }).join(''); }
 function displayName(p){ return p ? (p.name||'') : ''; }
 function headTitle(f){ var h=P(f.head); return (h.vote?'':'') + displayName(h) + ' కుటుంబం'; }
+/* 🔎 global search on every column (same rules as the main app): several words = all must match;
+   1-2 letter words must be a whole word, longer ones the start of a word. */
+var SUPT={Strong:'strong పూర్తి మద్దతు',Leaning:'leaning మొగ్గు ఉంది',Undecided:'undecided తేల్చలేదు',Opposed:'opposed వ్యతిరేకం'};
+function pHay(p){
+  return (' '+[p.name, p.rn, p.sur, tes(p.sur), 'house', p.house, p.id, p.mobile, p.gp?'gp '+p.gp:'', 'booth బూత్ '+p.booth, p.ward?'ward వార్డు '+p.ward:'no ward వార్డు లేదు',
+    p.street, p.caste, cte(p.caste), p.caste?'':'caste not recorded కులం లేదు', SUPT[p.support]||'not asked అడగలేదు', p.visited==='Visited'?'visited కలిశాం':'not visited కలవలేదు',
+    p.g==='Female'?'female women స్త్రీ మహిళ':p.g==='Male'?'male men పురుషుడు':'', 'age వయసు '+p.age, leaderName(p.leader), p.fhead?'head కుటుంబ పెద్ద':'',
+    p.r26?'removed 2026 తొలగించారు':'', p.gone?'expired మరణించారు':''].join(' ').replace(/[,·|()]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
+}
+function pMatch(p, q){ var hay=pHay(p); return String(q).toLowerCase().split(/\s+/).filter(Boolean).every(function(w){ return w.length<3 ? hay.indexOf(' '+w+' ')>=0 : hay.indexOf(' '+w)>=0; }); }
 function surOf(f){ var h=P(f.head); return h.sur ? (tes(h.sur)||h.sur) : ''; }
 function undecided(f){ return f.support.Undecided || 0; }
 // best person to call for the family: someone with a mobile (eldest first), else the eldest voter
@@ -426,6 +436,7 @@ function renderList(){
       ms.forEach(function(p){
         var s = 0;
         if (String(p.house||'').toLowerCase().indexOf(q)===0 || cte(p.caste).indexOf(q)>=0 || tes(p.sur).indexOf(q)>=0) s=40;
+        else if (pMatch(p, q)) s=30;   // any column: phone, GP no., ward, street, support, relative, age…
         var a = Fuzzy.score(p.name, Q), b = Fuzzy.score(p.name+' '+p.sur+' '+(p.caste||'')+' '+leaderName(p.leader), Q);
         s = Math.max(s, a ? a + (p.vote?0.5:0) : 0, b ? Math.max(0.1, b-3) : 0);
         if (s>best){ best=s; hit=p; }

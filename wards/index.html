@@ -181,7 +181,10 @@ function render(){
     if (F.tab==='mix' && w!=='mix') return false;
     if (F.tab==='w' && w!==String(W)) return false;
     if (F.tab==='chg' && !(h.id in staged)) return false;
-    if (q) return h.house.toLowerCase().indexOf(q)===0 || h.names.toLowerCase().indexOf(q)>=0;
+    if (q){ if (h.house.toLowerCase().indexOf(q)===0 || h.names.toLowerCase().indexOf(q)>=0) return true;
+      // 🔎 every column this page has: house, names, street, ward, booth, voters (several words = all must match)
+      var hay=(' '+[h.house, h.names, h.sec, w==='mix'?'mixed కలగలుపు':w?'ward వార్డు '+w:'no ward వార్డు లేదు', 'booth బూత్ '+h.booth, h.n+' voters ఓటర్లు'].join(' ').replace(/[,·]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
+      return q.split(/\s+/).every(function(x){ return x.length<3 ? hay.indexOf(' '+x+' ')>=0 : hay.indexOf(' '+x)>=0; }); }
     return true;
   });
   list.sort(sortKey);

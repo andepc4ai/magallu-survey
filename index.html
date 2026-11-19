@@ -329,7 +329,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 18 Nov · 10:00 -->
+    <!-- app version: 19 Nov · 10:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -348,7 +348,7 @@ details.dcard[open]>summary{margin-bottom:10px}
   <div class="wrap">
     <div class="search">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="పేరు / ఇంటి నం. / ఓటర్ ID వెతకండి">
+      <input id="q" type="search" placeholder="🔎 ఏదైనా వెతకండి — పేరు, ఇంటి నం., కులం, వీధి, ఫోన్…">
     </div>
     <button class="wtog" id="lFilTog"></button>
     <div id="lFilBox" class="hide">
@@ -421,7 +421,14 @@ details.dcard[open]>summary{margin-bottom:10px}
     </div>
     <div class="prog" id="drSub"></div>
   </div>
-  <div class="wrap"><div id="drSort" class="chips"></div><div id="drList"></div></div>
+  <div class="wrap">
+    <input id="drQ" type="search" placeholder="🔎 ఏదైనా వెతకండి — పేరు, కులం, వీధి, ఫోన్… · Search anything" style="width:100%;height:48px;border:2px solid #e5dfd2;border-radius:12px;padding:0 12px;font-size:1rem;background:#fff;margin-bottom:8px">
+    <button class="wtog" id="drFilTog"></button>
+    <div id="drFil" class="hide"></div>
+    <button class="wtog" id="drSortTog"></button>
+    <div id="drSort" class="chips hide" style="flex-wrap:wrap"></div>
+    <div id="drList"></div>
+  </div>
 </section>
 
 <!-- SURNAME -> CASTE (admin) -->
@@ -605,6 +612,25 @@ var S = {
 };
 function issues(v){ return String(v.issue||'').split(',').map(function(x){return x.trim();}).filter(Boolean); }
 /* ---------- family leader (stored as "Name (EPIC)" when picked from the voter list, else just the name) ---------- */
+/* 🔎 global search: one text per voter with every column of the sheet (Telugu + English), so a search box finds a voter
+   by anything — name, relative, surname, house, EPIC, phone, GP no., booth, ward, street, caste, support, visited,
+   gender, age, occupation, issue, notes, leader, can-vote, new voter. Several words = all must match
+   (e.g. "madiga ward 3 మొగ్గు"). Short words (1-2 letters) must match a whole word; longer ones the start of a word. */
+function vHay(v){
+  var w=v._h?hWard(v._h):'', sp=SUP.filter(function(x){ return x.v===v.support; })[0], is=issues(v);
+  return (' '+[v.name, v.relN, REL[v.relT], v.surname, 'house', v.house, v.e, v.mobile, v.gp?'gp '+v.gp:'', 'sr '+v.sr, 'booth బూత్ '+v.booth,
+    w&&w!=='none'?'ward వార్డు '+w+(RESV[w]?' '+RESV[w]+' '+resvTe(w):''):'no ward వార్డు లేదు', v.sec, v.caste, CASTE_TE[v.caste]||'', v.caste?'':'caste not recorded కులం లేదు',
+    sp?sp.en+' '+sp.te:'not asked అడగలేదు', isDone(v)?'visited కలిశాం':'not visited కలవలేదు',
+    v.gen==='Female'?'female women స్త్రీ మహిళ':v.gen==='Male'?'male men పురుషుడు':'', 'age వయసు '+v.age, v.occupation, OCC_TE[v.occupation]||'',
+    is.join(' '), ISS.filter(function(x){ return is.indexOf(x.v)>=0; }).map(function(x){ return x.te; }).join(' '), v.notes, leaderName(v.leader),
+    {Yes:'will vote వస్తారు',Far:'far దూరం',No:'cannot vote రాలేరు'}[v.avail]||'', v.isNew?'new 2026 కొత్త':'', v.r26?'removed 2026 తొలగించారు':'', v.voted?'voted ఓటు వేశారు':'',
+    v.fhead?'head కుటుంబ పెద్ద':''].join(' ').replace(/[,·|()]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
+}
+function vMatch(v, q){
+  if (!q) return true;
+  var hay = vHay(v), ws = String(q).toLowerCase().split(/\s+/).filter(Boolean);
+  return ws.every(function(w){ return w.length<3 ? hay.indexOf(' '+w+' ')>=0 : hay.indexOf(' '+w)>=0; });
+}
 function leaderName(s){ var m=/^(.*?)\s*\(([A-Z]{2,4}\d{5,})\)$/.exec(String(s||'')); return m?m[1]:String(s||''); }
 function leaderEpic(s){ var m=/\(([A-Z]{2,4}\d{5,})\)$/.exec(String(s||'')); return m?m[1]:''; }
 function topLeader(vs){ var c={}, best='', n=0; vs.forEach(function(v){ if(v.leader){ c[v.leader]=(c[v.leader]||0)+1; if(c[v.leader]>n){ n=c[v.leader]; best=v.leader; } } }); return best; }
@@ -958,6 +984,7 @@ function houseMatches(h){
     h.v.forEach(function(v){
       if ((v.e+' '+v.mobile).toLowerCase().indexOf(q)>=0) best=Math.max(best,40);
       if (v.gp && v.gp===q) best=Math.max(best,70);
+      if (vMatch(v, q)) best=Math.max(best,35);   // any column (caste, street, ward, support, phone…)
       var a=Fuzzy.score(v.name, S.Q), b=Fuzzy.score(v.name+' '+v.relN+' '+v.caste+' '+leaderName(v.leader), S.Q); best=Math.max(best, a?a+2:0, b?Math.max(0.1,b-4):0);
     });
     (h.gone||[]).forEach(function(v){ var a=Fuzzy.score(v.name, S.Q); if (a) best=Math.max(best, Math.max(0.1, a-5)); });
@@ -1483,7 +1510,7 @@ function renderPoll(){
     var num=/^\d+$/.test(q), Q=Fuzzy.query(q);
     // a search looks at everyone in the booth/ward, whichever tab is picked
     list=inB.map(function(v){ var sc=0;
-      if (num && v.gp===q) sc=110; else if (num && String(v.sr)===q) sc=100; else if (num && String(v.house).indexOf(q)===0) sc=30; else if (String(v.e).toLowerCase().indexOf(q)>=0) sc=50; else if (String(v.house).toLowerCase().indexOf(q)===0) sc=30; else sc=Fuzzy.score(v.name+' '+v.relN, Q);
+      if (num && v.gp===q) sc=110; else if (num && String(v.sr)===q) sc=100; else if (num && String(v.house).indexOf(q)===0) sc=30; else if (String(v.e).toLowerCase().indexOf(q)>=0) sc=50; else if (String(v.house).toLowerCase().indexOf(q)===0) sc=30; else sc=Math.max(Fuzzy.score(v.name+' '+v.relN, Q), vMatch(v,q)?20:0);
       v._ps=sc; return v; }).filter(function(v){ return v._ps>0; }).sort(function(a,b){ return b._ps-a._ps; });
   } else list=list.slice().sort(function(a,b){ return String(a.booth).localeCompare(String(b.booth)) || (Number(a.sr)||0)-(Number(b.sr)||0); });
   $('pCount').textContent=list.length+' ఓటర్లు'+(q?' · 🔎 అందరిలో వెతికాం (All tabs)':'');
@@ -1888,7 +1915,37 @@ $('dBody').onclick=function(e){
   var b=e.target.closest('[data-h]'); if (b) openHouse(b.dataset.h);
 };
 var DRL = null;   // open drill list {t, rows, sort, lim}
-function openDrill(d){ DRL={t:d.t, rows:d.rows, sort:'tgt', lim:100}; renderDrill(); $('vDrill').classList.remove('hide'); $('vDrill').scrollTop=0; }
+function openDrill(d){ DRL={t:d.t, rows:d.rows, sort:'tgt', dir:1, lim:100, q:'', fo:false, so:false, f:{w:[], c:'', s:'', sup:[], g:'', vis:''}};
+  $('drQ').value=''; renderDrill(); $('vDrill').classList.remove('hide'); $('vDrill').scrollTop=0; }
+/* drill list filters (inside the list only) + sorts. Tap the picked sort again to reverse it. */
+var DRSORTS=[['tgt','🎯 ముందు','Targets first'],['gp','GP క్ర.సం.','GP no.'],['house','🏠 ఇంటి నం.','House'],['name','పేరు','Name'],['ward','📍 వార్డు','Ward'],
+  ['caste','🏷️ కులం','Caste'],['sur','👪 ఇంటిపేరు','Surname'],['age','🎂 వయసు','Age'],['sup','💪 మద్దతు','Support']];
+function drWard(v){ var w=v._h?hWard(v._h):'none'; return w; }
+function drOk(v){ var f=DRL.f;
+  if (f.w.length && f.w.indexOf(drWard(v))<0) return false;
+  if (f.c && (v.caste||'none')!==f.c) return false;
+  if (f.s && String(v.surname||'').trim()!==f.s) return false;
+  if (f.sup.length && f.sup.indexOf(v.support||'none')<0) return false;
+  if (f.g && (f.g==='F'?v.gen!=='Female':v.gen!=='Male')) return false;
+  if (f.vis && (f.vis==='y')!==isDone(v)) return false;
+  if (DRL.q && !vMatch(v, DRL.q) && !Fuzzy.score(v.name, DRL.Q)) return false;
+  return true; }
+function drFilHtml(){
+  var f=DRL.f, R=DRL.rows, cnt=function(fn){ var o={}; R.forEach(function(v){ var k=fn(v); o[k]=(o[k]||0)+1; }); return o; };
+  var cw=cnt(drWard), cc=cnt(function(v){ return v.caste||'none'; }), cs=cnt(function(v){ return String(v.surname||'').trim(); }), cu=cnt(function(v){ return v.support||'none'; });
+  var chip=function(attr,val,on,txt){ return '<button class="chip'+(on?' on':'')+'" '+attr+'="'+esc(val)+'">'+txt+'</button>'; };
+  var wk=Object.keys(cw).sort(function(a,b){ return (a==='none')-(b==='none') || a-b; });
+  return '<div class="dsubh">📍 వార్డు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drw','all',!f.w.length,'అన్నీ')+wk.map(function(w){ return chip('data-drw',w,f.w.indexOf(w)>=0,(w==='none'?'లేదు':w)+' <small>('+cw[w]+')</small>'); }).join('')+'</div>'+
+    '<div class="dsubh">💪 మద్దతు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drsup','all',!f.sup.length,'అన్నీ')+SUPC.map(function(x){ var k=x[0]||'none'; return cu[k]?chip('data-drsup',k,f.sup.indexOf(k)>=0,'<i class="sd" style="background:'+x[2]+'"></i>'+x[1]+' <small>('+cu[k]+')</small>'):''; }).join('')+'</div>'+
+    '<div class="chips" style="flex-wrap:wrap;margin-top:6px">'+chip('data-drg','',!f.g,'👫 అందరూ')+chip('data-drg','F',f.g==='F','👩 స్త్రీలు')+chip('data-drg','M',f.g==='M','👨 పురుషులు')+
+      chip('data-drv','',!f.vis,'🚶 అందరూ')+chip('data-drv','y',f.vis==='y','✓ కలిశాం')+chip('data-drv','n',f.vis==='n','✗ కలవలేదు')+'</div>'+
+    '<div class="pvf" style="margin-top:6px"><label>🏷️ కులం · Caste<select class="chip" data-drsel="c"><option value="">అన్నీ · All</option>'+
+      Object.keys(cc).sort(function(a,b){ return (a==='none')-(b==='none') || (CASTE_TE[a]||a).localeCompare(CASTE_TE[b]||b); }).map(function(k){ return '<option value="'+esc(k)+'"'+(f.c===k?' selected':'')+'>'+esc(k==='none'?'కులం నమోదు కాలేదు':(CASTE_TE[k]||k))+' ('+cc[k]+')</option>'; }).join('')+'</select></label>'+
+    '<label>👪 ఇంటిపేరు · Surname<select class="chip" data-drsel="s"><option value="">అన్నీ · All</option>'+
+      Object.keys(cs).filter(String).sort().map(function(k){ return '<option value="'+esc(k)+'"'+(f.s===k?' selected':'')+'>'+esc(k)+' ('+cs[k]+')</option>'; }).join('')+'</select></label></div>'+
+    (drFActive()?'<button class="dclr" data-drclr="1" style="width:100%;margin:4px 0 8px">✕ ఫిల్టర్లు తీసేయి · Clear filters</button>':'');
+}
+function drFActive(){ var f=DRL.f; return f.w.length||f.c||f.s||f.sup.length||f.g||f.vis; }
 function drLine(v){
   var s=SUPC.filter(function(x){ return x[0]===(v.support||''); })[0] || SUPC[SUPC.length-1], h=v._h||{};
   var l2=['<i class="sd" style="background:'+s[2]+'"></i>'+esc(s[1]), (v.gen==='Female'?'👩 ':'👨 ')+esc(v.age), '🏠 '+esc(v.house||'—'), esc(v.sec||''), hWard(h)!=='none'?'వార్డు '+hWard(h):'',
@@ -1898,19 +1955,46 @@ function drLine(v){
 }
 function renderDrill(){
   if (!DRL) return;
-  var r=DRL.rows.slice(), so=DRL.sort, num=function(x){ return Number(String(x||'').replace(/\D/g,''))||1e9; };
-  if (so==='tgt') r.sort(function(a,b){ return targetScore(b)-targetScore(a) || num(a.gp)-num(b.gp); });
-  else if (so==='gp') r.sort(function(a,b){ return num(a.gp)-num(b.gp) || String(a.name).localeCompare(String(b.name)); });
-  else if (so==='house') r.sort(function(a,b){ return natKey(a.house).localeCompare(natKey(b.house)); });
-  else r.sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); });
+  var r=DRL.rows.filter(drOk), so=DRL.sort, d=DRL.dir, num=function(x){ return Number(String(x||'').replace(/\D/g,''))||1e9; },
+      nm=function(a,b){ return String(a.name).localeCompare(String(b.name)); }, last=function(x){ return x?0:1; },
+      SO={Strong:0,Leaning:1,Undecided:2,Opposed:3};
+  var cmp = so==='tgt' ? function(a,b){ return (targetScore(b)-targetScore(a))*d || num(a.gp)-num(b.gp); }
+    : so==='gp' ? function(a,b){ return (num(a.gp)-num(b.gp))*d || nm(a,b); }
+    : so==='house' ? function(a,b){ return natKey(a.house).localeCompare(natKey(b.house))*d; }
+    : so==='ward' ? function(a,b){ var x=drWard(a), y=drWard(b); return (x==='none')-(y==='none') || ((Number(x)||0)-(Number(y)||0))*d || natKey(a.house).localeCompare(natKey(b.house)); }
+    : so==='caste' ? function(a,b){ return last(a.caste)-last(b.caste) || (CASTE_TE[a.caste]||a.caste||'').localeCompare(CASTE_TE[b.caste]||b.caste||'')*d || nm(a,b); }
+    : so==='sur' ? function(a,b){ return last(a.surname)-last(b.surname) || String(a.surname||'').localeCompare(String(b.surname||''))*d || nm(a,b); }
+    : so==='age' ? function(a,b){ return ((Number(a.age)||0)-(Number(b.age)||0))*d || nm(a,b); }
+    : so==='sup' ? function(a,b){ var x=SO[a.support], y=SO[b.support]; return (x==null)-(y==null) || ((x||0)-(y||0))*d || nm(a,b); }
+    : function(a,b){ return nm(a,b)*d; };
+  r.sort(cmp);
   $('drTitle').textContent = DRL.t;
   var ph = r.filter(function(v){ return v.mobile; }).length;
-  $('drSub').textContent = r.length+' ఓటర్లు · 📞 '+ph+' నంబర్లు'+(dfActive()?' · 🔎 ఫిల్టర్ ఉంది':'');
-  $('drSort').innerHTML = [['tgt','🎯 ముందు'],['gp','GP క్ర.సం.'],['house','🏠 ఇంటి నం.'],['name','పేరు']].map(function(x){ return '<button class="chip'+(so===x[0]?' on':'')+'" data-drs="'+x[0]+'">'+x[1]+'</button>'; }).join('');
+  $('drSub').textContent = r.length+(r.length!==DRL.rows.length?' / '+DRL.rows.length:'')+' ఓటర్లు · 📞 '+ph+' నంబర్లు'+(dfActive()?' · 🔎 ఫిల్టర్ ఉంది':'');
+  var fa=drFActive(), so1=DRSORTS.filter(function(x){ return x[0]===so; })[0];
+  $('drFilTog').className='wtog'+(fa?' act':''); $('drFilTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+(fa?'ఉన్నాయి · On':'అన్నీ · All')+'</span><span class="wc">'+(DRL.fo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('drFil').classList.toggle('hide', !DRL.fo); if (DRL.fo) $('drFil').innerHTML = drFilHtml();
+  $('drSortTog').className='wtog'+(so!=='tgt'||d!==1?' act':''); $('drSortTog').innerHTML='↕️ క్రమం <span class="wv">'+so1[1]+' '+(d===1?'▲':'▼')+'</span><span class="wc">'+(DRL.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('drSort').classList.toggle('hide', !DRL.so);
+  $('drSort').innerHTML = DRSORTS.map(function(x){ return '<button class="chip'+(so===x[0]?' on':'')+'" data-drs="'+x[0]+'">'+x[1]+(so===x[0]?(d===1?' ▲':' ▼'):'')+'</button>'; }).join('')+
+    '<div class="dleg" style="width:100%">మళ్ళీ నొక్కితే తిరగబడుతుంది · Tap again to reverse</div>';
   $('drList').innerHTML = r.slice(0,DRL.lim).map(drLine).join('') + (r.length>DRL.lim?'<button class="more" data-drmore="1">ఇంకా చూపించు ('+(r.length-DRL.lim)+')</button>':'');
 }
 $('btnDrillBack').onclick=function(){ $('vDrill').classList.add('hide'); DRL=null; };
-$('drSort').onclick=function(e){ var b=e.target.closest('[data-drs]'); if(!b) return; DRL.sort=b.dataset.drs; DRL.lim=100; renderDrill(); };
+$('drSort').onclick=function(e){ var b=e.target.closest('[data-drs]'); if(!b) return; var k=b.dataset.drs;
+  if (DRL.sort===k) DRL.dir=-DRL.dir; else { DRL.sort=k; DRL.dir=1; } DRL.lim=100; renderDrill(); };
+$('drFilTog').onclick=function(){ DRL.fo=!DRL.fo; renderDrill(); };
+$('drSortTog').onclick=function(){ DRL.so=!DRL.so; renderDrill(); };
+var drQT; $('drQ').oninput=function(){ var t=this; clearTimeout(drQT); drQT=setTimeout(function(){ if(!DRL) return; DRL.q=t.value.trim().toLowerCase(); DRL.Q=Fuzzy.query(DRL.q); DRL.lim=100; renderDrill(); },200); };
+$('drFil').onclick=function(e){ var f=DRL.f, b;
+  if ((b=e.target.closest('[data-drw]'))){ var w=b.dataset.drw; if (w==='all') f.w=[]; else { var i=f.w.indexOf(w); if (i>=0) f.w.splice(i,1); else f.w.push(w); } }
+  else if ((b=e.target.closest('[data-drsup]'))){ var s=b.dataset.drsup; if (s==='all') f.sup=[]; else { var j=f.sup.indexOf(s); if (j>=0) f.sup.splice(j,1); else f.sup.push(s); } }
+  else if ((b=e.target.closest('[data-drg]'))) f.g=b.dataset.drg;
+  else if ((b=e.target.closest('[data-drv]'))) f.vis=b.dataset.drv;
+  else if (e.target.closest('[data-drclr]')) DRL.f={w:[], c:'', s:'', sup:[], g:'', vis:''};
+  else return;
+  DRL.lim=100; renderDrill(); };
+$('drFil').onchange=function(e){ var t=e.target; if (t.dataset.drsel){ DRL.f[t.dataset.drsel]=t.value; DRL.lim=100; renderDrill(); } };
 $('drList').onclick=function(e){
   if (e.target.closest('a.drcall')) return;
   if (e.target.closest('[data-drmore]')){ DRL.lim+=200; renderDrill(); return; }
@@ -1955,7 +2039,7 @@ function addClear(inp){
   b.onclick = function(){ inp.value = ''; inp.dispatchEvent(new Event('input', {bubbles:true})); upd(); inp.focus(); };
   upd();
 }
-['q','pq','sq'].forEach(function(id){ addClear($(id)); });
+['q','pq','sq','drQ'].forEach(function(id){ addClear($(id)); });
 $('tCaste').onclick=function(e){ if (!HAS_API){ e.preventDefault(); surOpen(); } };
 $('btnSurBack').onclick=function(){ surClose(); if(S.openHouse) renderHouse(); };
 $('surChips').onclick=function(e){ var b=e.target.closest('[data-sm]'); if(!b) return; SU.mode=b.dataset.sm; surRender(); };
