@@ -329,7 +329,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 19 Nov · 10:00 -->
+    <!-- app version: 19 Nov · 13:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -455,6 +455,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 <div id="toast" class="toast"></div>
 
 <script src="survey.js"></script>
+<script src="sort.js"></script>
 <script src="usage.js"></script>
 <script>
 /* Forgiving search for Magallu pages: spelling variants, joined/split names, 1-2 typos, Telugu input. */
@@ -599,6 +600,7 @@ var REL = {Father:'తండ్రి',Husband:'భర్త',Mother:'తల్�
 var S = {
   user: LS.get('user'),           // {name,pin,booth,wards}
   rows: [], byId:{}, houses:[], hById:{},
+  lms: MultiSort.norm(LS.get('lms'), 'v'),   // house list sort priority ① ② ③
   pv: (function(){ var p=Object.assign({f:['caste'], sk:-1, sd:1, v:''}, LS.get('pv2') || {}); if (!Array.isArray(p.f)) p.f=[]; if (p.s==='n' && p.sk===undefined){ p.sk='n'; p.sd=-1; } delete p.s; return p; })(),
   df: (function(){ var d=Object.assign({w:[], b:[], s:[], c:[], g:''}, LS.get('dfil') || {}); d.b=arr(d.b); d.s=arr(d.s); d.c=arr(d.c); d.g=(d.g==='F'||d.g==='M')?d.g:''; return d; })(),
   dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
@@ -935,7 +937,7 @@ function buildFilters(){
   lFoldBars(st);
 }
 // folded "🔎 ఫిల్టర్లు" and "↕️ క్రమం" lines on the house list (both closed by default)
-var LSORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward']];
+var LSORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['st','వీధి','Street'],['b','బూత్','Booth'],['nv','కలవనివారు ఎక్కువ','Most not visited']];
 function hnCmp(a,b){ a=String(a||''); b=String(b||''); if (!a!==!b) return a?-1:1;
   var x=a.match(/\d+/g)||[], y=b.match(/\d+/g)||[]; for (var i=0;i<Math.max(x.length,y.length);i++){ var d=(+x[i]||0)-(+y[i]||0); if (d) return d; } return a.localeCompare(b); }
 function lFoldBars(st){
@@ -946,15 +948,15 @@ function lFoldBars(st){
   $('lFilTog').className='wtog'+(on?' act':'');
   $('lFilTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+sum.join(' · ')+'</span><span class="wc">'+(S.lfo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('lFilBox').classList.toggle('hide', !S.lfo);
-  var srt = S.lsort||'v', so = LSORTS.filter(function(s){ return s[0]===srt; })[0];
-  $('lSortTog').className='wtog'+(srt!=='v'?' act':'');
-  $('lSortTog').innerHTML='↕️ క్రమం <span class="wv">'+so[1]+' · '+so[2]+'</span><span class="wc">'+(S.lso?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  var ms = S.lms, dflt = ms[0].k==='v' && ms[0].d===1 && !ms[1].k;
+  $('lSortTog').className='wtog'+(dflt?'':' act');
+  $('lSortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(ms, LSORTS))+'</span><span class="wc">'+(S.lso?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('lSortChips').classList.toggle('hide', !S.lso);
-  $('lSortChips').innerHTML = LSORTS.map(function(s){ return '<button class="chip'+(srt===s[0]?' on':'')+'" data-ls="'+s[0]+'">'+s[1]+'</button>'; }).join('');
+  if (S.lso) $('lSortChips').innerHTML = MultiSort.html(ms, LSORTS);
 }
 $('lFilTog').onclick=function(){ S.lfo=!S.lfo; buildFilters(); };
 $('lSortTog').onclick=function(){ S.lso=!S.lso; buildFilters(); };
-$('lSortChips').onclick=function(e){ var b=e.target.closest('[data-ls]'); if(!b) return; S.lsort=b.dataset.ls; S.lso=false; S.limit=40; buildFilters(); renderList(); };
+MultiSort.bind($('lSortChips'), function(){ return S.lms; }, function(st){ S.lms=st; LS.set('lms',st); S.limit=40; buildFilters(); renderList(); });
 $('wardChips').onclick=function(e){ var b=e.target.closest('[data-wd]'); if(!b) return; var w=b.dataset.wd;
   if (w==='all') S.wsel=[]; else { var i=S.wsel.indexOf(w); if (i>=0) S.wsel.splice(i,1); else S.wsel.push(w); }
   S.limit=40; LS.set('wsel',S.wsel); buildFilters(); renderList(); };
@@ -992,11 +994,17 @@ function houseMatches(h){
   }
   return true;
 }
-function sortHouses(hs){
-  if (S.lsort==='h') return hs.slice().sort(function(a,b){ return hnCmp(a.house,b.house) || b.v.length-a.v.length; });
-  if (S.lsort==='w') return hs.slice().sort(function(a,b){ var x=hWard(a), y=hWard(b); return (x==='none'?99:+x||98)-(y==='none'?99:+y||98) || b.v.length-a.v.length || hnCmp(a.house,b.house); });
-  return hs;
-}
+// house list sort: priority ① → ② → ③ (sort.js); house no. is the final tie-break
+var HSORT = {
+  v: function(a,b){ return b.v.length-a.v.length; },
+  h: function(a,b){ return hnCmp(a.house,b.house); },
+  w: function(a,b){ var x=hWard(a), y=hWard(b); return (+x||0)-(+y||0); },
+  st: function(a,b){ return String(a.sec||'').localeCompare(String(b.sec||'')); },
+  b: function(a,b){ return String(a.booth).localeCompare(String(b.booth)); },
+  nv: function(a,b){ var n=function(h){ return h.v.filter(function(v){ return !isDone(v); }).length; }; return n(b)-n(a); }
+};
+var HLAST = { w: function(h){ return hWard(h)==='none'?1:0; }, st: function(h){ return h.sec?0:1; }, h: function(h){ return h.house&&h.house!=='—'?0:1; } };
+function sortHouses(hs){ return hs.slice().sort(MultiSort.cmp(S.lms, HSORT, function(a,b){ return hnCmp(a.house,b.house); }, HLAST)); }
 function renderList(){
   buildWardChips();
   var hs = S.houses.filter(houseMatches);
@@ -1915,11 +1923,24 @@ $('dBody').onclick=function(e){
   var b=e.target.closest('[data-h]'); if (b) openHouse(b.dataset.h);
 };
 var DRL = null;   // open drill list {t, rows, sort, lim}
-function openDrill(d){ DRL={t:d.t, rows:d.rows, sort:'tgt', dir:1, lim:100, q:'', fo:false, so:false, f:{w:[], c:'', s:'', sup:[], g:'', vis:''}};
+function openDrill(d){ DRL={t:d.t, rows:d.rows, ms:MultiSort.norm(LS.get('drms'),'tgt'), lim:100, q:'', fo:false, so:false, f:{w:[], c:'', s:'', sup:[], g:'', vis:''}};
   $('drQ').value=''; renderDrill(); $('vDrill').classList.remove('hide'); $('vDrill').scrollTop=0; }
 /* drill list filters (inside the list only) + sorts. Tap the picked sort again to reverse it. */
 var DRSORTS=[['tgt','🎯 ముందు','Targets first'],['gp','GP క్ర.సం.','GP no.'],['house','🏠 ఇంటి నం.','House'],['name','పేరు','Name'],['ward','📍 వార్డు','Ward'],
   ['caste','🏷️ కులం','Caste'],['sur','👪 ఇంటిపేరు','Surname'],['age','🎂 వయసు','Age'],['sup','💪 మద్దతు','Support']];
+var DSORT = {   // d = 1 natural order of each key
+  tgt: function(a,b){ return targetScore(b)-targetScore(a); },
+  gp: function(a,b){ var n=function(x){ return Number(String(x||'').replace(/\D/g,''))||1e9; }; return n(a.gp)-n(b.gp); },
+  house: function(a,b){ return hnCmp(a.house,b.house); },
+  name: function(a,b){ return String(a.name).localeCompare(String(b.name)); },
+  ward: function(a,b){ return (Number(drWard(a))||0)-(Number(drWard(b))||0); },
+  caste: function(a,b){ return (CASTE_TE[a.caste]||a.caste||'').localeCompare(CASTE_TE[b.caste]||b.caste||''); },
+  sur: function(a,b){ return String(a.surname||'').localeCompare(String(b.surname||'')); },
+  age: function(a,b){ return (Number(a.age)||0)-(Number(b.age)||0); },
+  sup: function(a,b){ var O={Strong:0,Leaning:1,Undecided:2,Opposed:3}; return (O[a.support]||0)-(O[b.support]||0); }
+};
+var DLAST = { ward: function(v){ return drWard(v)==='none'?1:0; }, caste: function(v){ return v.caste?0:1; }, sur: function(v){ return v.surname?0:1; },
+  sup: function(v){ return v.support?0:1; }, gp: function(v){ return v.gp?0:1; } };
 function drWard(v){ var w=v._h?hWard(v._h):'none'; return w; }
 function drOk(v){ var f=DRL.f;
   if (f.w.length && f.w.indexOf(drWard(v))<0) return false;
@@ -1955,34 +1976,21 @@ function drLine(v){
 }
 function renderDrill(){
   if (!DRL) return;
-  var r=DRL.rows.filter(drOk), so=DRL.sort, d=DRL.dir, num=function(x){ return Number(String(x||'').replace(/\D/g,''))||1e9; },
-      nm=function(a,b){ return String(a.name).localeCompare(String(b.name)); }, last=function(x){ return x?0:1; },
-      SO={Strong:0,Leaning:1,Undecided:2,Opposed:3};
-  var cmp = so==='tgt' ? function(a,b){ return (targetScore(b)-targetScore(a))*d || num(a.gp)-num(b.gp); }
-    : so==='gp' ? function(a,b){ return (num(a.gp)-num(b.gp))*d || nm(a,b); }
-    : so==='house' ? function(a,b){ return natKey(a.house).localeCompare(natKey(b.house))*d; }
-    : so==='ward' ? function(a,b){ var x=drWard(a), y=drWard(b); return (x==='none')-(y==='none') || ((Number(x)||0)-(Number(y)||0))*d || natKey(a.house).localeCompare(natKey(b.house)); }
-    : so==='caste' ? function(a,b){ return last(a.caste)-last(b.caste) || (CASTE_TE[a.caste]||a.caste||'').localeCompare(CASTE_TE[b.caste]||b.caste||'')*d || nm(a,b); }
-    : so==='sur' ? function(a,b){ return last(a.surname)-last(b.surname) || String(a.surname||'').localeCompare(String(b.surname||''))*d || nm(a,b); }
-    : so==='age' ? function(a,b){ return ((Number(a.age)||0)-(Number(b.age)||0))*d || nm(a,b); }
-    : so==='sup' ? function(a,b){ var x=SO[a.support], y=SO[b.support]; return (x==null)-(y==null) || ((x||0)-(y||0))*d || nm(a,b); }
-    : function(a,b){ return nm(a,b)*d; };
-  r.sort(cmp);
+  var r=DRL.rows.filter(drOk), ms=DRL.ms;
+  r.sort(MultiSort.cmp(ms, DSORT, function(a,b){ return String(a.name).localeCompare(String(b.name)); }, DLAST));
   $('drTitle').textContent = DRL.t;
   var ph = r.filter(function(v){ return v.mobile; }).length;
   $('drSub').textContent = r.length+(r.length!==DRL.rows.length?' / '+DRL.rows.length:'')+' ఓటర్లు · 📞 '+ph+' నంబర్లు'+(dfActive()?' · 🔎 ఫిల్టర్ ఉంది':'');
-  var fa=drFActive(), so1=DRSORTS.filter(function(x){ return x[0]===so; })[0];
+  var fa=drFActive(), dflt=ms[0].k==='tgt'&&ms[0].d===1&&!ms[1].k;
   $('drFilTog').className='wtog'+(fa?' act':''); $('drFilTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+(fa?'ఉన్నాయి · On':'అన్నీ · All')+'</span><span class="wc">'+(DRL.fo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('drFil').classList.toggle('hide', !DRL.fo); if (DRL.fo) $('drFil').innerHTML = drFilHtml();
-  $('drSortTog').className='wtog'+(so!=='tgt'||d!==1?' act':''); $('drSortTog').innerHTML='↕️ క్రమం <span class="wv">'+so1[1]+' '+(d===1?'▲':'▼')+'</span><span class="wc">'+(DRL.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('drSortTog').className='wtog'+(dflt?'':' act'); $('drSortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(ms, DRSORTS))+'</span><span class="wc">'+(DRL.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('drSort').classList.toggle('hide', !DRL.so);
-  $('drSort').innerHTML = DRSORTS.map(function(x){ return '<button class="chip'+(so===x[0]?' on':'')+'" data-drs="'+x[0]+'">'+x[1]+(so===x[0]?(d===1?' ▲':' ▼'):'')+'</button>'; }).join('')+
-    '<div class="dleg" style="width:100%">మళ్ళీ నొక్కితే తిరగబడుతుంది · Tap again to reverse</div>';
+  if (DRL.so) $('drSort').innerHTML = MultiSort.html(ms, DRSORTS);
   $('drList').innerHTML = r.slice(0,DRL.lim).map(drLine).join('') + (r.length>DRL.lim?'<button class="more" data-drmore="1">ఇంకా చూపించు ('+(r.length-DRL.lim)+')</button>':'');
 }
 $('btnDrillBack').onclick=function(){ $('vDrill').classList.add('hide'); DRL=null; };
-$('drSort').onclick=function(e){ var b=e.target.closest('[data-drs]'); if(!b) return; var k=b.dataset.drs;
-  if (DRL.sort===k) DRL.dir=-DRL.dir; else { DRL.sort=k; DRL.dir=1; } DRL.lim=100; renderDrill(); };
+MultiSort.bind($('drSort'), function(){ return DRL.ms; }, function(st){ DRL.ms=st; LS.set('drms',st); DRL.lim=100; renderDrill(); });
 $('drFilTog').onclick=function(){ DRL.fo=!DRL.fo; renderDrill(); };
 $('drSortTog').onclick=function(){ DRL.so=!DRL.so; renderDrill(); };
 var drQT; $('drQ').oninput=function(){ var t=this; clearTimeout(drQT); drQT=setTimeout(function(){ if(!DRL) return; DRL.q=t.value.trim().toLowerCase(); DRL.Q=Fuzzy.query(DRL.q); DRL.lim=100; renderDrill(); },200); };

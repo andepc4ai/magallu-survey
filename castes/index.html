@@ -95,6 +95,7 @@ select.cs.big{width:100%;height:52px;font-size:1.05rem}
 <div id="st" class="st hide"></div>
 
 <script src="../fuzzy.js"></script>
+<script src="../sort.js"></script>
 <script src="../usage.js"></script>
 <script>
 (function(){
@@ -116,7 +117,7 @@ function call(fn, args){
 }
 var CS = [], COPEN = false;   // caste filter: chosen castes ('none' = not set yet), chips open
 var W = [], WOPEN = false, SW = null;   // ward filter: chosen wards, chips open, {surname: {ward: voters}}
-var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'all', SORT = 'v', FOPEN = false, SOPEN = false, q = '', queue = {}, busy = false, listScroll = 0;
+var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'all', MS = MultiSort.norm((function(){ try { return JSON.parse(localStorage.getItem('cs_ms')); } catch(e){ return null; } })(), 'v'), FOPEN = false, SOPEN = false, q = '', queue = {}, busy = false, listScroll = 0;
 function te(s){ return TE[s] || ''; }
 function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
 function casteOptions(cur){
@@ -195,19 +196,19 @@ function renderFold(){
   $('filTog').className='wtog'+(W.length||CS.length||mode!=='all'?' act':'');
   $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+sum.join(' · ')+'</span><span class="wc">'+(FOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('filBox').classList.toggle('hide', !FOPEN);
-  var so=SORTS.filter(function(x){ return x[0]===SORT; })[0];
-  $('sortTog').className='wtog'+(SORT!=='v'?' act':'');
-  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+so[1]+' · '+so[2]+'</span><span class="wc">'+(SOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  var sdf = MS[0].k==='v' && MS[0].d===1 && !MS[1].k;
+  $('sortTog').className='wtog'+(sdf?'':' act');
+  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+MultiSort.summary(MS, SORTS)+'</span><span class="wc">'+(SOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortC').classList.toggle('hide', !SOPEN);
-  $('sortC').innerHTML=SORTS.map(function(x){ return '<button class="chip'+(SORT===x[0]?' on':'')+'" data-so="'+x[0]+'">'+x[1]+'<small>'+x[2]+'</small></button>'; }).join('');
+  if (SOPEN) $('sortC').innerHTML=MultiSort.html(MS, SORTS);
 }
 $('filTog').onclick=function(){ FOPEN=!FOPEN; renderFold(); };
 $('sortTog').onclick=function(){ SOPEN=!SOPEN; renderFold(); };
-$('sortC').onclick=function(e){ var b=e.target.closest('[data-so]'); if(!b) return; SORT=b.dataset.so; SOPEN=false;
-  if (SORT==='w' && !voters){ renderFold(); loadVoters().then(renderList); return; } renderList(); };
+MultiSort.bind($('sortC'), function(){ return MS; }, function(st){ MS=st; try { localStorage.setItem('cs_ms', JSON.stringify(st)); } catch(e){}
+  if (st.some(function(x){ return x.k==='w'; }) && !voters){ renderFold(); loadVoters().then(renderList); return; } renderList(); });
 function renderList(){
   renderWard(); renderCaste(); renderFold();
-  if (W.length && !voters){ $('list').innerHTML='<div class="msg">వార్డుల వివరాలు లోడ్ అవుతున్నాయి… · Loading wards…</div>'; loadVoters().then(function(){ renderList(); }); return; }
+  if ((W.length || MS.some(function(x){ return x.k==='w'; })) && !voters){ $('list').innerHTML='<div class="msg">వార్డుల వివరాలు లోడ్ అవుతున్నాయి… · Loading wards…</div>'; loadVoters().then(function(){ renderList(); }); return; }
   var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
   var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
   $('prog').textContent = 'మొత్తం పూర్తి · Done: '+filled.length+' / '+rows.length+' ఇంటిపేర్లు ('+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు)';
@@ -231,10 +232,10 @@ function renderList(){
   });
   var nV=function(r){ return W.length?wCount(r[1]):r[2]; }, byV=function(a,b){ return nV(b)-nV(a); };
   if (q) list.sort(function(a,b){ return b._s-a._s || b[2]-a[2]; });
-  else if (SORT==='w') list.sort(function(a,b){ return mainW(a[1])-mainW(b[1]) || byV(a,b); });
-  else if (SORT==='c') list.sort(function(a,b){ var x=cOf(a), y=cOf(b); return (x==='none')-(y==='none') || cTe(x).localeCompare(cTe(y)) || byV(a,b); });
-  else if (SORT==='a') list.sort(function(a,b){ return String(a[1]).localeCompare(String(b[1])); });
-  else list.sort(byV);
+  else list.sort(MultiSort.cmp(MS, {   // sort priority ① → ② → ③ (../sort.js)
+    v: byV, w: function(a,b){ return mainW(a[1])-mainW(b[1]); },
+    c: function(a,b){ return cTe(cOf(a)).localeCompare(cTe(cOf(b))); }, a: function(a,b){ return String(a[1]).localeCompare(String(b[1])); }
+  }, byV, { w: function(r){ return mainW(r[1])===99?1:0; }, c: function(r){ return cOf(r)==='none'?1:0; } }));
   if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'&&!q?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
   $('list').innerHTML = list.slice(0,200).map(function(r){
     var cur=r[3], ok=NAMES.indexOf(cur)>=0;

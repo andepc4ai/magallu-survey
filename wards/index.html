@@ -75,6 +75,7 @@ button,input,select{font:inherit;color:inherit}
 </div>
 <div class="st" id="st">—</div>
 <div class="ab hide" id="ab"><div class="t" id="abt"></div><button class="dis" id="abDis">✕ రద్దు</button><button class="app" id="abApp">✓ సేవ్ చేయండి</button></div>
+<script src="../sort.js"></script>
 <script src="../usage.js"></script>
 <script>
 (function(){
@@ -91,7 +92,7 @@ function call(fn, args){
 }
 function st(cls, t){ var e=$('st'); e.className='st '+cls; e.textContent=t; }
 var U = LS.get('mvs_user');
-var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:[], street:[], sur:[], q:'', limit:60, sort:'v', fo:false, so:false }, queue = {}, busy = false;
+var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:[], street:[], sur:[], q:'', limit:60, ms:MultiSort.norm(LS.get('wd_ms'),'v'), fo:false, so:false }, queue = {}, busy = false;
 var staged = LS.get('wd_staged') || {}, MOPEN = {};   // marked but not yet applied: {houseId: ward}
 
 var who = U && U.name && U.pin && !U.reader ? [U.name, U.pin] : ['', ''];   // open page: works without login; Readers save in open mode
@@ -138,25 +139,27 @@ function buildSelects(){
     mSel('n', '👪 ఇంటిపేరు', F.sur, Object.keys(n).sort(function(x,y){ return n[y]-n[x] || x.localeCompare(y); }).map(function(x){ return [x, x, n[x]+' ఇళ్ళు']; }));
   foldBars();
 }
-var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward']];
+var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['b','బూత్','Booth']];
 function foldBars(){
   var sum=[F.booth.length?'బూత్ '+F.booth.map(bd).join(','):'', F.street.length?F.street.length+' వీధి':'', F.sur.length?F.sur.join(','):''].filter(String);
   $('filTog').className='wtog'+(sum.length?' act':'');
   $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+esc(sum.length?sum.join(' · '):'అన్నీ · All')+'</span><span class="wc">'+(F.fo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('fil').classList.toggle('hide', !F.fo);
-  var so=SORTS.filter(function(x){ return x[0]===F.sort; })[0];
-  $('sortTog').className='wtog'+(F.sort!=='v'?' act':'');
-  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+so[1]+' · '+so[2]+' (వీధి లోపల)</span><span class="wc">'+(F.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  var sdf = F.ms[0].k==='v' && F.ms[0].d===1 && !F.ms[1].k;
+  $('sortTog').className='wtog'+(sdf?'':' act');
+  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(F.ms, SORTS))+' (వీధి లోపల)</span><span class="wc">'+(F.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortC').classList.toggle('hide', !F.so);
-  $('sortC').innerHTML=SORTS.map(function(x){ return '<button class="chip'+(F.sort===x[0]?' on':'')+'" data-so="'+x[0]+'">'+x[1]+'<small>'+x[2]+'</small></button>'; }).join('');
+  if (F.so) $('sortC').innerHTML=MultiSort.html(F.ms, SORTS);
 }
 $('filTog').onclick=function(){ F.fo=!F.fo; foldBars(); };
 $('sortTog').onclick=function(){ F.so=!F.so; foldBars(); };
-$('sortC').onclick=function(e){ var b=e.target.closest('[data-so]'); if(!b) return; F.sort=b.dataset.so; F.so=false; F.limit=60; foldBars(); render(); };
-// within each street: most voters / house no. / ward
+MultiSort.bind($('sortC'), function(){ return F.ms; }, function(st){ F.ms=st; LS.set('wd_ms',st); F.limit=60; foldBars(); render(); });
+// houses stay grouped by street; inside a street: sort priority ① → ② → ③ (../sort.js)
+function wn(h){ var w=hWard(h); return w===''?99:w==='mix'?98:Number(w); }
+function hkc(a,b){ return a.sk<b.sk?-1:a.sk>b.sk?1:0; }
+var WSORT = { v: function(a,b){ return b.n-a.n; }, h: hkc, w: function(a,b){ return wn(a)-wn(b); }, b: function(a,b){ return String(a.booth).localeCompare(String(b.booth)); } };
 function sortKey(a,b){ if (a.sec!==b.sec) return a.sec<b.sec?-1:1;
-  var hk=(a.sk<b.sk?-1:a.sk>b.sk?1:0), wn=function(h){ var w=hWard(h); return w===''?99:w==='mix'?98:Number(w); };
-  return F.sort==='h' ? hk : F.sort==='w' ? (wn(a)-wn(b) || b.n-a.n || hk) : (b.n-a.n || hk); }
+  return MultiSort.cmp(F.ms, WSORT, hkc, { w: function(h){ return wn(h)>=98?1:0; } })(a,b); }
 $('fil').onclick = function(e){
   var t=e.target.closest('[data-mtog]'); if (t){ MOPEN[t.dataset.mtog]=!MOPEN[t.dataset.mtog]; buildSelects(); return; }
   var c=e.target.closest('[data-mk]'); if (!c) return;
