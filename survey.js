@@ -132,8 +132,9 @@ function summary(v){
 
 var css = '.sv{margin-top:6px}'+
 '.svq{display:flex;align-items:center;gap:8px;margin:6px 0}.svk{flex:none;font-weight:700;font-size:.85rem;color:#44403c;min-width:84px}'+
+'.svq .svk{min-width:0;width:70px;font-size:.8rem;white-space:normal;line-height:1.2}'+   /* question in 2 lines (ఓటు / వేయగలరా?) so the 4 answer boxes get the room */
 '.seg{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}'+
-'.sg{min-height:40px;border:2px solid #e7e5e4;background:#fff;border-radius:10px;font-size:.78rem;font-weight:700;line-height:1.15;padding:2px;color:#44403c}'+
+'.sg{min-height:48px;border:2px solid #e7e5e4;background:#fff;border-radius:10px;font-size:.78rem;font-weight:700;line-height:1.15;padding:2px;color:#44403c}'+
 '.sg.on{background:var(--c);border-color:var(--c);color:#fff}'+
 '.svr{display:flex;align-items:center;gap:8px;width:100%;min-height:42px;border:0;border-top:1px solid #f0ebe1;background:none;text-align:left;padding:6px 2px;font:inherit;color:inherit;cursor:pointer}'+
 '.svr .svv{flex:1;min-width:0;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.svph{color:#a8a29e;font-size:.82rem}'+
