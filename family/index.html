@@ -60,7 +60,7 @@ a{color:inherit}
 .wchips .chip small{font-weight:400;font-size:.66rem;opacity:.75}
 .clrw{position:relative;display:block}.clrx{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border:0;border-radius:50%;background:#e7e5e4;color:#44403c;font-size:1rem;font-weight:700;display:none;align-items:center;justify-content:center;cursor:pointer;z-index:2}input[type=search]{padding-right:48px!important}input[type=search]::-webkit-search-cancel-button{display:none}
 .pc.r26{border-left:5px solid #f97316}.pc .r26t{color:#c2410c;font-weight:700}
-.pc.gone{border:2px solid #fecaca;border-left:5px solid #dc2626;background:#fef2f2;color:#7f1d1d}.pc.gone b{text-decoration:line-through;text-decoration-color:rgba(127,29,29,.4)}.pc.gone span{color:#b91c1c}
+.pc.gone{border:2px solid #d6d3d1;border-left:5px solid #78716c;background:#f5f5f4;color:#57534e}.pc.gone span{color:#57534e}.ens{font-size:.72rem;font-weight:400;color:#78716c}
 .pc.fh{border-color:#ca8a04;background:#fef9c3;box-shadow:0 0 0 2px #fde047}
 .pc .crown{font-size:.72rem;font-weight:700;color:#854d0e}
 .fhead{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:10px;padding-top:10px;border-top:1px dashed #e5dfd2}.fhead .who{flex:1}
@@ -293,13 +293,15 @@ function supCounts(f){ var c={}; SUP.forEach(function(s){ c[s[0]]=0; }); Object.
 function barHtml(f){ var c=supCounts(f), t=f.voters||1;
   return SUP.map(function(s){ return c[s[0]]?'<i class="c-'+s[0]+'" style="width:'+(100*c[s[0]]/t)+'%"></i>':''; }).join(''); }
 function legHtml(f){ var c=supCounts(f); return SUP.filter(function(s){ return c[s[0]]; }).map(function(s){ return '<span class="c-'+s[0]+'" style="background:none">'+s[1]+' '+c[s[0]]+'</span>'; }).join(''); }
-function displayName(p){ return p ? (p.name||'') : ''; }
+function displayName(p){ return p ? (p.te||p.name||'') : ''; }
+// name on screen: Telugu first, English small after it (English only when no Telugu yet)
+function dnHtml(p){ return !p ? '' : p.te ? esc(p.te)+' <small class="ens">'+esc(p.name)+'</small>' : esc(p.name||''); }
 function headTitle(f){ var h=P(f.head); return (h.vote?'':'') + displayName(h) + ' కుటుంబం'; }
 /* 🔎 global search on every column (same rules as the main app): several words = all must match;
    1-2 letter words must be a whole word, longer ones the start of a word. */
 var SUPT={Strong:'strong పూర్తి మద్దతు',Leaning:'leaning మొగ్గు ఉంది',Undecided:'undecided తేల్చలేదు',Opposed:'opposed వ్యతిరేకం'};
 function pHay(p){
-  return (' '+[p.name, p.rn, p.sur, tes(p.sur), 'house', p.house, p.id, p.mobile, p.gp?'gp '+p.gp:'', 'booth బూత్ '+p.booth, p.ward?'ward వార్డు '+p.ward:'no ward వార్డు లేదు',
+  return (' '+[p.name, p.te, p.rn, p.teR, p.sur, tes(p.sur), 'house', p.house, p.id, p.mobile, p.gp?'gp '+p.gp:'', 'booth బూత్ '+p.booth, p.ward?'ward వార్డు '+p.ward:'no ward వార్డు లేదు',
     p.street, p.caste, cte(p.caste), p.caste?'':'caste not recorded కులం లేదు', SUPT[p.support]||'not asked అడగలేదు', p.visited==='Visited'?'visited కలిశాం':'not visited కలవలేదు',
     p.g==='Female'?'female women స్త్రీ మహిళ':p.g==='Male'?'male men పురుషుడు':'', 'age వయసు '+p.age, leaderName(p.leader), p.fhead?'head కుటుంబ పెద్ద':'',
     p.r26?'removed 2026 తొలగించారు':'', p.gone?'expired మరణించారు':''].join(' ').replace(/[,·|()]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
@@ -470,7 +472,7 @@ function renderList(){
     $('flist').innerHTML = list.slice(0,lim).map(function(f){
       var h=famHead(f)||P(f.head), seen={}, t=f.roots.map(function(r){ return treeHtml(r, seen); }).join('');
       f.members.forEach(function(id){ if(!seen[id]) t+=treeHtml(id, seen); });
-      return '<div class="card"><div class="fc" style="border:0;padding:0;margin:0 0 6px" role="button" data-fam="'+esc(f.head)+'"><b>'+esc(displayName(h))+' కుటుంబం ›</b>'+
+      return '<div class="card"><div class="fc" style="border:0;padding:0;margin:0 0 6px" role="button" data-fam="'+esc(f.head)+'"><b>'+dnHtml(h)+' కుటుంబం ›</b>'+
         '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు · 🏠 '+esc(h.house||'—')+'</div>'+wardLine(f)+'</div>'+
         '<div class="tree">'+t+'</div></div>';
     }).join('') + (list.length>lim?'<button class="more" id="more">ఇంకా చూపించు ('+(list.length-lim)+')</button>':'');
@@ -478,8 +480,8 @@ function renderList(){
   }
   $('flist').innerHTML = list.slice(0,F.limit).map(function(f){
     var h=famHead(f)||P(f.head), g=subFam(f);
-    return '<div class="fc" role="button" data-fam="'+esc(f.head)+'"'+(q&&f._hit?' data-me="'+esc(f._hit.id)+'"':'')+'><b>'+esc(displayName(h))+'</b>'+(h.vote?'':h.gone?' <span class="warnb" style="background:#fee2e2;color:#b91c1c">✕ '+esc(goneTe(h.gone))+'</span>':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
-      (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+(q&&f._hit&&f._hit.id!==f.head?'<div class="hit">🔎 '+esc(displayName(f._hit))+(f._hit.house?' · 🏠 '+esc(f._hit.house):'')+'</div>':'')+(undecided(g)?'<span class="swing">🎯 '+undecided(g)+' తేల్చలేదు</span>':'')+
+    return '<div class="fc" role="button" data-fam="'+esc(f.head)+'"'+(q&&f._hit?' data-me="'+esc(f._hit.id)+'"':'')+'><b>'+dnHtml(h)+'</b>'+(h.vote?'':h.gone?' <span class="warnb" style="background:#e7e5e4;color:#44403c">'+esc(goneTe(h.gone))+'</span>':' <span class="warnb" style="background:#eef2f1;color:#475569">ఓటు లేదు</span>')+
+      (f.check?'<span class="warnb">⚠ '+f.check+'</span>':'')+(q&&f._hit&&f._hit.id!==f.head?'<div class="hit">🔎 '+dnHtml(f._hit)+(f._hit.house?' · 🏠 '+esc(f._hit.house):'')+'</div>':'')+(undecided(g)?'<span class="swing">🎯 '+undecided(g)+' తేల్చలేదు</span>':'')+
       '<div class="m">'+esc(surOf(f))+(surOf(f)?' · ':'')+(f.caste?'<b style="font-size:.85rem;color:#6d28d9">'+esc(cte(f.caste))+'</b> · ':'')+f.voters+' ఓటర్లు · '+f.houseCount+' ఇళ్ళు</div>'+wardLine(f)+
       '<div class="sbar">'+barHtml(g)+'</div><div class="leg">'+legHtml(g)+'</div>'+contactHtml(f)+(famHead(f)?'<div class="lmini" style="color:#854d0e">👑 కుటుంబ పెద్ద: <b>'+esc(famHead(f).name)+'</b></div>':'')+(famLeader(f)?'<div class="lmini">👤 నాయకుడు: <b>'+esc(leaderName(famLeader(f)))+'</b></div>':'')+'</div>';
   }).join('') + (list.length>F.limit?'<button class="more" id="more">ఇంకా చూపించు ('+(list.length-F.limit)+')</button>':'');
@@ -513,9 +515,9 @@ $('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=1
 /* ---------- family tree ---------- */
 function pcard(p, me){
   var chk = p.vote && p.rel && !p.sure;
-  if (p.gone) return '<button class="pc gone" data-p="'+esc(p.id)+'"><div><b>'+esc(displayName(p))+'</b><span>✕ '+esc(goneTe(p.gone))+(p.age?' · '+p.age:'')+'</span></div></button>';
+  if (p.gone) return '<button class="pc gone" data-p="'+esc(p.id)+'"><div><b>'+dnHtml(p)+'</b><span>'+esc(goneTe(p.gone))+' · Expired'+(p.age?' · '+p.age:'')+'</span></div></button>';
   return '<button class="pc'+(p.r26?' r26':'')+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+(F.wsel.length&&p.vote&&!inSel(p)?' ow':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
-    '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+(p.vote&&p.gp?'<em class="gpn">GP '+esc(p.gp)+'</em>':'')+esc(displayName(p))+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—')+(p.ward?' · వా '+esc(p.ward):''):'ఓటు లేదు · no vote')+'</span>'+(p.r26?'<span class="r26t">⚠ 2026లో తొలగింపు: '+esc(goneTe(p.r26))+'</span>':'')+'</div></button>';
+    '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+(p.vote&&p.gp?'<em class="gpn">GP '+esc(p.gp)+'</em>':'')+dnHtml(p)+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—')+(p.ward?' · వా '+esc(p.ward):''):'ఓటు లేదు · no vote')+'</span>'+(p.r26?'<span class="r26t">⚠ 2026లో తొలగింపు: '+esc(goneTe(p.r26))+'</span>':'')+'</div></button>';
 }
 function treeHtml(id, seen, me){
   if (seen[id]) return ''; seen[id]=1;
@@ -590,7 +592,8 @@ function svEdit(e, f){
   LS.set('mvs_pending', pend);
   // the family tree shows support / caste / mobile too
   var r = DATA && DATA.voters.filter(function(x){ return String(x[0])===e; })[0];
-  if (r){ if ('support' in f) r[10]=f.support; if (f.visits || f.visited) r[11]='Visited'; if ('caste' in f) r[12]=f.caste; if ('mobile' in f) r[13]=f.mobile; LS.set('fam_data', DATA); }
+  if (r){ if ('support' in f) r[10]=f.support; if (f.visits || f.visited) r[11]='Visited'; if ('caste' in f) r[12]=f.caste; if ('mobile' in f) r[13]=f.mobile; if ('avail' in f) r[22]=f.avail; LS.set('fam_data', DATA); }
+  if (r && 'avail' in f && ((f.avail==='Expired') !== !!(P(e)||{}).volExp)) rebuild();   // మరణించారు: grey card, out of the counts (or back again)
   var pp = P(e); if (pp){ ['support','caste','mobile'].forEach(function(k){ if (k in f) pp[k]=f[k]; }); }
   SV.dirty = true;
   st('busy','⏳ సేవ్ అవుతోంది… · Saving'); clearTimeout(SV.t); SV.t = setTimeout(svFlush, 700);
@@ -644,19 +647,21 @@ function surveyHtml(p, f){
 }
 
 /* ---------- person ---------- */
-function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)+'">'+esc(displayName(p))+(p.vote?'':' (ఓటు లేదు)')+'</button>':''; }
+function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)+'">'+dnHtml(p)+(p.vote?'':' (ఓటు లేదు)')+'</button>':''; }
 function renderPerson(id, picking){
   var p=P(id); if(!p){ go(''); return; }
   $('ptitle').textContent = displayName(p);
-  if (p.gone){ $('psub').textContent = '✕ 2026 జాబితా నుండి తొలగించారు: '+goneTe(p.gone)+' · Removed from the 2026 roll: '+p.gone+(p.house?' · 🏠 '+p.house:''); }
+  if (p.gone){ $('psub').textContent = 'మరణించారు · Expired — '+(p.volExp?'వాలంటీర్ నమోదు · marked in app':'2026 జాబితా · '+p.gone)+' · ఓటు లేదు, లెక్కల్లో లేరు'+(p.house?' · 🏠 '+p.house:''); }
   else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 📍 వార్డు '+(p.ward||'—')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')+' · బూత్ '+p.booth) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
+  if (p.volExp) h += '<div class="card" style="background:#f5f5f4;color:#57534e"><b>మరణించారు</b> <small>Expired — marked in the app</small>'+
+    '<button class="b sm" style="margin-top:8px;background:#fff;border:1.5px solid #a8a29e;color:#44403c" data-unexp="'+esc(p.id)+'">↩ పొరపాటు — తిరిగి ఓటరుగా చేర్చు · Undo</button></div>';
   if (p.vote){
     if (id!==SV.last){ SV.last=id; SV.open=''; SV.link=false; }
     h += surveyHtml(p, f);
     h += '<a class="b house sm" href="../#v='+encodeURIComponent(id)+'&b='+encodeURIComponent(location.hash)+'">🏠 ఈ ఇంటిని యాప్‌లో తెరవండి · Open house</a>';
     var r = p.rel && P(p.rel), relLbl = REL[p.rt]||p.rt, linkOpen = SV.link || picking || (r && !p.sure) || !r;
-    h += '<div class="card"><button class="fold2" data-linktog="1"><h3>🔗 జాబితాలో సంబంధం · Voter-list relation</h3><span class="cv">'+(linkOpen?'▴':(r?'✓ '+esc(displayName(r))+' ▾':'▾'))+'</span></button>';
+    h += '<div class="card"><button class="fold2" data-linktog="1"><h3>🔗 జాబితాలో సంబంధం · Voter-list relation</h3><span class="cv">'+(linkOpen?'▴':(r?'✓ '+dnHtml(r)+' ▾':'▾'))+'</span></button>';
     if (linkOpen) h += '<div style="margin-top:8px">'+
       '<div>'+esc(relLbl)+': <b>'+esc(p.rn||'—')+'</b></div>'+
       (p.as&&p.as!==p.rt?'<div style="margin-top:4px;color:#6d28d9;font-weight:700">సరిచేసిన సంబంధం · Corrected: '+esc(REL[p.as]||p.as)+'</div>':'')+
@@ -688,7 +693,7 @@ function renderPerson(id, picking){
   if (picking) { renderPick(id, ''); var pq=$('pq'); if(pq) pq.focus(); }
 }
 function pickerHtml(p){
-  return '<div class="pk"><div class="pkl">1. ఈ వ్యక్తి '+esc(displayName(p))+' కి ఏమవుతారు? · Who is the person to them?</div>'+
+  return '<div class="pk"><div class="pkl">1. ఈ వ్యక్తి '+dnHtml(p)+' కి ఏమవుతారు? · Who is the person to them?</div>'+
     '<div class="tchips">'+TYPES.map(function(t){ return '<button class="chip'+(PK.as===t?' on':'')+'" data-as="'+t+'">'+REL[t]+'</button>'; }).join('')+'</div>'+
     '<div class="pkl">2. వ్యక్తిని ఎంచుకోండి · Pick the person</div>'+
     '<input class="f" id="pq" placeholder="పేరు / ఇంటి నెం. వెతకండి · Search name or house">'+
@@ -722,6 +727,7 @@ $('pbody').onclick=function(e){
   if (svr){ var sv=SV.byE[svr.dataset.svid]; if (sv){ var ui={open:SV.open, ro:!!(U&&U.reader)};
     var again = Survey.click(e, sv, ui, function(fx){ if (!fx){ RO(); return false; } return svEdit(sv.e, fx); });
     SV.open = ui.open; if (again) renderPerson(cur().p, false); return; } }
+  if ((t=e.target.closest('[data-unexp]'))) { if (svEdit(t.dataset.unexp, {avail:''})!==false) renderPerson(cur().p, false); return; }
   if ((t=e.target.closest('[data-p]'))) { go('p='+encodeURIComponent(t.dataset.p)); return; }
   if ((t=e.target.closest('[data-fam]'))) { go('f='+encodeURIComponent(t.dataset.fam)+'&me='+encodeURIComponent(cur().p||'')); return; }
   if ((t=e.target.closest('[data-ok]'))) { var p=P(t.dataset.ok); setLink(p, p.rel, true); return; }

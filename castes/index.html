@@ -273,7 +273,7 @@ function renderOne(s){
     var hv = houses[k], h = hv[0];
     return '<div class="hh"><div class="hd">🏠 '+esc(h[6]||'—')+' <span>'+esc(h[8])+' · బూత్ '+esc(({207:204,208:205,209:206})[h[7]]||h[7])+(h[9]?' · <b style="color:#854d0e">వార్డు '+esc(h[9])+'</b>':'')+'</span></div>'+
       hv.map(function(v){
-        return '<div class="pp"><b>'+(v[10]?'<span class="gpn">GP '+esc(v[10])+'</span>':'')+esc(v[1])+'</b><span>'+(v[5]==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+esc(v[4])+' ఏళ్ళు · '+(REL[v[2]]||esc(v[2]))+': '+esc(v[3])+'</span></div>';
+        return '<div class="pp"><b>'+(v[10]?'<span class="gpn">GP '+esc(v[10])+'</span>':'')+(v[11]?esc(v[11])+' <small style="font-weight:400;font-size:.72rem;color:#78716c">'+esc(v[1])+'</small>':esc(v[1]))+'</b><span>'+(v[5]==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+esc(v[4])+' ఏళ్ళు · '+(REL[v[2]]||esc(v[2]))+': '+esc(v[3])+'</span></div>';
       }).join('')+'</div>';
   }).join('');
 }

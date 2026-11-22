@@ -29,7 +29,8 @@ var Q = [
    opts:[['Strong','పూర్తి మద్దతు','#15803d'],['Leaning','మొగ్గు','#65a30d'],['Undecided','తేల్చలేదు','#ea580c'],['Opposed','వ్యతిరేకం','#b91c1c']]},
   // can this person come and vote on 29 Nov? (separate from support: a strong supporter may live far away)
   {k:'avail', te:'ఓటు వేయగలరా?', en:'Can vote', type:'seg',
-   opts:[['Yes','✅ వస్తారు','#15803d'],['Far','🚌 దూరం · రప్పించాలి','#2563eb'],['No','❌ రాలేరు','#57534e']]},
+   opts:[['Yes','✅ వస్తారు','#15803d'],['Far','🚌 దూరం · రప్పించాలి','#2563eb'],['No','❌ రాలేరు','#57534e'],
+         ['Expired','మరణించారు · Expired','#78716c']]},   // Expired = grey everywhere, out of every count
   {k:'caste', icon:'🏷', te:'కులం', en:'Caste', type:'one', list:'castes', te_map:CASTE_TE, empty:'నమోదు కాలేదు'},
   {k:'mobile', icon:'📱', te:'మొబైల్', en:'Mobile', type:'phone', empty:'నంబర్ లేదు'},
   {k:'issue', icon:'⚠️', te:'సమస్యలు', en:'Needs', type:'many', opts:ISS, status:'issueStatus', empty:'లేవు'},
@@ -125,7 +126,7 @@ function click(e, v, ui, edit){
 function summary(v){
   var s = Q[0].opts.filter(function(o){ return o[0]===v.support; })[0];
   return (s ? '<i class="svdot" style="background:'+s[2]+'"></i>'+s[1] : '<i class="svdot"></i>మద్దతు ?') +
-    (v.avail==='Far' ? ' · 🚌 దూరం' : v.avail==='No' ? ' · ❌ రాలేరు' : '') +
+    (v.avail==='Far' ? ' · 🚌 దూరం' : v.avail==='No' ? ' · ❌ రాలేరు' : v.avail==='Expired' ? ' · మరణించారు' : '') +
     (v.caste ? ' · '+esc(CASTE_TE[v.caste]||v.caste) : '') + (v.mobile ? ' · 📞 '+esc(v.mobile) : '');
 }
 
