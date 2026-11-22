@@ -101,7 +101,7 @@ function hWard(h){ return h.w; }
 
 // rows: [booth, house, street, ward ('' | '3' | 'mix'), voters, names]
 function ingest(rows){
-  H = rows.map(function(r){ var h = {id:r[0]+'|'+r[1], booth:r[0], house:String(r[1]), sec:String(r[2]||''), w:String(r[3]==null?'':r[3]), n:r[4], names:String(r[5]||''), mix:r[6]||null};
+  H = rows.map(function(r){ var h = {id:r[0]+'|'+r[1], booth:r[0], house:String(r[1]), sec:String(r[2]||''), w:String(r[3]==null?'':r[3]), n:r[4], names:String(r[5]||''), mix:r[6]||null, gp:String(r[7]||'')};
     if (h.id in queue) h.w = queue[h.id]; h.w0 = h.w; if (h.id in staged){ if (staged[h.id]===h.w) delete staged[h.id]; else h.w = staged[h.id]; } h.sk = natKey(h.house); return h; })
     .sort(function(a,b){ return a.sec<b.sec?-1:a.sec>b.sec?1:(a.sk<b.sk?-1:a.sk>b.sk?1:0); });
   byId = {}; H.forEach(function(h){ byId[h.id]=h; });
@@ -139,7 +139,7 @@ function buildSelects(){
     mSel('n', '👪 ఇంటిపేరు', F.sur, Object.keys(n).sort(function(x,y){ return n[y]-n[x] || x.localeCompare(y); }).map(function(x){ return [x, x, n[x]+' ఇళ్ళు']; }));
   foldBars();
 }
-var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['b','బూత్','Booth']];
+var SORTS = [['gp','GP క్ర.సం.','GP no.'],['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['b','బూత్','Booth']];
 function foldBars(){
   var sum=[F.booth.length?'బూత్ '+F.booth.map(bd).join(','):'', F.street.length?F.street.length+' వీధి':'', F.sur.length?F.sur.join(','):''].filter(String);
   $('filTog').className='wtog'+(sum.length?' act':'');
@@ -149,7 +149,7 @@ function foldBars(){
   $('sortTog').className='wtog'+(sdf?'':' act');
   $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(F.ms, SORTS))+' (వీధి లోపల)</span><span class="wc">'+(F.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortC').classList.toggle('hide', !F.so);
-  if (F.so) $('sortC').innerHTML=MultiSort.html(F.ms, SORTS);
+  if (F.so) $('sortC').innerHTML=MultiSort.html(F.ms, SORTS, 'v');
 }
 $('filTog').onclick=function(){ F.fo=!F.fo; foldBars(); };
 $('sortTog').onclick=function(){ F.so=!F.so; foldBars(); };
@@ -157,9 +157,10 @@ MultiSort.bind($('sortC'), function(){ return F.ms; }, function(st){ F.ms=st; LS
 // houses stay grouped by street; inside a street: sort priority ① → ② → ③ (../sort.js)
 function wn(h){ var w=hWard(h); return w===''?99:w==='mix'?98:Number(w); }
 function hkc(a,b){ return a.sk<b.sk?-1:a.sk>b.sk?1:0; }
-var WSORT = { v: function(a,b){ return b.n-a.n; }, h: hkc, w: function(a,b){ return wn(a)-wn(b); }, b: function(a,b){ return String(a.booth).localeCompare(String(b.booth)); } };
+function hGp(h){ return Math.min.apply(null, h.gp.split(' ').filter(String).map(MultiSort.gpn).concat([1e9])); }
+var WSORT = { gp: function(a,b){ return hGp(a)-hGp(b); }, v: function(a,b){ return b.n-a.n; }, h: hkc, w: function(a,b){ return wn(a)-wn(b); }, b: function(a,b){ return String(a.booth).localeCompare(String(b.booth)); } };
 function sortKey(a,b){ if (a.sec!==b.sec) return a.sec<b.sec?-1:1;
-  return MultiSort.cmp(F.ms, WSORT, hkc, { w: function(h){ return wn(h)>=98?1:0; } })(a,b); }
+  return MultiSort.cmp(F.ms, WSORT, hkc, { w: function(h){ return wn(h)>=98?1:0; }, gp: function(h){ return hGp(h)>=1e9?1:0; } })(a,b); }
 $('fil').onclick = function(e){
   var t=e.target.closest('[data-mtog]'); if (t){ MOPEN[t.dataset.mtog]=!MOPEN[t.dataset.mtog]; buildSelects(); return; }
   var c=e.target.closest('[data-mk]'); if (!c) return;
@@ -184,10 +185,11 @@ function render(){
     if (F.tab==='mix' && w!=='mix') return false;
     if (F.tab==='w' && w!==String(W)) return false;
     if (F.tab==='chg' && !(h.id in staged)) return false;
-    if (q){ if (h.house.toLowerCase().indexOf(q)===0 || h.names.toLowerCase().indexOf(q)>=0) return true;
+    if (q){ var gq=MultiSort.gpQ(q); if (gq) return h.gp.split(' ').some(function(g){ return MultiSort.gpEq(g,gq); });   // GP no. → that voter's house
+      if (h.house.toLowerCase().indexOf(q)===0 || h.names.toLowerCase().indexOf(q)>=0) return true;
       // 🔎 every column this page has: house, names, street, ward, booth, voters (several words = all must match)
-      var hay=(' '+[h.house, h.names, h.sec, w==='mix'?'mixed కలగలుపు':w?'ward వార్డు '+w:'no ward వార్డు లేదు', 'booth బూత్ '+h.booth, h.n+' voters ఓటర్లు'].join(' ').replace(/[,·]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
-      return q.split(/\s+/).every(function(x){ return x.length<3 ? hay.indexOf(' '+x+' ')>=0 : hay.indexOf(' '+x)>=0; }); }
+      var hay=(' '+[h.house, h.names, h.sec, w==='mix'?'mixed కలగలుపు':w?'ward వార్డు '+w:'no ward వార్డు లేదు', 'booth బూత్ '+h.booth, h.n+' voters ఓటర్లు', h.gp?'gp '+h.gp:''].join(' ').replace(/[,·]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
+      return q.split(/\s+/).every(function(x){ return MultiSort.word(hay, x); }); }
     return true;
   });
   list.sort(sortKey);

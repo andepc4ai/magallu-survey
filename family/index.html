@@ -199,7 +199,7 @@ var F = { q:'', size:1, booth:'all', wsel:[], check:false, sur:'', cas:'', limit
 // house numbers in natural order: 2-5 before 2-10, empty last
 function hnCmp(a,b){ a=String(a||''); b=String(b||''); if (!a!==!b) return a?-1:1;
   var x=a.match(/\d+/g)||[], y=b.match(/\d+/g)||[]; for (var i=0;i<Math.max(x.length,y.length);i++){ var d=(+x[i]||0)-(+y[i]||0); if (d) return d; } return a.localeCompare(b); }
-var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['n','ఇళ్ళు ఎక్కువ','Most houses'],['s','ఇంటిపేరు','Surname'],['c','కులం','Caste']];
+var SORTS = [['gp','GP క్ర.సం.','GP no.'],['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['n','ఇళ్ళు ఎక్కువ','Most houses'],['s','ఇంటిపేరు','Surname'],['c','కులం','Caste']];
 
 fetch('te_surnames.json').then(function(r){ return r.json(); }).then(function(j){ TE=j; if (M) route(); }).catch(function(){});
 function tes(s){ return TE[s] || ''; }
@@ -304,7 +304,7 @@ function pHay(p){
     p.g==='Female'?'female women స్త్రీ మహిళ':p.g==='Male'?'male men పురుషుడు':'', 'age వయసు '+p.age, leaderName(p.leader), p.fhead?'head కుటుంబ పెద్ద':'',
     p.r26?'removed 2026 తొలగించారు':'', p.gone?'expired మరణించారు':''].join(' ').replace(/[,·|()]/g,' ').replace(/\s+/g,' ').toLowerCase()+' ');
 }
-function pMatch(p, q){ var hay=pHay(p); return String(q).toLowerCase().split(/\s+/).filter(Boolean).every(function(w){ return w.length<3 ? hay.indexOf(' '+w+' ')>=0 : hay.indexOf(' '+w)>=0; }); }
+function pMatch(p, q){ var hay=pHay(p); return String(q).toLowerCase().split(/\s+/).filter(Boolean).every(function(w){ return MultiSort.word(hay, w); }); }
 function surOf(f){ var h=P(f.head); return h.sur ? (tes(h.sur)||h.sur) : ''; }
 function undecided(f){ return f.support.Undecided || 0; }
 // best person to call for the family: someone with a mobile (eldest first), else the eldest voter
@@ -351,8 +351,8 @@ function leaderHtml(f){
 }
 function leaderSug(q){
   q=String(q||'').trim(); if (q.length<2) return '';
-  var Q=Fuzzy.query(q);
-  return Object.keys(M.P).map(P).filter(function(v){ return v.vote; }).map(function(v){ return {v:v, s:Fuzzy.score(v.name,Q)}; })
+  var Q=Fuzzy.query(q), gq=MultiSort.gpQ(q);
+  return Object.keys(M.P).map(P).filter(function(v){ return v.vote; }).map(function(v){ return {v:v, s:gq?(MultiSort.gpEq(v.gp,gq)?1:0):Fuzzy.score(v.name,Q)}; })
     .filter(function(x){ return x.s>0; }).sort(function(a,b){ return b.s-a.s; }).slice(0,6).map(function(x){ var v=x.v;
       return '<button class="po" data-lpick="'+esc(v.name+' ('+v.id+')')+'"><b>'+esc(v.name)+'</b><br><span>'+(v.age||'')+' ఏళ్ళు · 🏠 '+esc(v.house)+' · '+esc(v.street)+'</span></button>'; }).join('');
 }
@@ -405,7 +405,7 @@ function renderList(){
   $('sortTog').className='wtog'+(sdf?'':' act');
   $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(ms, SORTS))+'</span><span class="wc">'+(F.sopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortChips').classList.toggle('hide', !F.sopen);
-  if (F.sopen) $('sortChips').innerHTML = MultiSort.html(ms, SORTS);
+  if (F.sopen) $('sortChips').innerHTML = MultiSort.html(ms, SORTS, 'v');
   $('viewChips').innerHTML = '<button class="chip'+(F.tree?'':' on')+'" data-view="0">📋 జాబితా · List</button><button class="chip'+(F.tree?' on':'')+'" data-view="1">🌳 కుటుంబ చెట్లు · Trees</button>';
   $('sizeChips').innerHTML = [[1,'అన్నీ'],[2,'2+'],[5,'5+'],[10,'10+']].map(function(x){
     return '<button class="chip'+(F.size===x[0]&&!F.check&&!F.swing?' on':'')+'" data-size="'+x[0]+'">'+x[1]+' ఓటర్లు</button>'; }).join('')+
@@ -433,9 +433,11 @@ function renderList(){
     if (F.sur && !ms.some(function(p){ return p.sur===F.sur; })) return false;
     if (F.cas && (F.cas==='none' ? f.caste : f.caste!==F.cas)) return false;
     if (q){
-      var Q=F.Q, best=0, hit=null;
+      var Q=F.Q, best=0, hit=null, gq=MultiSort.gpQ(q);
       ms.forEach(function(p){
         var s = 0;
+        if (gq && p.vote && MultiSort.gpEq(p.gp,gq)){ if (100>best){ best=100; hit=p; } return; }   // GP no.: exact voter
+        if (gq) return;
         if (String(p.house||'').toLowerCase().indexOf(q)===0 || cte(p.caste).indexOf(q)>=0 || tes(p.sur).indexOf(q)>=0) s=40;
         else if (pMatch(p, q)) s=30;   // any column: phone, GP no., ward, street, support, relative, age…
         var a = Fuzzy.score(p.name, Q), b = Fuzzy.score(p.name+' '+p.sur+' '+(p.caste||'')+' '+leaderName(p.leader), Q);
@@ -451,11 +453,12 @@ function renderList(){
     var fh=function(f){ var h=famHead(f)||P(f.head); return h.house||''; };
     var byV=function(a,b){ return subFam(b).voters-subFam(a).voters || b.houseCount-a.houseCount; };
     // sort priority ① → ② → ③ (../sort.js); d = 1 is each key's natural order
-    var FS = { v: function(a,b){ return subFam(b).voters-subFam(a).voters; }, h: function(a,b){ return hnCmp(fh(a),fh(b)); },
+    var fg=function(f){ return Math.min.apply(null, f.members.map(P).filter(function(p){ return p.vote; }).map(function(p){ return MultiSort.gpn(p.gp); }).concat([1e9])); };
+    var FS = { gp: function(a,b){ return fg(a)-fg(b); }, v: function(a,b){ return subFam(b).voters-subFam(a).voters; }, h: function(a,b){ return hnCmp(fh(a),fh(b)); },
       w: function(a,b){ return fw(a)-fw(b); }, n: function(a,b){ return b.houseCount-a.houseCount; },
       s: function(a,b){ return String(P(a.head).sur||'').localeCompare(String(P(b.head).sur||'')); },
       c: function(a,b){ return cte(a.caste||'').localeCompare(cte(b.caste||'')); } };
-    var FL = { w: function(f){ return fw(f)===99?1:0; }, s: function(f){ return P(f.head).sur?0:1; }, c: function(f){ return f.caste?0:1; }, h: function(f){ return fh(f)?0:1; } };
+    var FL = { gp: function(f){ return fg(f)>=1e9?1:0; }, w: function(f){ return fw(f)===99?1:0; }, s: function(f){ return P(f.head).sur?0:1; }, c: function(f){ return f.caste?0:1; }, h: function(f){ return fh(f)?0:1; } };
     list = list.slice().sort(MultiSort.cmp(F.ms, FS, byV, FL));
   }
   if (q && !F.swing) list = list.slice().sort(function(a,b){ return (b._score||0)-(a._score||0) || b.voters-a.voters; });

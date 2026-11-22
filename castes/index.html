@@ -138,8 +138,9 @@ function load(){
   });
   loadVoters();
 }
+var GPM = {}; function gpMin(s){ return GPM[s]||1e9; }
 function loadVoters(){
-  if (!votersP) votersP = call('getSurnameVoters',WHO).then(function(v){ voters = v; SW = {}; v.forEach(function(x){ var o=SW[x[0]]||(SW[x[0]]={}), w=x[9]||'none'; o[w]=(o[w]||0)+1; }); return v; })
+  if (!votersP) votersP = call('getSurnameVoters',WHO).then(function(v){ voters = v; SW = {}; GPM = {}; v.forEach(function(x){ var g=MultiSort.gpn(x[10]); if (g<(GPM[x[0]]||1e9)) GPM[x[0]]=g; }); v.forEach(function(x){ var o=SW[x[0]]||(SW[x[0]]={}), w=x[9]||'none'; o[w]=(o[w]||0)+1; }); return v; })
     .catch(function(e){ votersP = null; throw e; });
   return votersP;
 }
@@ -186,7 +187,7 @@ $('casteC').onclick=function(e){
 try{ CS = JSON.parse(localStorage.getItem('cs_csel')) || []; }catch(x){ CS=[]; }
 
 /* ---------- list view ---------- */
-var SORTS = [['v','ఓటర్లు ఎక్కువ','Most voters'],['w','వార్డు','Ward'],['c','కులం','Caste'],['a','ఇంటిపేరు A-Z','Surname']];
+var SORTS = [['gp','GP క్ర.సం.','GP no.'],['v','ఓటర్లు ఎక్కువ','Most voters'],['w','వార్డు','Ward'],['c','కులం','Caste'],['a','ఇంటిపేరు A-Z','Surname']];
 function cTe(c){ var x=CASTES.filter(function(k){ return k[0]===c; })[0]; return x?x[1]:String(c); }
 // surname's main ward = the ward with most of its voters (99 = no ward yet)
 function mainW(s){ var o=SW&&SW[s]||{}, best='none', n=-1; Object.keys(o).forEach(function(w){ if (w!=='none' && o[w]>n){ n=o[w]; best=w; } }); return best==='none'?99:Number(best); }
@@ -200,15 +201,15 @@ function renderFold(){
   $('sortTog').className='wtog'+(sdf?'':' act');
   $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+MultiSort.summary(MS, SORTS)+'</span><span class="wc">'+(SOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortC').classList.toggle('hide', !SOPEN);
-  if (SOPEN) $('sortC').innerHTML=MultiSort.html(MS, SORTS);
+  if (SOPEN) $('sortC').innerHTML=MultiSort.html(MS, SORTS, 'v');
 }
 $('filTog').onclick=function(){ FOPEN=!FOPEN; renderFold(); };
 $('sortTog').onclick=function(){ SOPEN=!SOPEN; renderFold(); };
 MultiSort.bind($('sortC'), function(){ return MS; }, function(st){ MS=st; try { localStorage.setItem('cs_ms', JSON.stringify(st)); } catch(e){}
-  if (st.some(function(x){ return x.k==='w'; }) && !voters){ renderFold(); loadVoters().then(renderList); return; } renderList(); });
+  if (st.some(function(x){ return x.k==='w'||x.k==='gp'; }) && !voters){ renderFold(); loadVoters().then(renderList); return; } renderList(); });
 function renderList(){
   renderWard(); renderCaste(); renderFold();
-  if ((W.length || MS.some(function(x){ return x.k==='w'; })) && !voters){ $('list').innerHTML='<div class="msg">వార్డుల వివరాలు లోడ్ అవుతున్నాయి… · Loading wards…</div>'; loadVoters().then(function(){ renderList(); }); return; }
+  if ((W.length || MS.some(function(x){ return x.k==='w'||x.k==='gp'; }) || MultiSort.gpQ(q)) && !voters){ $('list').innerHTML='<div class="msg">వార్డుల వివరాలు లోడ్ అవుతున్నాయి… · Loading wards…</div>'; loadVoters().then(function(){ renderList(); }); return; }
   var filled = rows.filter(function(r){ return NAMES.indexOf(r[3])>=0; });
   var tot = rows.reduce(function(a,r){return a+r[2];},0), done = filled.reduce(function(a,r){return a+r[2];},0);
   $('prog').textContent = 'మొత్తం పూర్తి · Done: '+filled.length+' / '+rows.length+' ఇంటిపేర్లు ('+Math.round(100*done/Math.max(tot,1))+'% ఓటర్లు)';
@@ -223,19 +224,20 @@ function renderList(){
     if (W.length && !wCount(r[1])) return false;
     if (CS.length && CS.indexOf(cOf(r))<0) return false;
     if (!q) return true;
+    var gq=MultiSort.gpQ(q); if (gq){ r._s = voters && voters.some(function(v){ return v[0]===r[1] && MultiSort.gpEq(v[10],gq); }) ? 100 : 0; return r._s>0; }   // GP no. → that voter's surname
     r._s = Fuzzy.score(r[1], Q) + (r[1].toLowerCase()===q||te(r[1])===q ? 50 : (r[1].toLowerCase().indexOf(q)===0||te(r[1]).indexOf(q)===0) ? 20 : (r[1].toLowerCase().indexOf(q)>=0||te(r[1]).indexOf(q)>=0) ? 8 : 0);
     if (!r._s){   // 🔎 also every other column of this page: caste (Telugu / English), "not recorded", voter count
       var c=cOf(r), ct=(CASTES.filter(function(x){ return x[0]===c; })[0]||[])[1]||'', hay=(' '+[r[1], te(r[1]), c, ct, NAMES.indexOf(r[3])>=0?'':'not recorded కులం లేదు', r[2]+' voters ఓటర్లు'].join(' ').replace(/\s+/g,' ').toLowerCase()+' ');
-      if (q.split(/\s+/).every(function(w){ return w.length<3 ? hay.indexOf(' '+w+' ')>=0 : hay.indexOf(' '+w)>=0; })) r._s=5;
+      if (q.split(/\s+/).every(function(w){ return MultiSort.word(hay, w); })) r._s=5;
     }
     return r._s>0;
   });
   var nV=function(r){ return W.length?wCount(r[1]):r[2]; }, byV=function(a,b){ return nV(b)-nV(a); };
   if (q) list.sort(function(a,b){ return b._s-a._s || b[2]-a[2]; });
   else list.sort(MultiSort.cmp(MS, {   // sort priority ① → ② → ③ (../sort.js)
-    v: byV, w: function(a,b){ return mainW(a[1])-mainW(b[1]); },
+    gp: function(a,b){ return gpMin(a[1])-gpMin(b[1]); }, v: byV, w: function(a,b){ return mainW(a[1])-mainW(b[1]); },
     c: function(a,b){ return cTe(cOf(a)).localeCompare(cTe(cOf(b))); }, a: function(a,b){ return String(a[1]).localeCompare(String(b[1])); }
-  }, byV, { w: function(r){ return mainW(r[1])===99?1:0; }, c: function(r){ return cOf(r)==='none'?1:0; } }));
+  }, byV, { gp: function(r){ return gpMin(r[1])>=1e9?1:0; }, w: function(r){ return mainW(r[1])===99?1:0; }, c: function(r){ return cOf(r)==='none'?1:0; } }));
   if (!list.length){ $('list').innerHTML='<div class="msg">'+(mode==='missing'&&!q?'అన్నీ పూర్తయ్యాయి 🎉':'ఏమీ లేవు')+'</div>'; return; }
   $('list').innerHTML = list.slice(0,200).map(function(r){
     var cur=r[3], ok=NAMES.indexOf(cur)>=0;
@@ -262,7 +264,8 @@ function renderOne(s){
         $('vr').onclick=function(){ renderOne(s); }; });
     return;
   }
-  var all = voters.filter(function(v){ return v[0]===s; }), mine = all.filter(function(v){ return inW(v[9]); });
+  var all = voters.filter(function(v){ return v[0]===s; }), mine = all.filter(function(v){ return inW(v[9]); })
+    .sort(function(a,b){ return MultiSort.gpn(a[10])-MultiSort.gpn(b[10]); });   // GP order: houses and people
   var houses = {}, order = [];
   mine.forEach(function(v){ var k=v[7]+'|'+v[6]; if(!houses[k]){ houses[k]=[]; order.push(k); } houses[k].push(v); });
   if (!order.length){ $('people').innerHTML='<div class="msg">ఈ ఇంటిపేరుతో ఓటర్లు లేరు</div>'; return; }
