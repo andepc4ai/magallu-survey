@@ -244,7 +244,7 @@ select.chip{appearance:auto;font-weight:700}
 .dt{width:100%;border-collapse:collapse;font-size:.85rem}.dt th{text-align:left;color:var(--muted);font-weight:600;padding:4px 4px;border-bottom:1px solid #e7e5e4}.dt td{padding:7px 4px;border-bottom:1px solid #f5f5f4;vertical-align:top}
 .dt small{color:var(--muted)}
 #vHouse{z-index:22}#vDrill{z-index:21}
-[data-dr]{cursor:pointer}.hr[data-dr]:active,tr[data-dr]:active,.tile[data-dr]:active{background:#fef9c3}
+[data-dr]{cursor:pointer}.hall{flex:none;background:#1c1917;color:#fde047;border-radius:999px;padding:6px 12px;font-size:.85rem;font-weight:700;white-space:nowrap}.hall:active{opacity:.8}.hr[data-dr]:active,tr[data-dr]:active,.tile[data-dr]:active{background:#fef9c3}
 .tile[data-ftree]{cursor:pointer}.tile[data-ftree] small::after,.tile[data-dr] small::after,.hr[data-dr] .hv small::after{content:' ›'}
 .dv{display:block;width:100%;text-align:left;background:#fff;border:1px solid #e7e5e4;border-radius:12px;padding:8px 10px;margin:0 0 6px;font:inherit;color:inherit;cursor:pointer}
 .dv .l1{display:flex;align-items:center;gap:6px;min-width:0}.dv .l1 .nm{display:block;flex:1;min-width:0;font-weight:700}
@@ -336,7 +336,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 23 Nov · 12:00 -->
+    <!-- app version: 23 Nov · 14:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1072,8 +1072,11 @@ function openHouse(hid){
 }
 function closeHouse(){
   if (S.famBack!=null){ var b=S.famBack; S.famBack=null; location.href='family/'+b; return; }   // opened from the Families page: go back there
-  S.hpick=null; S.hhist=false; S.vdel=null;
+  S.hpick=null; S.hhist=false; S.vdel=null; S.drNav=null;
   S.openHouse=null; $('vHouse').classList.add('hide'); document.body.style.overflow=''; renderList();
+  // back on the dashboard / its voter list: show the edits made in the house at once (they are already in S.rows)
+  if (!$('vDash').classList.contains('hide')){ var ds=$('vDash').scrollTop; renderDash(); $('vDash').scrollTop=ds; }
+  if (DRL && !$('vDrill').classList.contains('hide')){ var dl=$('vDrill').scrollTop; renderDrill(); $('vDrill').scrollTop=dl; }
 }
 $('btnBack').onclick=closeHouse;
 
@@ -1156,9 +1159,9 @@ function renderHouse(){
     '</div>';
   }).join('');
   html += goneHtml(h) + splitHtml(h);
-  var idx = nextHouseIndex(h), pdx = nextHouseIndex(h, -1);
-  html += (idx<0 && pdx<0) ? '<button class="next" data-back="1">← వెనక్కి · Back</button>'
-    : '<div class="nav2"><button class="next"'+(pdx<0?' disabled':'')+' data-prev="1">← ముందు ఇల్లు <small>Previous</small></button><button class="next"'+(idx<0?' disabled':'')+' data-next="1">తర్వాతి ఇల్లు → <small>Next</small></button></div>';
+  var idx = nextHouseId(h), pdx = nextHouseId(h, -1), inL = S.drNav ? ' · జాబితాలో' : '';   // "in the list" when following a dashboard list
+  html += (!idx && !pdx) ? '<button class="next" data-back="1">← వెనక్కి · Back</button>'
+    : '<div class="nav2"><button class="next"'+(pdx?'':' disabled')+' data-prev="1">← ముందు ఇల్లు <small>Previous'+inL+'</small></button><button class="next"'+(idx?'':' disabled')+' data-next="1">తర్వాతి ఇల్లు → <small>Next'+inL+'</small></button></div>';
   $('hBody').innerHTML = html;
 }
 /* ---------- visits: many per voter; wrong ones can be deleted ---------- */
@@ -1315,7 +1318,12 @@ function issueHtml(v){
     '<button class="done" data-fold="'+esc(k)+'">'+(cur.length?'✓ అయింది':'మూసివేయి')+'</button></div><div class="iss">'+
     ISS.map(function(x){return '<button class="tb'+(cur.indexOf(x.v)>=0?' on':'')+'" data-issue="'+x.v+'">'+x.te+'<small>'+x.en+'</small></button>';}).join('')+'</div>';
 }
-// next / previous house in the list exactly as shown (same filters and sort); dir -1 = previous
+// next / previous house id; dir -1 = previous. Opened from a dashboard voter list (S.drNav = that list's houses in the
+// order shown, GP no. by default): follow that list, so no voter in it is skipped. Otherwise the house list as shown.
+function nextHouseId(h, dir){
+  if (S.drNav){ var i = S.drNav.indexOf(h.id), k = i + (dir||1); return i>=0 && k>=0 && k<S.drNav.length && S.hById[S.drNav[k]] ? S.drNav[k] : null; }
+  var j = nextHouseIndex(h, dir); return j>=0 ? S.houses[j].id : null;
+}
 function nextHouseIndex(h, dir){
   var list = sortHouses(S.houses.filter(inScope)), j = list.indexOf(h) + (dir||1);
   return list.indexOf(h)>=0 && j>=0 && j<list.length ? S.houses.indexOf(list[j]) : -1;
@@ -1412,8 +1420,8 @@ $('hBody').onclick=function(e){
     var cur2=issues(vs); edit(vs,{issueStatus: cur2.map(function(x){ return x+':'+(st[x]||'Open'); }).join('; ')}); toast('✓ '+isb.textContent); renderHouse(); return; }
   var pcb=e.target.closest('[data-pc]');
   if (pcb){ var vp=S.byId[pcb.closest('[data-id]').dataset.id]; edit(vp,{caste:pcb.dataset.pc}); delete S.open[vp.id+':caste']; toast('కులం ✓'); renderHouse(); return; }
-  if (e.target.closest('[data-next]')){ var i=nextHouseIndex(h); if(i>=0) openHouse(S.houses[i].id); else closeHouse(); return; }
-  if (e.target.closest('[data-prev]')){ var k=nextHouseIndex(h,-1); if(k>=0) openHouse(S.houses[k].id); return; }
+  if (e.target.closest('[data-next]')){ var i=nextHouseId(h); if(i) openHouse(i); else closeHouse(); return; }
+  if (e.target.closest('[data-prev]')){ var k=nextHouseId(h,-1); if(k) openHouse(k); return; }
   if (e.target.closest('[data-back]')){ closeHouse(); return; }
   var b=e.target.closest('[data-f]'); if(!b) return;
   var v=S.byId[b.closest('[data-id]').dataset.id], f=b.dataset.f, val=b.dataset.v, ch={};
@@ -1818,7 +1826,7 @@ function renderDash(){
     h += '<details class="dcard" data-dk="turn"><summary><h3>🗳️ పోలింగ్ <span class="en">Turnout</span></h3></summary><div class="tiles" style="margin:0">'+tile(pct(nv,total)+'%','ఓటు వేశారు','Voted · '+nv+' / '+total, drA('ఓటు వేశారు · Voted', rows.filter(function(v){ return v.voted; })))+tile(pct(spv,sp.length)+'%','మనవాళ్ళు వేశారు','Supporters · '+spv+' / '+sp.length, drA('మనవాళ్ళు — ఇంకా వేయలేదు · Supporters not voted', sp.filter(function(v){ return !v.voted; })))+'</div></details>'; }
   // support
   var so=stat(rows);
-  h += '<details class="dcard" data-dk="sup"><summary><h3>మద్దతు <span class="en">Support</span></h3></summary>'+(isChart()
+  h += '<details class="dcard" data-dk="sup"><summary><h3>మద్దతు <span class="en">Support</span></h3><span class="hall"'+drA('మద్దతు · అందరూ · Support · all', rows)+'>అందరూ '+total+' ›</span></summary>'+(isChart()
     ? supBar(so,'sbarD',rows,'మద్దతు · ')+supLegend(so,total,rows,'మద్దతు · ')
     : '<table class="dt"><tr><th>మద్దతు</th><th>ఓటర్లు</th><th>%</th></tr>'+SUPC.map(function(x){ var n=x[0]?so[x[0]]:so.na; return '<tr'+drA('మద్దతు · '+x[1], supOf(rows, x[0]||''))+'><td><i class="sw" style="background:'+x[2]+'"></i>'+x[1]+'</td><td>'+n+'</td><td>'+pct(n,total)+'%</td></tr>'; }).join('')+'</table>')+'</details>';
   // 🎯 main target voters
@@ -1907,7 +1915,7 @@ $('dBody').onclick=function(e){
   if (e.target.closest('[data-dfclr]')){ S.df={w:[], b:[], s:[], c:[], g:'', a:[]}; LS.set('dfil',S.df); renderDash(); return; }
   var dv=e.target.closest('[data-dview]'); if (dv){ S.dview=dv.dataset.dview; LS.set('dview',S.dview); renderDash(); return; }
   if (e.target.closest('[data-ftree]')){ location.href='family/#t=1&o=h'+(S.df.w.length?'&w='+encodeURIComponent(S.df.w.join(',')):''); return; }   // All voters → family trees
-  var dr=e.target.closest('[data-dr]'); if (dr && DR[dr.dataset.dr]){ openDrill(DR[dr.dataset.dr]); return; }
+  var dr=e.target.closest('[data-dr]'); if (dr && DR[dr.dataset.dr]){ if (dr.closest('summary')) e.preventDefault(); openDrill(DR[dr.dataset.dr]); return; }   // a › in a card title opens the list, the card stays as it was
   var tp=e.target.closest('[data-tip]'); if (tp){ toast(tp.dataset.tip); return; }
   if (e.target.closest('[data-wclr]')){ S.wsel=[]; LS.set('wsel',S.wsel); buildFilters(); renderList(); renderDash(); return; }
   var m=e.target.closest('[data-more]'); if (m){ S.dashMore[m.dataset.more]=!S.dashMore[m.dataset.more]; renderDash(); return; }
@@ -1995,6 +2003,7 @@ function renderDrill(){
   var gx = DRL.gone.filter(function(v){ return drOkG(v); }).sort(MultiSort.cmp(ms, DSORT, function(a,b){ return String(a.name).localeCompare(String(b.name)); }, DLAST));
   if (gq) gx = gx.filter(function(v){ return MultiSort.gpEq(v.gp,gq); });
   if (gx.length) $('drSub').textContent += ' · మరణించారు '+gx.length;
+  DRL.shown = r;   // the voters in the order shown: the house screen's previous / next follow it
   $('drList').innerHTML = r.slice(0,DRL.lim).map(drLine).join('') + (r.length>DRL.lim?'<button class="more" data-drmore="1">ఇంకా చూపించు ('+(r.length-DRL.lim)+')</button>':'') +
     (gx.length ? '<div class="drgh">మరణించారు · Expired — '+gx.length+' <small>ఓటు లేదు, లెక్కల్లో లేరు · not counted</small></div>'+gx.map(drLine).join('') : '');
 }
@@ -2016,7 +2025,12 @@ $('drFil').onchange=function(e){ var t=e.target; if (t.dataset.drsel){ DRL.f[t.d
 $('drList').onclick=function(e){
   if (e.target.closest('a.drcall')) return;
   if (e.target.closest('[data-drmore]')){ DRL.lim+=200; renderDrill(); return; }
-  var d=e.target.closest('[data-drh]'); if (d && d.dataset.drh && S.hById[d.dataset.drh]) openHouse(d.dataset.drh);
+  var d=e.target.closest('[data-drh]');
+  if (d && d.dataset.drh && S.hById[d.dataset.drh]){
+    var seen={}; S.drNav=[]; (DRL.shown||[]).forEach(function(v){ var id=v._h&&v._h.id; if (id && !seen[id]){ seen[id]=1; S.drNav.push(id); } });
+    if (!seen[d.dataset.drh]) S.drNav=null;   // an expired-only house: plain house navigation
+    openHouse(d.dataset.drh);
+  }
 };
 // 👥 who used the app (admin only) — loaded from the server only when this card is opened
 function usageCard(){
