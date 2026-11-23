@@ -336,7 +336,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 23 Nov · 14:00 -->
+    <!-- app version: 23 Nov · 14:30 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -731,7 +731,7 @@ function ingest(raw){
 }
 // expired = on the roll as Expired (ASDD) OR a volunteer answered ఓటు వేయగలరా = మరణించారు. Grey, never counted.
 function regroup(all){
-  all.forEach(function(v){ v.volExp = !v.sgone && v.avail==='Expired'; v.gone = v.sgone || (v.volExp ? 'Expired (volunteer)' : ''); });
+  all.forEach(function(v){ v.volExp = !v.sgone && v.avail==='Expired'; v.volNo = !v.sgone && !v.volExp && v.avail==='No'; v.gone = v.sgone || (v.volExp ? 'Expired (volunteer)' : v.volNo ? 'Cannot vote (volunteer)' : ''); });   // 23 Nov: ❌ రాలేరు also leaves the counts
   S.rows = all.filter(function(v){ return !v.gone; }); S.gone = all.filter(function(v){ return v.gone; }); S.byId = {};
   all.forEach(function(v){ S.byId[v.id]=v; });
   buildHouses();
@@ -814,9 +814,9 @@ function edit(v, f){
   // answering a question for someone never visited counts as a visit
   if (f.visited==='Visited' && !f.visits && !v.visited) f.visits=[newVisitId()];
   if (f.visits && S.geo && Date.now()-S.geo.t < 5*60000) f.geo = S.geo.lat.toFixed(6)+','+S.geo.lng.toFixed(6)+','+Math.round(S.geo.acc);
-  var expWas = v.avail==='Expired';
+  var expWas = v.avail==='Expired' || v.avail==='No';
   applyLocal(v,f); if (!('voted' in f && Object.keys(f).length===1)) v.vol = S.user.name;
-  if ((v.avail==='Expired')!==expWas){ regroup(S.rows.concat(S.gone)); if (v.avail==='Expired') S.vexp=null; }   // మరణించారు: moves to the grey box, out of every count
+  if ((v.avail==='Expired' || v.avail==='No')!==expWas){ regroup(S.rows.concat(S.gone)); if (v.avail==='Expired') S.vexp=null; }   // మరణించారు: moves to the grey box, out of every count
   var p = S.pending[v.id] || (S.pending[v.id] = {s:v.s,r:v.r,e:v.e,f:{}});
   for (var k in f) p.f[k] = k==='visits' ? (p.f.visits||[]).concat(f.visits) : f[k];
   LS.set('pending',S.pending);
@@ -1082,20 +1082,20 @@ $('btnBack').onclick=closeHouse;
 
 /* ---------- removed from the roll (Roll Status = Removed): shown in red, never counted ---------- */
 // election uses the 2025 list: only those who have died lose their vote (Anudeep, 2026-11-13)
-function stillVotes(r){ return !/expired/i.test(String(r||'')); }
+function stillVotes(r){ return !/expired|duplicate/i.test(String(r||'')); }   // 23 Nov: duplicates no longer counted (same as the printed report)
 function r26Html(v){ return v.r26 ? '<div class="r26b">⚠ 2026 జాబితాలో తొలగించారు: <b>'+esc(goneTe(v.r26))+'</b> — 2025 జాబితా ప్రకారం ఓటు ఉంది, తప్పకుండా కలవాలి <span class="en">Removed in 2026 ('+esc(v.r26)+'), still votes on the 2025 list</span></div>' : ''; }
 function goneTe(r){
-  r = String(r||''); var t = /expired/i.test(r)?'మరణించారు':/shift/i.test(r)?'ఊరు మారారు':/duplicate/i.test(r)?'రెండుసార్లు నమోదు':
+  r = String(r||''); var t = /cannot vote/i.test(r)?'ఓటు వేయలేరు':/expired/i.test(r)?'మరణించారు':/shift/i.test(r)?'ఊరు మారారు':/duplicate/i.test(r)?'రెండుసార్లు నమోదు':
     /absent|untrace/i.test(r)?'కనిపించలేదు':/asdd/i.test(r)?'ASDD జాబితాలో లేరు':'తొలగించారు';
   var still = (/still on roll as (\w+)/i.exec(r)||[])[1], other = /another booth/i.test(r);
   return t + (still?' · ఇప్పుడు '+still+' గా ఉన్నారు':'') + (other?' · వేరే బూత్‌లో ఉండవచ్చు':'');
 }
 function goneHtml(h){
   if (!h.gone || !h.gone.length) return '';
-  return '<div class="gonebox"><div class="goneh">మరణించారు <span class="en">Expired · '+h.gone.length+'</span></div>'+
+  return '<div class="gonebox"><div class="goneh">ఓటు వేయలేనివారు <span class="en">Cannot vote · '+h.gone.length+'</span></div>'+
     h.gone.map(function(v){ return '<div class="goner" data-id="'+esc(v.id)+'"><b>'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+nmHtml(v)+'</b><span>'+esc(v.age)+' ఏళ్ళు · '+esc(v.e)+'</span>'+
-      '<i>'+esc(goneTe(v.gone))+' <small>· '+(v.volExp?'వాలంటీర్ నమోదు'+(v.vol?' ('+esc(v.vol)+')':'')+' · marked in app':'2026 జాబితా · '+esc(v.gone))+'</small></i>'+
-      (v.volExp?'<button class="goneundo" data-unexp="'+esc(v.id)+'">↩ పొరపాటు — తిరిగి ఓటరుగా చేర్చు <small>Undo</small></button>':'')+'</div>'; }).join('')+
+      '<i>'+esc(goneTe(v.gone))+' <small>· '+(v.volExp||v.volNo?'వాలంటీర్ నమోదు'+(v.vol?' ('+esc(v.vol)+')':'')+' · marked in app':'2026 జాబితా · '+esc(v.gone))+'</small></i>'+
+      (v.volExp||v.volNo?'<button class="goneundo" data-unexp="'+esc(v.id)+'">↩ పొరపాటు — తిరిగి ఓటరుగా చేర్చు <small>Undo</small></button>':'')+'</div>'; }).join('')+
     '<div class="gonen">ఓటు లేదు — లెక్కల్లో చేర్చలేదు · No vote, not counted</div></div>';
 }
 // name: Telugu big first, English small under it (English only when there is no Telugu yet)
@@ -1788,6 +1788,11 @@ function renderDash(){
   h += '<div class="tiles">'+
     tile(total,'అందరూ ఓటర్లు','All voters · list', drA('అందరూ ఓటర్లు · All voters', rows))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
     tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
+  // 23 Nov: win mark and +15% target (same rule as the printed report): voters here already exclude expired / duplicate / ❌
+  var wRows=rows.filter(function(v){ return v.ward!=='' && v.ward!=null; }), wSup=wRows.filter(isSup).length, wMark=Math.floor(wRows.length/2)+1,   // only voters with a ward (on the GP roll)
+     wDummy=0, wTgt=Math.ceil(wMark*1.15), wNeed=Math.max(wTgt-wSup,0);
+  h += '<div class="tiles">'+tile(wMark,'గెలుపు సంఖ్య','Win mark · '+wRows.length+' can vote')+tile(wTgt,'లక్ష్యం +15%','Target · 15% buffer')+
+    tile(wSup,'పూర్తి + మొగ్గు','Strong + Leaning', drA('పూర్తి + మొగ్గు · Strong + Leaning', wRows.filter(isSup)))+tile(wNeed||'✔','ఇంకా కావాలి','Still needed for target')+'</div>';
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
   S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
@@ -1805,7 +1810,7 @@ function renderDash(){
     R('2025 ఓటర్ల జాబితా <small>rows in “All Voters”</small>', rA+rG)+
     R('➕ 2026 కొత్త ఓటర్లు <small>“New Voters 2026”</small>', rN)+
     R('= జాబితాలో మొత్తం పేర్లు <small>Names on the lists</small>', rA+rG+rN)+
-    (rG?R('➖ మరణించినవారు <small>Expired — not counted'+(Object.keys(gr).length>1?' · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', '):'')+'</small>', rG, 'goner2', drA('మరణించారు · Expired', [], S.gone)):'')+
+    (rG?R('➖ ఓటు వేయలేనివారు <small>Cannot vote (expired / duplicate / ❌) — not counted'+(Object.keys(gr).length>1?' · '+Object.keys(gr).map(function(k){ return esc(k)+' '+gr[k]; }).join(', '):'')+'</small>', rG, 'goner2', drA('ఓటు వేయలేనివారు · Cannot vote', [], S.gone)):'')+
     R('<b>= మొత్తం ఓటర్లు</b> <small>Voters in the app — every one counts</small>', rA+rN)+
     '</table><div class="dsubh">ఈ '+(rA+rN)+' మందిలో <span class="en">Of these</span></div><table class="dt">'+
     R('✓ వార్డు ఉన్నవారు <small>Have a ward (Excel “Can vote”)</small>', withW)+
@@ -2002,10 +2007,10 @@ function renderDrill(){
   if (DRL.so) $('drSort').innerHTML = MultiSort.html(ms, DRSORTS, 'gp');
   var gx = DRL.gone.filter(function(v){ return drOkG(v); }).sort(MultiSort.cmp(ms, DSORT, function(a,b){ return String(a.name).localeCompare(String(b.name)); }, DLAST));
   if (gq) gx = gx.filter(function(v){ return MultiSort.gpEq(v.gp,gq); });
-  if (gx.length) $('drSub').textContent += ' · మరణించారు '+gx.length;
+  if (gx.length) $('drSub').textContent += ' · ఓటు వేయలేనివారు '+gx.length;
   DRL.shown = r;   // the voters in the order shown: the house screen's previous / next follow it
   $('drList').innerHTML = r.slice(0,DRL.lim).map(drLine).join('') + (r.length>DRL.lim?'<button class="more" data-drmore="1">ఇంకా చూపించు ('+(r.length-DRL.lim)+')</button>':'') +
-    (gx.length ? '<div class="drgh">మరణించారు · Expired — '+gx.length+' <small>ఓటు లేదు, లెక్కల్లో లేరు · not counted</small></div>'+gx.map(drLine).join('') : '');
+    (gx.length ? '<div class="drgh">ఓటు వేయలేనివారు · Cannot vote — '+gx.length+' <small>ఓటు లేదు, లెక్కల్లో లేరు · not counted</small></div>'+gx.map(drLine).join('') : '');
 }
 $('btnDrillBack').onclick=function(){ $('vDrill').classList.add('hide'); DRL=null; };
 MultiSort.bind($('drSort'), function(){ return DRL.ms; }, function(st){ DRL.ms=st; LS.set('drms2',st); DRL.lim=100; renderDrill(); });
