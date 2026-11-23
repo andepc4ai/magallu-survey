@@ -92,7 +92,7 @@ function call(fn, args){
 }
 function st(cls, t){ var e=$('st'); e.className='st '+cls; e.textContent=t; }
 var U = LS.get('mvs_user');
-var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:[], street:[], sur:[], q:'', limit:60, ms:MultiSort.norm(LS.get('wd_ms'),'v'), fo:false, so:false }, queue = {}, busy = false;
+var H = [], byId = {}, W = LS.get('wd_pick') || '', F = { tab:'none', booth:[], street:[], sur:[], q:'', limit:60, ms:MultiSort.norm(LS.get('wd_ms2'),'gp'), fo:false, so:false }, queue = {}, busy = false;
 var staged = LS.get('wd_staged') || {}, MOPEN = {};   // marked but not yet applied: {houseId: ward}
 
 var who = U && U.name && U.pin && !U.reader ? [U.name, U.pin] : ['', ''];   // open page: works without login; Readers save in open mode
@@ -134,26 +134,26 @@ function buildSelects(){
   var b={}, s={}, n={}; H.forEach(function(h){ b[h.booth]=(b[h.booth]||0)+1; if (inA(F.booth, h.booth)) s[h.sec]=(s[h.sec]||0)+1;
     if (inA(F.booth, h.booth) && inA(F.street, h.sec)) (h.surs||[]).forEach(function(x){ n[x]=(n[x]||0)+1; }); });
   F.booth = F.booth.filter(function(x){ return b[x]; }); F.street = F.street.filter(function(x){ return s[x]; });
-  $('fil').innerHTML = mSel('b', '🗳️ బూత్', F.booth, Object.keys(b).sort().map(function(x){ return [x, String(bd(x)), b[x]+' ఇళ్ళు']; })) +
+  $('fil').innerHTML = 
     mSel('s', '🛣️ వీధి', F.street, Object.keys(s).sort().map(function(x){ return [x, x, s[x]+' ఇళ్ళు']; })) +
     mSel('n', '👪 ఇంటిపేరు', F.sur, Object.keys(n).sort(function(x,y){ return n[y]-n[x] || x.localeCompare(y); }).map(function(x){ return [x, x, n[x]+' ఇళ్ళు']; }));
   foldBars();
 }
-var SORTS = [['gp','GP క్ర.సం.','GP no.'],['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward'],['b','బూత్','Booth']];
+var SORTS = [['gp','GP క్ర.సం.','GP no.'],['v','ఓటర్లు ఎక్కువ','Most voters'],['h','ఇంటి నం.','House no.'],['w','వార్డు','Ward']];
 function foldBars(){
   var sum=[F.booth.length?'బూత్ '+F.booth.map(bd).join(','):'', F.street.length?F.street.length+' వీధి':'', F.sur.length?F.sur.join(','):''].filter(String);
   $('filTog').className='wtog'+(sum.length?' act':'');
   $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+esc(sum.length?sum.join(' · '):'అన్నీ · All')+'</span><span class="wc">'+(F.fo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('fil').classList.toggle('hide', !F.fo);
-  var sdf = F.ms[0].k==='v' && F.ms[0].d===1 && !F.ms[1].k;
+  var sdf = F.ms[0].k==='gp' && F.ms[0].d===1 && !F.ms[1].k;
   $('sortTog').className='wtog'+(sdf?'':' act');
   $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(F.ms, SORTS))+' (వీధి లోపల)</span><span class="wc">'+(F.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortC').classList.toggle('hide', !F.so);
-  if (F.so) $('sortC').innerHTML=MultiSort.html(F.ms, SORTS, 'v');
+  if (F.so) $('sortC').innerHTML=MultiSort.html(F.ms, SORTS, 'gp');
 }
 $('filTog').onclick=function(){ F.fo=!F.fo; foldBars(); };
 $('sortTog').onclick=function(){ F.so=!F.so; foldBars(); };
-MultiSort.bind($('sortC'), function(){ return F.ms; }, function(st){ F.ms=st; LS.set('wd_ms',st); F.limit=60; foldBars(); render(); });
+MultiSort.bind($('sortC'), function(){ return F.ms; }, function(st){ F.ms=st; LS.set('wd_ms2',st); F.limit=60; foldBars(); render(); });
 // houses stay grouped by street; inside a street: sort priority ① → ② → ③ (../sort.js)
 function wn(h){ var w=hWard(h); return w===''?99:w==='mix'?98:Number(w); }
 function hkc(a,b){ return a.sk<b.sk?-1:a.sk>b.sk?1:0; }
@@ -201,7 +201,7 @@ function render(){
     return '<div class="sec"><div class="sh"><b>'+esc(g.sec||'—')+' <span>· '+all.length+' ఇళ్ళు</span></b>'+
       (W && open ? '<button class="all" data-all="'+esc(g.sec)+'">వార్డు లేని '+open+' → '+W+'</button>' : '')+'</div>'+
       g.hs.map(function(h){ var w=hWard(h), ch=(h.id in staged);
-        return '<button class="hs'+(ch?' chg':'')+'" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· బూత్ '+esc(bd(h.booth))+' · '+h.n+' ఓటర్లు</span></b>'+
+        return '<button class="hs'+(ch?' chg':'')+'" data-h="'+esc(h.id)+'"><span class="hn"><b>🏠 '+esc(h.house)+' <span style="display:inline;font-weight:400">· '+h.n+' ఓటర్లు</span></b>'+
           (w==='mix'&&h.mix ? h.mix.map(function(m){ return '<span class="mixw"><b>'+(m[0]?'వార్డు '+esc(m[0]):'వార్డు లేదు')+' ('+m[1].length+'):</b> '+esc(m[1].join(', '))+'</span>'; }).join('')
             : '<span>'+esc(h.names)+'</span>')+'</span>'+
           (ch ? '<span class="wb chg">'+(w||'✕')+'<small>'+(h.w0&&h.w0!=='mix'?'ముందు '+h.w0:h.w0==='mix'?'ముందు కలగలుపు':'కొత్త')+'</small></span>'

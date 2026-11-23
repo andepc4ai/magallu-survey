@@ -117,7 +117,7 @@ function call(fn, args){
 }
 var CS = [], COPEN = false;   // caste filter: chosen castes ('none' = not set yet), chips open
 var W = [], WOPEN = false, SW = null;   // ward filter: chosen wards, chips open, {surname: {ward: voters}}
-var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'all', MS = MultiSort.norm((function(){ try { return JSON.parse(localStorage.getItem('cs_ms')); } catch(e){ return null; } })(), 'v'), FOPEN = false, SOPEN = false, q = '', queue = {}, busy = false, listScroll = 0;
+var Q = null, rows = [], bySur = {}, voters = null, votersP = null, mode = 'all', MS = MultiSort.norm((function(){ try { return JSON.parse(localStorage.getItem('cs_ms2')); } catch(e){ return null; } })(), 'gp'), FOPEN = false, SOPEN = false, q = '', queue = {}, busy = false, listScroll = 0;
 function te(s){ return TE[s] || ''; }
 function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
 function casteOptions(cur){
@@ -197,15 +197,15 @@ function renderFold(){
   $('filTog').className='wtog'+(W.length||CS.length||mode!=='all'?' act':'');
   $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+sum.join(' · ')+'</span><span class="wc">'+(FOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('filBox').classList.toggle('hide', !FOPEN);
-  var sdf = MS[0].k==='v' && MS[0].d===1 && !MS[1].k;
+  var sdf = MS[0].k==='gp' && MS[0].d===1 && !MS[1].k;
   $('sortTog').className='wtog'+(sdf?'':' act');
   $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+MultiSort.summary(MS, SORTS)+'</span><span class="wc">'+(SOPEN?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortC').classList.toggle('hide', !SOPEN);
-  if (SOPEN) $('sortC').innerHTML=MultiSort.html(MS, SORTS, 'v');
+  if (SOPEN) $('sortC').innerHTML=MultiSort.html(MS, SORTS, 'gp');
 }
 $('filTog').onclick=function(){ FOPEN=!FOPEN; renderFold(); };
 $('sortTog').onclick=function(){ SOPEN=!SOPEN; renderFold(); };
-MultiSort.bind($('sortC'), function(){ return MS; }, function(st){ MS=st; try { localStorage.setItem('cs_ms', JSON.stringify(st)); } catch(e){}
+MultiSort.bind($('sortC'), function(){ return MS; }, function(st){ MS=st; try { localStorage.setItem('cs_ms2', JSON.stringify(st)); } catch(e){}
   if (st.some(function(x){ return x.k==='w'||x.k==='gp'; }) && !voters){ renderFold(); loadVoters().then(renderList); return; } renderList(); });
 function renderList(){
   renderWard(); renderCaste(); renderFold();
@@ -271,7 +271,7 @@ function renderOne(s){
   if (!order.length){ $('people').innerHTML='<div class="msg">ఈ ఇంటిపేరుతో ఓటర్లు లేరు</div>'; return; }
   $('people').innerHTML = '<h3 style="margin:4px 2px 10px">'+(W.length?'📍 వార్డు '+W.map(wName).join(', ')+': ':'')+mine.length+' ఓటర్లు · '+order.length+' ఇళ్ళు'+(W.length?' <span style="font-weight:400;color:#6b665c">(మొత్తం '+all.length+')</span>':'')+'</h3>' + order.map(function(k){
     var hv = houses[k], h = hv[0];
-    return '<div class="hh"><div class="hd">🏠 '+esc(h[6]||'—')+' <span>'+esc(h[8])+' · బూత్ '+esc(({207:204,208:205,209:206})[h[7]]||h[7])+(h[9]?' · <b style="color:#854d0e">వార్డు '+esc(h[9])+'</b>':'')+'</span></div>'+
+    return '<div class="hh"><div class="hd">🏠 '+esc(h[6]||'—')+' <span>'+(h[9]?'<b style="color:#854d0e">📍 వార్డు '+esc(h[9])+'</b> · ':'')+esc(h[8])+'</span></div>'+
       hv.map(function(v){
         return '<div class="pp"><b>'+(v[10]?'<span class="gpn">GP '+esc(v[10])+'</span>':'')+(v[11]?esc(v[11])+' <small style="font-weight:400;font-size:.72rem;color:#78716c">'+esc(v[1])+'</small>':esc(v[1]))+'</b><span>'+(v[5]==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+esc(v[4])+' ఏళ్ళు · '+(REL[v[2]]||esc(v[2]))+': '+esc(v[3])+'</span></div>';
       }).join('')+'</div>';
