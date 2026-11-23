@@ -336,7 +336,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 23 Nov · 08:30 -->
+    <!-- app version: 23 Nov · 12:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1860,17 +1860,19 @@ function renderDash(){
       return {label:x?x[2]+' ఏళ్ళు':'వయసు లేదు', sub:(x&&x[3]?x[3]+' · ':'')+'👩 '+f+' · 👨 '+(r.length-f), rows:r}; }), 'వయసు', false);
   h += tgtH;   // 🎯 target voters sit right after surname (Anudeep's order, 16 Nov evening)
   h += streetH;   // 🛣️ street just before 👑 heads
+  // visits per day + by volunteer: only the login named "Admin" (Anudeep, 23 Nov), like the usage card
+  var iA = !!(S.user.admin && /^admin$/i.test(String(S.user.name||'').trim()));
   // visits per day (last 14 days)
-  if (V){
+  if (iA && V){
     var days=[], cnt={}; for (var i=13;i>=0;i--){ var k=dayKey(Date.now()-i*DAY); days.push(k); cnt[k]=0; }
     V.forEach(function(x){ if (x[0] in cnt) cnt[x[0]]++; });
     var mx=Math.max.apply(null, days.map(function(k){ return cnt[k]; }))||1;
     h += '<details class="dcard" data-dk="days"><summary><h3>రోజువారీ సందర్శనలు <span class="en">Visits per day · last 14 days</span></h3></summary>'+(isChart()
       ? '<div class="bars">'+days.map(function(k){ var n=cnt[k]; return '<div class="bc" title="'+k+': '+n+' visits" data-tip="'+k+': '+n+' సందర్శనలు"><span class="bv">'+(n||'')+'</span><i style="height:'+Math.max(n?4:0,Math.round(n*110/mx))+'px"></i><span class="bl">'+Number(k.slice(8))+'</span></div>'; }).join('')+'</div>'
       : '<table class="dt"><tr><th>తేదీ</th><th>సందర్శనలు</th></tr>'+days.slice().reverse().map(function(k){ return '<tr><td>'+k+'</td><td>'+cnt[k]+'</td></tr>'; }).join('')+'</table>')+'</details>';
-  } else h += '<div class="dcard">'+(S.dashErr?'📵 సందర్శనల వివరాలకు ఇంటర్నెట్ కావాలి':'⏳ సందర్శనలు లోడ్ అవుతున్నాయి…')+'</div>';
+  } else if (iA) h += '<div class="dcard">'+(S.dashErr?'📵 సందర్శనల వివరాలకు ఇంటర్నెట్ కావాలి':'⏳ సందర్శనలు లోడ్ అవుతున్నాయి…')+'</div>';
   // by volunteer
-  if (V){
+  if (iA && V){
     var by={}, wk=Date.now()-7*DAY;
     V.forEach(function(x){ var o=by[x[1]]||(by[x[1]]={n:0,w:0,t:0,p:{}}); o.n++; o.p[x[2]]=1; if (x[0]===today) o.t++; if (new Date(x[0]).getTime()>=wk-DAY) o.w++; });
     var names=Object.keys(by); if (!adm) names=names.filter(function(n){ return n===S.user.name; });
@@ -1881,7 +1883,7 @@ function renderDash(){
     else h += '<details class="dcard" data-dk="vol"><summary><h3>'+(adm?'వాలంటీర్ల వారీగా':'మీ పని')+' <span class="en">'+(adm?'By volunteer':'Your work')+'</span></h3></summary><table class="dt"><tr><th>పేరు</th><th>ఈ రోజు</th><th>7 రోజులు</th><th>మొత్తం</th><th>కలిసిన ఓటర్లు</th></tr>'+
       (names.length?names.map(function(n){ var o=by[n]; return '<tr'+drA(esc(n)+' కలిసిన ఓటర్లు', rows.filter(function(v){ return o.p[v.e]; }))+'><td>'+esc(n)+'</td><td>'+o.t+'</td><td>'+o.w+'</td><td>'+o.n+'</td><td>'+Object.keys(o.p).length+'</td></tr>'; }).join(''):'<tr><td colspan="5">ఇంకా సందర్శనలు లేవు</td></tr>')+'</table></details>';
   }
-  if (S.user.admin && /^admin$/i.test(String(S.user.name||'').trim())) h += usageCard();   // usage report: only the login named "Admin" (server checks too)
+  if (iA) h += usageCard();   // usage report: only the login named "Admin" (server checks too)
   h += rollCard;   // 📋 voter count near the end
   h += pivotCard(rows);   // 🧮 custom table is the very last card (Anudeep, 17 Nov)
   var keep=$('vDash').scrollTop; $('dBody').innerHTML=h; $('vDash').scrollTop=keep;
