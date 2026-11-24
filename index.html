@@ -336,7 +336,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 24 Nov · 19:00 -->
+    <!-- app version: 24 Nov · 21:30 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1648,6 +1648,8 @@ var PDIM = {   // key: [label, English, value of a voter, natural order?]
   gender:['👫 లింగం','Gender', function(v){ return v.gen==='Female'?'👩 స్త్రీ':v.gen==='Male'?'👨 పురుషుడు':'నమోదు కాలేదు'; }, 1],
   age:   ['🎂 వయసు','Age', ageG, 1],
   caste: ['🏷️ కులం','Caste', function(v){ return v.caste?(CASTE_TE[v.caste]||v.caste):'కులం నమోదు కాలేదు'; }],
+  cand:  ['👤 వార్డు సభ్యులు','Ward member', function(v){ var w=hWard(v._h), c=WCAND[w]; return c ? 'వార్డు '+w+' · '+c[0]+' (క్ర.సం. '+c[2]+')' : 'వార్డు లేదు'; }, 1],
+  sym:   ['🎗️ గుర్తు','Symbol', function(v){ var c=WCAND[hWard(v._h)]; return c ? c[1] : 'వార్డు లేదు'; }],
   sur:   ['👪 ఇంటిపేరు','Surname', function(v){ return String(v.surname||'').trim()||'ఇంటిపేరు లేదు'; }],
   street:['🛣️ వీధి','Street', function(v){ return v.sec||'—'; }],
   sup:   ['💪 మద్దతు','Support', function(v){ var i=['Strong','Leaning','Undecided','Opposed',''].indexOf(v.support||''); return i<0?String(v.support):(i+1)+'. '+SUPC[i][1]; }, 1],
