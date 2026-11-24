@@ -910,9 +910,9 @@ function wardChoices(){
 var RESV = {1:'BC(W)',2:'UR(W)',3:'SC(W)',4:'UR(W)',5:'UR',6:'UR(W)',7:'UR',8:'UR',9:'SC',10:'SC',11:'SC(W)',12:'SC'};
 var RESV_TE = {UR:'జనరల్', SC:'ఎస్సీ', BC:'బీసీ', ST:'ఎస్టీ'};
 // 24 Nov: ward member candidates and their election symbols
-var WCAND = {1:['షేక్ షఫియా','గౌను'],2:['వడ్డెల్లి సంధ్య','గౌను'],3:['గుంటి విజయశ్రీ','కుక్కర్'],4:['గుండెపోగు ప్రభావతి','కుక్కర్'],5:['గుంటి సీతయ్య','కుక్కర్'],6:['వంగల లక్ష్మి','గౌను'],
-  7:['దేశపోగు పుల్లయ్య','కుక్కర్'],8:['ఓర్సు పోతురాజు','గౌను'],9:['ముక్కు ధనలక్ష్మి','గౌను'],10:['మేడీ ప్రభాకరరావు','గౌను'],11:['కొమ్ము రాజ్యం','కుక్కర్'],12:['కోట రమేష్','కుక్కర్']};
-function candTe(w){ var c=WCAND[w]; return c ? '👤 '+c[0]+' ('+c[1]+')' : ''; }
+var WCAND = {1:['షేక్ షఫియా','గౌను',2],2:['వడ్డెల్లి సంధ్య','గౌను',2],3:['గుంటి విజయశ్రీ','కుక్కర్',1],4:['గుండెపోగు ప్రభావతి','కుక్కర్',1],5:['గుంటి సీతయ్య','కుక్కర్',1],6:['వంగల లక్ష్మి','గౌను',2],
+  7:['దేశపోగు పుల్లయ్య','కుక్కర్',1],8:['ఓర్సు పోతురాజు','గౌను',2],9:['ముక్కు ధనలక్ష్మి','గౌను',2],10:['మేడీ ప్రభాకరరావు','గౌను',2],11:['కొమ్ము రాజ్యం','కుక్కర్',1],12:['కోట రమేష్','కుక్కర్',1]};   // [name, symbol, ballot serial no.]
+function candTe(w){ var c=WCAND[w]; return c ? '👤 '+c[0]+' ('+c[1]+', క్ర.సం. '+c[2]+')' : ''; }
 function wChips(attr, sel, ch, n, unit){
   return '<button class="chip'+(sel.length?'':' on')+'" '+attr+'="all">అన్నీ<small>All</small></button>' +
     ch.map(function(w){ var r=RESV[w], wo=r&&/\(W\)/.test(r);
@@ -1824,7 +1824,7 @@ function renderDash(){
     '<div class="dsubh">వార్డు వారీగా <span class="en">By ward · tap a ward to see its voters</span></div>'+
     '<table class="dt"><tr><th>వార్డు</th><th>జాబితా<br><small>On roll</small></th><th style="color:#57534e">మరణం<br><small>Expired</small></th><th style="color:#c2410c">⚠ తొలగింపు<br><small>Moved/dup</small></th><th>✓ ఓటర్లు<br><small>Can vote</small></th></tr>'+
     wkeys.concat(noW.l?['none']:[]).map(function(k){ var o=wk[k]; wsum.l+=o.l; wsum.x+=o.x; wsum.m+=o.m; wsum.c+=o.c;
-      return '<tr'+drA((k==='none'?'వార్డు లేదు':'వార్డు '+k)+' · ఓటర్లు', o.rows, o.gone)+(k==='none'?' class="r26row"':'')+'><td>'+(k==='none'?'⚠ లేదు':'<b>'+esc(k)+'</b>'+(WCAND[k]?'<br><small>'+esc(WCAND[k][0])+' ('+esc(WCAND[k][1])+')</small>':''))+'</td><td>'+o.l+'</td><td style="color:#57534e">'+o.x+'</td><td style="color:#c2410c">'+o.m+'</td><td><b>'+o.c+'</b></td></tr>'; }).join('')+
+      return '<tr'+drA((k==='none'?'వార్డు లేదు':'వార్డు '+k)+' · ఓటర్లు', o.rows, o.gone)+(k==='none'?' class="r26row"':'')+'><td>'+(k==='none'?'⚠ లేదు':'<b>'+esc(k)+'</b>'+(WCAND[k]?'<br><small>'+esc(WCAND[k][0])+' ('+esc(WCAND[k][1])+', క్ర.సం. '+WCAND[k][2]+')</small>':''))+'</td><td>'+o.l+'</td><td style="color:#57534e">'+o.x+'</td><td style="color:#c2410c">'+o.m+'</td><td><b>'+o.c+'</b></td></tr>'; }).join('')+
     '<tr><td><b>మొత్తం</b></td><td><b>'+wsum.l+'</b></td><td style="color:#57534e"><b>'+wsum.x+'</b></td><td style="color:#c2410c"><b>'+wsum.m+'</b></td><td><b>'+wsum.c+'</b></td></tr></table>'+
     '<div class="dleg">✓ ఓటర్లు = జాబితా − మరణించినవారు. తొలగింపు (⚠) వారికి ఓటు ఉంది, వారు ✓ ఓటర్లలో ఉన్నారు. '+
     'Can vote = on roll − expired; moved/duplicate voters still vote and are inside “Can vote”.'+(noW.c?' Excel shows '+withW+' because it leaves out the '+noW.c+' voters with no ward yet; '+withW+' + '+noW.c+' = '+(rA+rN)+'.':'')+'</div>'+
