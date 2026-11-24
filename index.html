@@ -336,7 +336,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 23 Nov · 14:30 -->
+    <!-- app version: 24 Nov · 19:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -909,6 +909,10 @@ function wardChoices(){
 /* ward member reservations (panchayat election 2026): shown small inside every ward chip */
 var RESV = {1:'BC(W)',2:'UR(W)',3:'SC(W)',4:'UR(W)',5:'UR',6:'UR(W)',7:'UR',8:'UR',9:'SC',10:'SC',11:'SC(W)',12:'SC'};
 var RESV_TE = {UR:'జనరల్', SC:'ఎస్సీ', BC:'బీసీ', ST:'ఎస్టీ'};
+// 24 Nov: ward member candidates and their election symbols
+var WCAND = {1:['షేక్ షఫియా','గౌను'],2:['వడ్డెల్లి సంధ్య','గౌను'],3:['గుంటి విజయశ్రీ','కుక్కర్'],4:['గుండెపోగు ప్రభావతి','కుక్కర్'],5:['గుంటి సీతయ్య','కుక్కర్'],6:['వంగల లక్ష్మి','గౌను'],
+  7:['దేశపోగు పుల్లయ్య','కుక్కర్'],8:['ఓర్సు పోతురాజు','గౌను'],9:['ముక్కు ధనలక్ష్మి','గౌను'],10:['మేడీ ప్రభాకరరావు','గౌను'],11:['కొమ్ము రాజ్యం','కుక్కర్'],12:['కోట రమేష్','కుక్కర్']};
+function candTe(w){ var c=WCAND[w]; return c ? '👤 '+c[0]+' ('+c[1]+')' : ''; }
 function wChips(attr, sel, ch, n, unit){
   return '<button class="chip'+(sel.length?'':' on')+'" '+attr+'="all">అన్నీ<small>All</small></button>' +
     ch.map(function(w){ var r=RESV[w], wo=r&&/\(W\)/.test(r);
@@ -958,7 +962,7 @@ function hnCmp(a,b){ a=String(a||''); b=String(b||''); if (!a!==!b) return a?-1:
   var x=a.match(/\d+/g)||[], y=b.match(/\d+/g)||[]; for (var i=0;i<Math.max(x.length,y.length);i++){ var d=(+x[i]||0)-(+y[i]||0); if (d) return d; } return a.localeCompare(b); }
 function lFoldBars(st){
   var sl = (st||[]).filter(function(x){ return x[0]===S.stat; })[0];
-  var sum = [S.wsel.length?'వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(','):'', S.booth.length?'బూత్ '+S.booth.join(','):'',
+  var sum = [S.wsel.length?'వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(',')+(S.wsel.length===1&&WCAND[S.wsel[0]]?' · '+candTe(S.wsel[0]):''):'', S.booth.length?'బూత్ '+S.booth.join(','):'',
     S.sec.length?S.sec.length+' వీధి':'', S.lcaste.length?S.lcaste.length+' కులం':'', sl?sl[1]:''].filter(String);
   var on = S.wsel.length||S.booth.length||S.sec.length||S.lcaste.length;
   $('lFilTog').className='wtog'+(on?' act':'');
@@ -1094,7 +1098,7 @@ function goneHtml(h){
   if (!h.gone || !h.gone.length) return '';
   return '<div class="gonebox"><div class="goneh">ఓటు వేయలేనివారు <span class="en">Cannot vote · '+h.gone.length+'</span></div>'+
     h.gone.map(function(v){ return '<div class="goner" data-id="'+esc(v.id)+'"><b>'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+nmHtml(v)+'</b><span>'+esc(v.age)+' ఏళ్ళు · '+esc(v.e)+'</span>'+
-      '<i>'+esc(goneTe(v.gone))+' <small>· '+(v.volExp||v.volNo?'వాలంటీర్ నమోదు'+(v.vol?' ('+esc(v.vol)+')':'')+' · marked in app':'2026 జాబితా · '+esc(v.gone))+'</small></i>'+
+      '<i>'+esc(goneTe(v.gone))+' <small>· '+(v.volExp||v.volNo?'వార్డు సభ్యులు నమోదు'+(v.vol?' ('+esc(v.vol)+')':'')+' · marked in app':'2026 జాబితా · '+esc(v.gone))+'</small></i>'+
       (v.volExp||v.volNo?'<button class="goneundo" data-unexp="'+esc(v.id)+'">↩ పొరపాటు — తిరిగి ఓటరుగా చేర్చు <small>Undo</small></button>':'')+'</div>'; }).join('')+
     '<div class="gonen">ఓటు లేదు — లెక్కల్లో చేర్చలేదు · No vote, not counted</div></div>';
 }
@@ -1120,7 +1124,7 @@ function splitName(h){ var c={}; h.v.forEach(function(v){ if (S.split.ids[v.id])
 function renderHouse(){
   var h = S.hById[S.openHouse]; if(!h) return;
   $('hTitle').textContent = '🏠 ఇంటి నం. '+h.house;
-  $('hSub').textContent = '📍 వార్డు '+(hWard(h)==='none'?'లేదు':hWard(h)==='mix'?'కలగలుపు':hWard(h))+' · '+h.sec+' · '+h.v.length+' ఓటర్లు';
+  $('hSub').textContent = '📍 వార్డు '+(hWard(h)==='none'?'లేదు':hWard(h)==='mix'?'కలగలుపు':hWard(h))+(WCAND[hWard(h)]?' · '+candTe(hWard(h)):'')+' · '+h.sec+' · '+h.v.length+' ఓటర్లు';
   if (!h.v.length){ $('hBody').innerHTML = goneHtml(h)+'<button class="next" data-back="1">← వెనక్కి · Back</button>'; return; }   // only expired voters here
   var hw = h.v[0].ward;
   var sameWard = h.v.every(function(v){return v.ward===hw;});
@@ -1820,7 +1824,7 @@ function renderDash(){
     '<div class="dsubh">వార్డు వారీగా <span class="en">By ward · tap a ward to see its voters</span></div>'+
     '<table class="dt"><tr><th>వార్డు</th><th>జాబితా<br><small>On roll</small></th><th style="color:#57534e">మరణం<br><small>Expired</small></th><th style="color:#c2410c">⚠ తొలగింపు<br><small>Moved/dup</small></th><th>✓ ఓటర్లు<br><small>Can vote</small></th></tr>'+
     wkeys.concat(noW.l?['none']:[]).map(function(k){ var o=wk[k]; wsum.l+=o.l; wsum.x+=o.x; wsum.m+=o.m; wsum.c+=o.c;
-      return '<tr'+drA((k==='none'?'వార్డు లేదు':'వార్డు '+k)+' · ఓటర్లు', o.rows, o.gone)+(k==='none'?' class="r26row"':'')+'><td>'+(k==='none'?'⚠ లేదు':'<b>'+esc(k)+'</b>')+'</td><td>'+o.l+'</td><td style="color:#57534e">'+o.x+'</td><td style="color:#c2410c">'+o.m+'</td><td><b>'+o.c+'</b></td></tr>'; }).join('')+
+      return '<tr'+drA((k==='none'?'వార్డు లేదు':'వార్డు '+k)+' · ఓటర్లు', o.rows, o.gone)+(k==='none'?' class="r26row"':'')+'><td>'+(k==='none'?'⚠ లేదు':'<b>'+esc(k)+'</b>'+(WCAND[k]?'<br><small>'+esc(WCAND[k][0])+' ('+esc(WCAND[k][1])+')</small>':''))+'</td><td>'+o.l+'</td><td style="color:#57534e">'+o.x+'</td><td style="color:#c2410c">'+o.m+'</td><td><b>'+o.c+'</b></td></tr>'; }).join('')+
     '<tr><td><b>మొత్తం</b></td><td><b>'+wsum.l+'</b></td><td style="color:#57534e"><b>'+wsum.x+'</b></td><td style="color:#c2410c"><b>'+wsum.m+'</b></td><td><b>'+wsum.c+'</b></td></tr></table>'+
     '<div class="dleg">✓ ఓటర్లు = జాబితా − మరణించినవారు. తొలగింపు (⚠) వారికి ఓటు ఉంది, వారు ✓ ఓటర్లలో ఉన్నారు. '+
     'Can vote = on roll − expired; moved/duplicate voters still vote and are inside “Can vote”.'+(noW.c?' Excel shows '+withW+' because it leaves out the '+noW.c+' voters with no ward yet; '+withW+' + '+noW.c+' = '+(rA+rN)+'.':'')+'</div>'+
@@ -1850,7 +1854,7 @@ function renderDash(){
   // ward / street / caste / surname
   var gw=groupBy(rows, function(v){ return hWard(v._h); }), gwx=groupBy((S.gone||[]).filter(function(v){ return (!v._h || dfOk(v._h)) && (!S.df.c.length || S.df.c.indexOf(v.caste||'none')>=0) && (!S.df.g || (S.df.g==='F' ? v.gen==='Female' : v.gen==='Male')); }), function(v){ return v.ward===''||v.ward==null?'none':String(v.ward); });   // expired: shown grey at the end of each ward list
   h += dTable('ward','📍 వార్డు వారీగా','By ward', Object.keys(gw).sort(function(a,b){ return (a==='none')-(b==='none') || a-b; })
-    .map(function(k){ return {label:k==='none'?'వార్డు లేదు':'వార్డు '+k, sub:k==='none'?'':'🪑 '+resvTe(k)+' · '+RESV[k], rows:gw[k], gone:gwx[k]}; }), 'వార్డు', false);
+    .map(function(k){ return {label:k==='none'?'వార్డు లేదు':'వార్డు '+k, sub:k==='none'?'':candTe(k)+' · 🪑 '+resvTe(k)+' · '+RESV[k], rows:gw[k], gone:gwx[k]}; }), 'వార్డు', false);
   var gs=groupBy(rows, function(v){ return v.sec||'—'; });
   var streetH = dTable('street','🛣️ వీధి వారీగా','By street / location', Object.keys(gs).map(function(k){ return {label:esc(k), rows:gs[k], sub:Object.keys(groupBy(gs[k],function(v){ return v._h.id; })).length+' ఇళ్ళు'}; })
     .sort(function(a,b){ return b.rows.length-a.rows.length; }), 'వీధి', false, 12);
@@ -1890,10 +1894,10 @@ function renderDash(){
     V.forEach(function(x){ var o=by[x[1]]||(by[x[1]]={n:0,w:0,t:0,p:{}}); o.n++; o.p[x[2]]=1; if (x[0]===today) o.t++; if (new Date(x[0]).getTime()>=wk-DAY) o.w++; });
     var names=Object.keys(by); if (!adm) names=names.filter(function(n){ return n===S.user.name; });
     names.sort(function(a,b){ return by[b].w-by[a].w || by[b].n-by[a].n; });
-    if (isChart() && names.length) h += '<details class="dcard" data-dk="vol"><summary><h3>'+(adm?'వాలంటీర్ల వారీగా':'మీ పని')+' <span class="en">'+(adm?'Visits by volunteer':'Your work')+'</span></h3></summary>'+
+    if (isChart() && names.length) h += '<details class="dcard" data-dk="vol"><summary><h3>'+(adm?'వార్డు సభ్యుల వారీగా':'మీ పని')+' <span class="en">'+(adm?'Visits by ward member':'Your work')+'</span></h3></summary>'+
       legendHtml([['7 రోజులు','#1d4ed8'],['అంతకు ముందు','#93c5fd']])+
       hChart(names.map(function(n){ var o=by[n]; return {label:esc(n), rows:rows.filter(function(v){ return o.p[v.e]; }), sub:'ఈ రోజు '+o.t+' · కలిసిన ఓటర్లు '+Object.keys(o.p).length, segs:[[o.w,'#1d4ed8','7 రోజులు'],[Math.max(0,o.n-o.w),'#93c5fd','అంతకు ముందు']], tot:o.n, right:'<b>'+o.n+'</b><small>సందర్శనలు</small>'}; }), '')+'</details>';
-    else h += '<details class="dcard" data-dk="vol"><summary><h3>'+(adm?'వాలంటీర్ల వారీగా':'మీ పని')+' <span class="en">'+(adm?'By volunteer':'Your work')+'</span></h3></summary><table class="dt"><tr><th>పేరు</th><th>ఈ రోజు</th><th>7 రోజులు</th><th>మొత్తం</th><th>కలిసిన ఓటర్లు</th></tr>'+
+    else h += '<details class="dcard" data-dk="vol"><summary><h3>'+(adm?'వార్డు సభ్యుల వారీగా':'మీ పని')+' <span class="en">'+(adm?'By ward member':'Your work')+'</span></h3></summary><table class="dt"><tr><th>పేరు</th><th>ఈ రోజు</th><th>7 రోజులు</th><th>మొత్తం</th><th>కలిసిన ఓటర్లు</th></tr>'+
       (names.length?names.map(function(n){ var o=by[n]; return '<tr'+drA(esc(n)+' కలిసిన ఓటర్లు', rows.filter(function(v){ return o.p[v.e]; }))+'><td>'+esc(n)+'</td><td>'+o.t+'</td><td>'+o.w+'</td><td>'+o.n+'</td><td>'+Object.keys(o.p).length+'</td></tr>'; }).join(''):'<tr><td colspan="5">ఇంకా సందర్శనలు లేవు</td></tr>')+'</table></details>';
   }
   if (iA) h += usageCard();   // usage report: only the login named "Admin" (server checks too)

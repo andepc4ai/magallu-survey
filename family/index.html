@@ -108,7 +108,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 <section id="vLogin" class="wrap hide">
   <div class="box">
     <h2 style="margin:0">👪 కుటుంబాలు</h2>
-    <div style="color:#6b665c">Magallu families · volunteer login</div>
+    <div style="color:#6b665c">Magallu families · ward member login</div>
     <label>User Name</label>
     <select id="who" class="f"><option value="">— Select —</option></select>
     <label>పిన్ · PIN</label>
@@ -651,7 +651,7 @@ function plink(id){ var p=P(id); return p?'<button class="lnk" data-p="'+esc(id)
 function renderPerson(id, picking){
   var p=P(id); if(!p){ go(''); return; }
   $('ptitle').textContent = displayName(p);
-  if (p.gone){ $('psub').textContent = 'మరణించారు · Expired — '+(p.volExp?'వాలంటీర్ నమోదు · marked in app':'2026 జాబితా · '+p.gone)+' · ఓటు లేదు, లెక్కల్లో లేరు'+(p.house?' · 🏠 '+p.house:''); }
+  if (p.gone){ $('psub').textContent = 'మరణించారు · Expired — '+(p.volExp?'వార్డు సభ్యులు నమోదు · marked in app':'2026 జాబితా · '+p.gone)+' · ఓటు లేదు, లెక్కల్లో లేరు'+(p.house?' · 🏠 '+p.house:''); }
   else $('psub').textContent = p.vote ? ((p.g==='Female'?'👩 స్త్రీ':'👨 పురుషుడు')+' · '+(p.age||'')+' ఏళ్ళు'+(p.caste?' · '+cte(p.caste):'')+' · 📍 వార్డు '+(p.ward||'—')+' · 🏠 '+(p.house||'—')+' · '+(p.street||'')) : 'ఓటు లేదు · not on the voter list';
   var f = famOf(id), h='';
   if (p.volExp) h += '<div class="card" style="background:#f5f5f4;color:#57534e"><b>మరణించారు</b> <small>Expired — marked in the app</small>'+
