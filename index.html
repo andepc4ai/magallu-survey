@@ -352,7 +352,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 14:30 -->
+    <!-- app version: 25 Nov · 15:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1200,7 +1200,7 @@ function vmFamHtml(v, h){
       return '<div class="vfr su-'+(m.support||'none')+(me?' me':'')+'" role="button" data-vfm="'+esc(m.id)+'">'+(m.gp?'<span class="gpn">GP '+esc(m.gp)+'</span>':'')+
         '<span class="vfn">'+esc(m.te||m.name)+' <small>'+(m.gen==='Female'?'👩':'👨')+esc(m.age)+(m.relT?' · '+(REL[m.relT]||esc(m.relT))+': '+esc(m.teR||m.relN||''):'')+'</small></span>'+
         (S.cMode ? (hasContrib(m) ? '<b class="vfgave">✓ ₹'+((Number(m.tc)||0)+(Number(m.c)||0)).toLocaleString('en-IN')+(Number(m.cppl)?' · 👥'+esc(m.cppl):'')+'</b>' : '<span class="vfnot">ఇవ్వలేదు</span>') : '')+(me?'<i class="vfme">ఇప్పుడు</i>':'')+'</div>'; }).join('')+
-    (HAS_API?'<a class="vfamlink" href="family/#p='+encodeURIComponent(v.e)+'" target="_blank" rel="noopener">👪 పూర్తి కుటుంబ చెట్టు <small>Family tree (new tab)</small></a>':'')+'</div>';
+    (HAS_API?'<a class="vfamlink" href="family/#pf='+encodeURIComponent(v.e)+'" target="_blank" rel="noopener">👪 పూర్తి కుటుంబ చెట్టు <small>Family tree (new tab)</small></a>':'')+'</div>';
 }
 function renderHouse(){
   if (S.vm) return renderVoter();

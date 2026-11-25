@@ -799,6 +799,11 @@ function route(){
   if (!M) return;
   var c=cur(); ['vList','vFam','vPerson'].forEach(function(v){ $(v).classList.add('hide'); });
   if (SV.dirty && !c.p){ SV.dirty=false; rebuild(); }
+  if (c.pf){   // 25 Nov: "#pf=EPIC" (from the app's 💰 voter screen) → that voter's family tree, voter highlighted
+    var pf=famOf(c.pf);
+    if (pf && pf.members.length>1){ var hh='f='+encodeURIComponent(pf.head)+'&me='+encodeURIComponent(c.pf); try { history.replaceState(null,'','#'+hh); } catch(x){ location.hash=hh; return; } c={f:pf.head, me:c.pf}; }
+    else c={p:c.pf};
+  }
   if (c.p){ $('vPerson').classList.remove('hide'); renderPerson(c.p, false); }
   else if (c.f){ $('vFam').classList.remove('hide'); renderFam(c.f, c.me); }
   else { if (c.s!==undefined){ F.sur=c.s; F.size=1; F.check=false; }
