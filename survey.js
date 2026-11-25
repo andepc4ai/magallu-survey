@@ -72,7 +72,8 @@ function render(v, ui, id){
   QQ.forEach(function(q){
     if (q.contrib && !ui.contrib) return;
     if (q.k==='tc') h += '<div class="svch">💰 విరాళం <small>Contribution</small></div>'+(ui.cnote||'');
-    if (ui.contrib && q.k==='support') h += '<div class="svch" style="background:#f5f5f4;color:#44403c">📝 సర్వే <small>Survey</small></div>';
+    if (ui.contrib && q.k==='support') h += '<button class="svmore" data-svmore="1">📝 సర్వే <small>మద్దతు, కులం, సమస్యలు… · Survey</small><span>'+(ui.more?'▴ మూసివేయి':'▾ తెరవండి')+'</span></button>';
+    if (ui.contrib && !ui.more && !q.contrib && q.k!=='mobile') return;   // 💰 screen stays short: rest of the survey folded
     if (q.type==='seg'){
       h += '<div class="svq"><span class="svk">'+q.te+'</span><div class="seg" style="grid-template-columns:repeat('+q.opts.length+',1fr)">'+q.opts.map(function(o){
         return '<button class="sg'+(v[q.k]===o[0]?' on':'')+'" style="--c:'+o[2]+'" data-svf="'+q.k+'" data-svv="'+esc(o[0])+'">'+o[1]+'</button>'; }).join('')+'</div></div>';
@@ -109,6 +110,7 @@ function render(v, ui, id){
 // handle a tap inside a survey. edit(fields) saves; returns true when the survey should be drawn again
 function click(e, v, ui, edit){
   var t;
+  if (e.target.closest('[data-svmore]')){ ui.more = !ui.more; ui.open=''; return true; }
   if ((t = e.target.closest('[data-svo]'))){ var k=t.dataset.svo; if (ui.ro && ui.open!==k){ edit(null); return false; } ui.open = ui.open===k ? '' : k; return true; }
   if ((t = e.target.closest('[data-svf]'))){
     var f={}, k2=t.dataset.svf, val=t.dataset.svv; f[k2] = v[k2]===val ? '' : val;
@@ -166,6 +168,8 @@ var css = '.sv{margin-top:6px}'+
 '.svok{flex:none;border:0;border-radius:10px;background:#1c1917;color:#FACC15;font-weight:700;padding:0 14px;min-height:40px}'+
 '.sved>.svok{margin-left:auto}.svmsg{width:100%;font-size:.8rem;color:#b91c1c}'+
 '.svch{margin:12px 0 2px;padding:6px 8px;border-radius:10px;background:#fef9c3;font-weight:800;font-size:.9rem;color:#713f12}.svch small{font-weight:600;color:#a16207;margin-left:4px}'+
+'.svmore{display:flex;align-items:center;gap:6px;width:100%;margin:12px 0 2px;padding:10px 10px;border:2px solid #e7e5e4;border-radius:10px;background:#fafaf9;font:inherit;font-weight:800;font-size:.9rem;color:#44403c;text-align:left}'+
+'.svmore small{flex:1;font-weight:600;color:#78716c;font-size:.75rem}.svmore span{font-size:.8rem;color:#57534e}'+
 '.svdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#cbd5e1;margin-right:4px;vertical-align:0}';
 if (typeof document!=='undefined'){ var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); }
 
