@@ -15,9 +15,17 @@ var FamilyEngine = (function () {
   // name without the surname, spaces removed, so "China Subba Rao" == "Chinasubbarao Gunti"
   function key(name, surname) {
     var sc = canon(surname), toks = canon(name).split(' ').filter(Boolean);
-    var rest = sc ? toks.filter(function (t) { return t !== sc; }) : toks;
+    // 25 Nov: a misspelt surname inside the name is still the surname ("Vanagala" in a "Vangala" family)
+    var rest = sc ? toks.filter(function (t) { return t !== sc && !(sc.length >= 5 && t.length >= 5 && editDist1(t, sc)); }) : toks;
     var k = (rest.length ? rest : toks).join('');
+    k = k.replace(/rao/g, 'r');           // 25 Nov: "Nageswara Rao" = "Nageswararao" = "Nageshwara R"
     return k.replace(/(a|u)$/,'');   // venkaiah/venkaia, raju/raj
+  }
+  // the key before 25 Nov (no surname-variant / Rao rules): used as a fallback so no earlier match is lost
+  function key0(name, surname) {
+    var sc = canon(surname), toks = canon(name).split(' ').filter(Boolean);
+    var rest = sc ? toks.filter(function (t) { return t !== sc; }) : toks;
+    return (rest.length ? rest : toks).join('').replace(/(a|u)$/,'');
   }
   function editDist1(a, b) {
     if (Math.abs(a.length - b.length) > 1) return false;
@@ -57,10 +65,13 @@ var FamilyEngine = (function () {
       P[p.id] = p; list.push(p);
     });
     // index by surname + name key
-    var idx = {}, idxKey = {};
+    var idx = {}, idxKey = {}, idx0 = {}, idxKey0 = {};
     list.forEach(function (p) {
       (idx[p.sc + '|' + p.k] = idx[p.sc + '|' + p.k] || []).push(p);
       (idxKey[p.k] = idxKey[p.k] || []).push(p);
+      p.k0 = key0(p.name, p.sur);
+      (idx0[p.sc + '|' + p.k0] = idx0[p.sc + '|' + p.k0] || []).push(p);
+      (idxKey0[p.k0] = idxKey0[p.k0] || []).push(p);
     });
     // main door number: '4 -157' = '4-157', '3-93/5' = '3-93', '1-138B' = '1-138/B' = '1-138'
     function door(h) { var s = String(h || '').toLowerCase().replace(/\s+/g, ''), m = s.match(/^\d+(-\d+)?/); return m ? m[0] : s; }
@@ -73,7 +84,7 @@ var FamilyEngine = (function () {
       if (p.rt === 'Other') return c.g !== p.g && c.hk === p.hk && (!p.age || !c.age || Math.abs(c.age - p.age) <= 25);
       return false;
     }
-    function score(p, c) { return (c.hk === p.hk ? 5 : 0) + (c.street && c.street === p.street ? 2 : 0) + (c.booth === p.booth ? 1 : 0); }
+    function score(p, c) { return (c.hk === p.hk ? 5 : 0) + (c.hk !== p.hk && door(c.house) && door(c.house) === door(p.house) ? 3 : 0) + (c.street && c.street === p.street ? 2 : 0) + (c.booth === p.booth ? 1 : 0); }
 
     // 1) automatic matches
     var unmatched = [];
@@ -84,6 +95,12 @@ var FamilyEngine = (function () {
       if (!cands.length) cands = (idxKey[p.relKey] || []).filter(function (c) { return fits(p, c) && c.hk === p.hk; });
       if (!cands.length && p.relKey.length >= 6) {
         cands = list.filter(function (c) { return c.sc === p.sc && fits(p, c) && editDist1(c.k, p.relKey); }); fuzzy = true;
+      }
+      if (!cands.length){   // fallback: the matching used before 25 Nov
+        var rk0 = key0(p.rn, p.sur); fuzzy = false;
+        cands = (idx0[p.sc + '|' + rk0] || []).filter(function (c) { return fits(p, c); });
+        if (!cands.length) cands = (idxKey0[rk0] || []).filter(function (c) { return fits(p, c) && c.hk === p.hk; });
+        if (!cands.length && rk0.length >= 6) { cands = list.filter(function (c) { return c.sc === p.sc && fits(p, c) && editDist1(c.k0, rk0); }); fuzzy = true; }
       }
       if (!cands.length) { unmatched.push(p); return; }
       cands.sort(function (a, b) { return score(p, b) - score(p, a); });
