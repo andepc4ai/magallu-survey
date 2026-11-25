@@ -360,7 +360,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 18:15 -->
+    <!-- app version: 25 Nov · 18:45 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -725,6 +725,7 @@ function demoCall(fn,args){
     rows.forEach(function(r){ if(r[10]===gone.e){ r[25]=mine.length; r[26]=mine.length?mine[0].t:0; r[27]=mine.length?mine[0].by:''; if(!mine.length) r[14]='Not Visited'; } }); LS.set('demo_rows',rows);
     return {e:gone.e,count:mine.length,last:mine.length?mine[0].t:0,by:mine.length?mine[0].by:''}; }
   if (fn==='getCard') return {gp:args[2], img:''};   // demo: no cards
+  if (fn==='getCards') return {};
   if (fn==='getDashboard') return {visits:(LS.get('demo_visits')||[]).map(function(x){ return [dayKey(x.t), x.by, x.e]; }), admin:true, me:args[0]};
   if (fn==='deleteVisits') { var out={}; args[2].forEach(function(id){ var r=demoCall('deleteVisit',[args[0],args[1],id]); out[r.e]=r; }); return out; }
   if (fn==='getVoters') { var saved = LS.get('demo_rows'); return {rows: saved || DEMO_ROWS, at:Date.now()}; }
@@ -858,16 +859,27 @@ function fixNow(cb){
 function canContrib(){ return !!(S.user && (DEMO || /^(magallu|main|admin)$/i.test(String(S.user.name||'').trim()))); }   // 💰 only these 3 logins (server checks too)
 /* 🪪 voter card (25 Nov): the voter's box from the official GP ward roll, fetched on tap (server getCard, Drive),
    Magallu / Main / Admin only; kept in memory for this visit only (never saved on the phone) */
-function cardBtn(v){ return canContrib() && v.gp ? '<button class="vcardb" data-vcard="'+esc(v.gp)+'">🪪 ఓటరు కార్డు <small>Voter card · GP '+esc(v.gp)+'</small></button>' : ''; }
-function cardIco(v){ return canContrib() && v.gp ? '<button class="cardico" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>' : ''; }   // small round icon on list rows
-var CARDS = {};
+function canCard(){ return !!(S.user && (S.user.admin || canContrib())); }   // 25 Nov: every admin login sees voter cards
+function cardBtn(v){ return canCard() && v.gp ? '<button class="vcardb" data-vcard="'+esc(v.gp)+'">🪪 ఓటరు కార్డు <small>Voter card · GP '+esc(v.gp)+'</small></button>' : ''; }
+function cardIco(v){ return canCard() && v.gp ? '<button class="cardico" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>' : ''; }   // small round icon on list rows
+var CARDS = {}, CPEND = {};
+// 25 Nov: load cards in the background (one call for up to 12) so the 🪪 tap is instant
+function prefetchCards(gps){
+  if (!canCard() || DEMO && !window.__cardDemo) return;
+  var need = []; (gps||[]).forEach(function(g){ g=String(g||''); if (g && !CARDS[g] && !CPEND[g] && need.indexOf(g)<0) need.push(g); });
+  for (var i=0; i<need.length; i+=12) (function(part){
+    var p = call('getCards', S.user.name, S.user.pin, part).then(function(d){ part.forEach(function(g){ if (d && d[g]) CARDS[g]=d[g]; delete CPEND[g]; }); },
+      function(){ part.forEach(function(g){ delete CPEND[g]; }); });
+    part.forEach(function(g){ CPEND[g]=p; });
+  })(need.slice(i, i+12));
+}
 function showCard(gp){
   var ov = $('cardOv'); if (!ov){ ov=document.createElement('div'); ov.id='cardOv'; document.body.appendChild(ov);
     ov.onclick=function(e){ if (e.target===ov || e.target.closest('[data-cardx]')) ov.classList.add('hide'); }; }
   var box = function(inner){ ov.innerHTML='<div class="cardbx"><button class="cardx" data-cardx="1">✕</button><div class="cardt">🪪 ఓటరు కార్డు · GP '+esc(gp)+'</div>'+inner+'</div>'; ov.classList.remove('hide'); };
   if (CARDS[gp]) return box('<img src="data:image/jpeg;base64,'+CARDS[gp]+'" alt="Voter card">');
   box('<div class="cardmsg">⏳ లోడ్ అవుతోంది… · Loading</div>');
-  call('getCard', S.user.name, S.user.pin, gp).then(function(d){
+  (CPEND[gp] ? CPEND[gp].then(function(){ return {img:CARDS[gp]||''}; }) : call('getCard', S.user.name, S.user.pin, gp)).then(function(d){
     if (ov.classList.contains('hide')) return;
     if (d && d.img){ CARDS[gp]=d.img; box('<img src="data:image/jpeg;base64,'+d.img+'" alt="Voter card">'); }
     else box('<div class="cardmsg">ఈ GP నంబర్‌కు కార్డు లేదు · No card for this GP no.</div>');
@@ -1148,6 +1160,7 @@ $('list').onclick=function(e){
 
 /* ---------- house screen ---------- */
 function openHouse(hid){
+  if (S.hById[hid]) prefetchCards(S.hById[hid].v.map(function(x){ return x.gp; }));   // 🪪 cards of the whole house, in the background
   S.openHouse = hid; S.split = null; S.open = {}; S.vexp = (S.hById[hid] && S.hById[hid].v.length===1) ? S.hById[hid].v[0].id : null; S.hpick=null; S.hhist=false; S.vdel=null; requestGeo(); renderHouse();
   $('vHouse').classList.remove('hide'); $('vHouse').scrollTop=0;
   document.body.style.overflow='hidden';
@@ -1221,6 +1234,7 @@ function renderVoter(){
   html += '<div class="nav2"><button class="next"'+(S.vm.i>0?'':' disabled')+' data-vprev="1">← ముందు ఓటరు <small>Previous voter</small></button><button class="next"'+(S.vm.i<n-1?'':' disabled')+' data-vnext="1">తర్వాతి ఓటరు → <small>Next voter</small></button></div>'+
     (h.id && S.hById[h.id] && S.hById[h.id].v.length>1 ? '<button class="vmhouse" data-vmhouse="1">🏠 ఇంట్లో అందరూ ('+S.hById[h.id].v.length+') <small>Whole house</small></button>' : '');
   $('hBody').innerHTML = html;
+  var nx = S.byId[S.vm.ids[S.vm.i+1]]; prefetchCards([v.gp, nx && nx.gp]);
 }
 // 25 Nov: who votes from this voter's house (tally against ఎంత మంది) + link to the full family tree
 function vmFamHtml(v, h){
