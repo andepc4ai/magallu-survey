@@ -295,6 +295,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 .fold.opt{opacity:.8;border-style:dashed}
 .wbadge{background:#fde047;color:#1c1917;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem;white-space:nowrap}.wbadge.no{background:#fee2e2;color:#b91c1c}.wtxt{color:#854d0e}
 .camt{color:#166534}
+.pvt .pvm{text-align:right;white-space:nowrap;color:#166534}.pvt th.pvm{color:#14532d}
 .vfam{background:#fff;border:2px solid #fde68a;border-radius:14px;padding:10px 12px;margin:4px 0 10px}.vfh{font-weight:700;margin-bottom:6px}
 .vfr{display:flex;align-items:center;gap:6px;padding:7px 8px;margin:4px 0;border-radius:10px;border-left:5px solid var(--sc,#cbd5e1);background:var(--st,#fff);cursor:pointer}
 .vfr.me{outline:2px solid #1c1917}.vfn{flex:1;min-width:0;font-weight:700;font-size:.92rem}.vfn small{display:block;font-weight:400;color:#57534e;font-size:.75rem}
@@ -352,7 +353,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 15:00 -->
+    <!-- app version: 25 Nov · 16:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -393,6 +394,7 @@ details.dcard[open]>summary{margin-bottom:10px}
     <div class="row">
       <button class="iconbtn" id="btnBack">← వెనక్కి</button>
       <h1 id="hTitle"></h1>
+      <button class="iconbtn sq" data-gohome="1" title="Home" aria-label="Home">🏠</button>
     </div>
     <div class="prog" id="hSub"></div>
   </div>
@@ -441,6 +443,7 @@ details.dcard[open]>summary{margin-bottom:10px}
     <div class="row">
       <button class="iconbtn" id="btnDrillBack">← వెనక్కి</button>
       <h1 id="drTitle" style="font-size:1.05rem"></h1>
+      <button class="iconbtn sq" data-gohome="1" title="Home" aria-label="Home">🏠</button>
     </div>
     <div class="prog" id="drSub"></div>
   </div>
@@ -460,6 +463,7 @@ details.dcard[open]>summary{margin-bottom:10px}
     <div class="row">
       <button class="iconbtn" id="btnSurBack">← వెనక్కి</button>
       <h1>ఇంటిపేరు → కులం</h1>
+      <button class="iconbtn sq" data-gohome="1" title="Home" aria-label="Home">🏠</button>
     </div>
     <div class="prog"><span id="surProg">—</span><div class="bar"><i id="surBar"></i></div></div>
   </div>
@@ -1746,11 +1750,15 @@ var PDIM = {   // key: [label, English, value of a voter, natural order?]
   vis:   ['🚶 కలిశామా','Visited', function(v){ return isDone(v)?'✓ కలిశాం':'✗ ఇంకా కలవలేదు'; }, 1],
   avail: ['🗳️ ఓటు వేయగలరా','Can vote', function(v){ return {Yes:'1. ✅ వస్తారు',Far:'2. 🚌 దూరం',No:'3. ❌ రాలేరు'}[v.avail]||'4. అడగలేదు'; }, 1],
   newv:  ['🆕 కొత్త ఓటరా','New voter', function(v){ return v.isNew?'🆕 2026 కొత్త':'2025 జాబితా'; }, 1],
+  gave:  ['💰 విరాళం','Contribution', function(v){ return hasContrib(v)?'1. ✓ ఇచ్చారు':'2. ఇంకా లేదు'; }, 1],
   none:  ['— ఏదీ వద్దు','None', function(){ return 'మొత్తం'; }, 1]
 };
 // Excel-style pivot: you pick the fields (in order); one row per combination with its voter count.
 function pvViews(){ return LS.get('pvViews2')||[]; }
-function pvKey(f){ return PDIM[f] && f!=='none'; }
+function pvKey(f){ return PDIM[f] && f!=='none' && (f!=='gave' || canContrib()); }
+// 25 Nov: contribution columns (Magallu / Main / Admin only): TC ₹ · C ₹ · total ₹ · givers · people
+function pvMoney(rows){ if (!canContrib()) return ''; var c=cSum(rows);
+  return '<td class="pvm">'+(c.tc?c.tc.toLocaleString('en-IN'):'—')+'</td><td class="pvm">'+(c.c?c.c.toLocaleString('en-IN'):'—')+'</td><td class="pvm"><b>'+((c.tc+c.c)?(c.tc+c.c).toLocaleString('en-IN'):'—')+'</b></td><td class="pvm">'+(c.n||'—')+'</td><td class="pvm">'+(c.p||'—')+'</td>'; }
 function pvNl(x){ return /లేదు|కాలేదు|^—$/.test(x)?1:0; }   // 'no ward' / 'not recorded' always last when sorting by name
 function pvCmp(f){ return PDIM[f][3] ? function(a,b){ return a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return a.localeCompare(b); }; }
 function pvLab(x){ return String(x).replace(/^\d\.\s/,''); }
@@ -1770,11 +1778,12 @@ function pivotCard(rows){
     var first={}; list.forEach(function(o){ first[o.key[0]]=(first[o.key[0]]||0)+o.rows.length; });
     // header sort (like Excel): sk = column index or 'n' (count), sd = 1 up / -1 down. Items are sorted inside their parent group,
     // so subtotals stay together; sorting by count orders every level by its own total.
-    var sk=(p.sk==='n'||(p.sk>=0&&p.sk<fs.length))?p.sk:-1, sd=p.sd===-1?-1:1, ptot={};
-    list.forEach(function(o){ for (var i=0;i<fs.length;i++){ var k=o.key.slice(0,i+1).join('\u0001'); ptot[k]=(ptot[k]||0)+o.rows.length; } });
+    var sk=(p.sk==='n'||(p.sk==='m'&&canContrib())||(p.sk>=0&&p.sk<fs.length))?p.sk:-1, sd=p.sd===-1?-1:1, ptot={};
+    var amt=function(rs){ var c=cSum(rs); return c.tc+c.c; };
+    list.forEach(function(o){ var a=sk==='m'?amt(o.rows):o.rows.length; for (var i=0;i<fs.length;i++){ var k=o.key.slice(0,i+1).join('\u0001'); ptot[k]=(ptot[k]||0)+a; } });
     list.sort(function(a,b){
       for (var i=0;i<fs.length;i++){ if (a.key[i]===b.key[i]) continue;
-        if (sk==='n'){ var d=ptot[a.key.slice(0,i+1).join('\u0001')]-ptot[b.key.slice(0,i+1).join('\u0001')]; if (d) return d*sd; }
+        if (sk==='n'||sk==='m'){ var d=ptot[a.key.slice(0,i+1).join('\u0001')]-ptot[b.key.slice(0,i+1).join('\u0001')]; if (d) return d*sd; }
         return (pvNl(a.key[i])-pvNl(b.key[i])) || cmps[i](a.key[i],b.key[i])*(sk===i?sd:1); }
       return 0; });
     var lim=S.dashMore.pv?list.length:60, out=[], prev=[], shown=0;
@@ -1782,12 +1791,13 @@ function pivotCard(rows){
       if (fs.length>1 && j>0 && o.key[0]!==list[j-1].key[0]) out.push(pvSub(list[j-1].key[0], first[list[j-1].key[0]], tot, fs.length, rows, fs[0]));
       out.push('<tr>'+o.key.map(function(x,i){ var same=prev.length && prev.slice(0,i+1).join('\u0001')===o.key.slice(0,i+1).join('\u0001');
           return '<td>'+(same?'':'<b>'+esc(pvLab(x))+'</b>')+'</td>'; }).join('')+
-        '<td class="pvc"'+drA(o.key.map(pvLab).join(' · '), o.rows)+'><b>'+o.rows.length+'</b></td><td class="shr">'+share1(o.rows.length,tot)+'%</td></tr>');
+        '<td class="pvc"'+drA(o.key.map(pvLab).join(' · '), o.rows)+'><b>'+o.rows.length+'</b></td><td class="shr">'+share1(o.rows.length,tot)+'%</td>'+pvMoney(o.rows)+'</tr>');
       prev=o.key; shown++; }
     if (fs.length>1 && shown===list.length && list.length) out.push(pvSub(list[list.length-1].key[0], first[list[list.length-1].key[0]], tot, fs.length, rows, fs[0]));
     var arr=function(k){ return '<span class="pva'+(sk===k?' on':'')+'">'+(sk===k?(sd===1?'▲':'▼'):'↕')+'</span>'; };
-    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f,i){ return '<th data-pvh="'+i+'">'+esc(PDIM[f][0])+' '+arr(i)+'</th>'; }).join('')+'<th data-pvh="n">ఓటర్లు '+arr('n')+'<br><small>Count</small></th><th>వాటా<br><small>Share</small></th></tr>'+out.join('')+
-      '<tr class="pvtot"><td colspan="'+fs.length+'"><b>మొత్తం · Grand total</b></td><td><b>'+tot+'</b></td><td class="shr">100%</td></tr></table></div>'+
+    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f,i){ return '<th data-pvh="'+i+'">'+esc(PDIM[f][0])+' '+arr(i)+'</th>'; }).join('')+'<th data-pvh="n">ఓటర్లు '+arr('n')+'<br><small>Count</small></th><th>వాటా<br><small>Share</small></th>'+
+      (canContrib()?'<th class="pvm">💰 TC ₹</th><th class="pvm">💰 C ₹</th><th class="pvm" data-pvh="m">మొత్తం ₹ '+arr('m')+'<br><small>Total</small></th><th class="pvm">ఇచ్చినవారు<br><small>Givers</small></th><th class="pvm">👥 మంది<br><small>People</small></th>':'')+'</tr>'+out.join('')+
+      '<tr class="pvtot"><td colspan="'+fs.length+'"><b>మొత్తం · Grand total</b></td><td><b>'+tot+'</b></td><td class="shr">100%</td>'+pvMoney(rows)+'</tr></table></div>'+
       moreBtn('pv', list.length, 60, 'అన్ని వరుసలు')+
       '<div class="dleg" style="margin-top:4px">↕ నిలువు పేరు నొక్కితే ఆ క్రమంలో · Tap a column name to sort (tap again to reverse)</div>';
   }
@@ -1796,7 +1806,8 @@ function pivotCard(rows){
     '<div class="dleg">సంఖ్య నొక్కితే ఆ ఓటర్లు కనిపిస్తారు · Tap a count to see those voters. వాటా = మొత్తం '+rows.length+' లో ఎంత శాతం'+(dfActive()?' (ఫిల్టర్ ప్రకారం · filtered)':'')+'. సేవ్ చేసినవి ఈ ఫోన్‌లో మాత్రమే · Saved on this phone only.</div></details>';
 }
 function pvSub(k, n, tot, cols, rows, f){
-  return '<tr class="pvsub"><td colspan="'+cols+'">'+esc(pvLab(k))+' మొత్తం · total</td><td'+drA(pvLab(k), rows.filter(function(v){ return PDIM[f][2](v)===k; }))+'><b>'+n+'</b></td><td class="shr">'+share1(n,tot)+'%</td></tr>';
+  var sub=rows.filter(function(v){ return PDIM[f][2](v)===k; });
+  return '<tr class="pvsub"><td colspan="'+cols+'">'+esc(pvLab(k))+' మొత్తం · total</td><td'+drA(pvLab(k), sub)+'><b>'+n+'</b></td><td class="shr">'+share1(n,tot)+'%</td>'+pvMoney(sub)+'</tr>';
 }
 function share1(n,d){ return d ? Math.round(n*1000/d)/10 : 0; }
 function stat(list){
@@ -2003,8 +2014,8 @@ $('dBody').addEventListener('change', function(e){ var t=e.target;
 $('dBody').addEventListener('toggle', function(e){ var d=e.target; if (d.dataset && d.dataset.dk){ S.dashOpen[d.dataset.dk]=d.open; if (d.dataset.dk==='usage' && d.open && !S.logins) loadLogins(); } }, true);
 $('dBody').onclick=function(e){
   var pf=e.target.closest('[data-pvf]'); if (pf){ var f=pf.dataset.pvf, i=S.pv.f.indexOf(f); if (i>=0) S.pv.f.splice(i,1); else S.pv.f.push(f); S.pv.v=''; if (S.pv.sk!=='n'){ S.pv.sk=-1; S.pv.sd=1; } LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); return; }
-  var ph=e.target.closest('[data-pvh]'); if (ph){ var k=ph.dataset.pvh==='n'?'n':Number(ph.dataset.pvh);
-    if (S.pv.sk===k) S.pv.sd = S.pv.sd===-1 ? 1 : -1; else { var was=S.pv.sk; S.pv.sk=k; S.pv.sd = k==='n' || was===-1 ? -1 : 1; }   // A→Z is already shown, so the 1st tap on a name column reverses   // count starts biggest-first
+  var ph=e.target.closest('[data-pvh]'); if (ph){ var k=ph.dataset.pvh==='n'||ph.dataset.pvh==='m'?ph.dataset.pvh:Number(ph.dataset.pvh);
+    if (S.pv.sk===k) S.pv.sd = S.pv.sd===-1 ? 1 : -1; else { var was=S.pv.sk; S.pv.sk=k; S.pv.sd = k==='n' || k==='m' || was===-1 ? -1 : 1; }   // A→Z is already shown, so the 1st tap on a name column reverses   // count starts biggest-first
     LS.set('pv2',S.pv); renderDash(); return; }
   var pv=e.target.closest('[data-pvv]'); if (pv){ var x=pvViews().filter(function(o){ return o.id===pv.dataset.pvv; })[0]; if (x){ S.pv={f:x.f.slice(), sk:x.sk!==undefined?x.sk:(x.s==='n'?'n':-1), sd:x.sd||(x.s==='n'?-1:1), v:x.id}; LS.set('pv2',S.pv); S.dashMore.pv=false; renderDash(); } return; }
   if (e.target.closest('[data-pvsave]')){ var nm=prompt('ఈ పట్టికకు పేరు · Name for this view', S.pv.f.map(function(k){ return PDIM[k][0].replace(/^\S+\s/,''); }).join(' × '));
@@ -2352,6 +2363,9 @@ function navSync(){
   if (NAV.h > d){ NAV.ign++; history.go(d - NAV.h); NAV.h = d; }   // closed with the on-screen button: drop the extra steps quietly
 }
 document.addEventListener('click', function(){ setTimeout(navSync, 0); });
+// 25 Nov: 🏠 on every inner screen — close all open screens (top first, each with its own back button) and show home
+function goHome(){ S.famBack=null; LAYERS.forEach(function(l){ if (isOpen(l[0])) $(l[1]).click(); }); showView('home'); }
+document.addEventListener('click', function(e){ if (e.target.closest('[data-gohome]')){ e.preventDefault(); goHome(); } });
 window.addEventListener('popstate', function(){
   if (NAV.ign){ NAV.ign--; return; }
   NAV.h = Math.max(0, NAV.h-1);
