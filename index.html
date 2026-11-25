@@ -295,6 +295,13 @@ details.dcard[open]>summary{margin-bottom:10px}
 .fold.opt{opacity:.8;border-style:dashed}
 .wbadge{background:#fde047;color:#1c1917;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem;white-space:nowrap}.wbadge.no{background:#fee2e2;color:#b91c1c}.wtxt{color:#854d0e}
 .camt{color:#166534}
+.cardico{flex:0 0 auto;width:36px;height:36px;border:0;border-radius:50%;background:#fef9c3;font-size:1rem;display:flex;align-items:center;justify-content:center;padding:0;margin-left:4px}
+.vcardb{display:block;width:100%;margin:6px 0;padding:9px 10px;border:2px solid #1c1917;border-radius:12px;background:#fef9c3;font:inherit;font-weight:800;color:#1c1917;text-align:left}.vcardb small{font-weight:500;color:#57534e;margin-left:6px}
+#cardOv{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px}
+.cardbx{position:relative;background:#fff;border-radius:14px;padding:12px;width:100%;max-width:560px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+.cardbx img{display:block;width:100%;height:auto;border:1px solid #e7e5e4;border-radius:6px}.cardt{font-weight:800;margin:0 40px 8px 2px}
+.cardx{position:absolute;top:8px;right:8px;width:36px;height:36px;border:0;border-radius:50%;background:#e7e5e4;font-size:1.1rem;font-weight:700}
+.cardmsg{padding:30px 10px;text-align:center;color:#57534e;font-weight:700}
 .pvt .pvm{text-align:right;white-space:nowrap;color:#166534}.pvt th.pvm{color:#14532d}
 .vfam{background:#fff;border:2px solid #fde68a;border-radius:14px;padding:10px 12px;margin:4px 0 10px}.vfh{font-weight:700;margin-bottom:6px}
 .vfr{display:flex;align-items:center;gap:6px;padding:7px 8px;margin:4px 0;border-radius:10px;border-left:5px solid var(--sc,#cbd5e1);background:var(--st,#fff);cursor:pointer}
@@ -353,7 +360,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 16:00 -->
+    <!-- app version: 25 Nov · 17:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -717,6 +724,7 @@ function demoCall(fn,args){
     var mine=dv.filter(function(x){ return x.e===gone.e; }).sort(function(a,b){ return b.t-a.t; }); var rows=LS.get('demo_rows')||JSON.parse(JSON.stringify(DEMO_ROWS));
     rows.forEach(function(r){ if(r[10]===gone.e){ r[25]=mine.length; r[26]=mine.length?mine[0].t:0; r[27]=mine.length?mine[0].by:''; if(!mine.length) r[14]='Not Visited'; } }); LS.set('demo_rows',rows);
     return {e:gone.e,count:mine.length,last:mine.length?mine[0].t:0,by:mine.length?mine[0].by:''}; }
+  if (fn==='getCard') return {gp:args[2], img:''};   // demo: no cards
   if (fn==='getDashboard') return {visits:(LS.get('demo_visits')||[]).map(function(x){ return [dayKey(x.t), x.by, x.e]; }), admin:true, me:args[0]};
   if (fn==='deleteVisits') { var out={}; args[2].forEach(function(id){ var r=demoCall('deleteVisit',[args[0],args[1],id]); out[r.e]=r; }); return out; }
   if (fn==='getVoters') { var saved = LS.get('demo_rows'); return {rows: saved || DEMO_ROWS, at:Date.now()}; }
@@ -848,6 +856,25 @@ function fixNow(cb){
   setTimeout(function(){ if (!done){ toast('📍 స్థానం దొరకలేదు — లేకుండా సేవ్ · Saved without location'); fin(null); } }, 17000);
 }
 function canContrib(){ return !!(S.user && (DEMO || /^(magallu|main|admin)$/i.test(String(S.user.name||'').trim()))); }   // 💰 only these 3 logins (server checks too)
+/* 🪪 voter card (25 Nov): the voter's box from the official GP ward roll, fetched on tap (server getCard, Drive),
+   Magallu / Main / Admin only; kept in memory for this visit only (never saved on the phone) */
+function cardBtn(v){ return canContrib() && v.gp ? '<button class="vcardb" data-vcard="'+esc(v.gp)+'">🪪 ఓటరు కార్డు <small>Voter card · GP '+esc(v.gp)+'</small></button>' : ''; }
+function cardIco(v){ return canContrib() && v.gp ? '<button class="cardico" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>' : ''; }   // small round icon on list rows
+var CARDS = {};
+function showCard(gp){
+  var ov = $('cardOv'); if (!ov){ ov=document.createElement('div'); ov.id='cardOv'; document.body.appendChild(ov);
+    ov.onclick=function(e){ if (e.target===ov || e.target.closest('[data-cardx]')) ov.classList.add('hide'); }; }
+  var box = function(inner){ ov.innerHTML='<div class="cardbx"><button class="cardx" data-cardx="1">✕</button><div class="cardt">🪪 ఓటరు కార్డు · GP '+esc(gp)+'</div>'+inner+'</div>'; ov.classList.remove('hide'); };
+  if (CARDS[gp]) return box('<img src="data:image/jpeg;base64,'+CARDS[gp]+'" alt="Voter card">');
+  box('<div class="cardmsg">⏳ లోడ్ అవుతోంది… · Loading</div>');
+  call('getCard', S.user.name, S.user.pin, gp).then(function(d){
+    if (ov.classList.contains('hide')) return;
+    if (d && d.img){ CARDS[gp]=d.img; box('<img src="data:image/jpeg;base64,'+d.img+'" alt="Voter card">'); }
+    else box('<div class="cardmsg">ఈ GP నంబర్‌కు కార్డు లేదు · No card for this GP no.</div>');
+  }).catch(function(err){ var m=String(err&&err.message||err);
+    box('<div class="cardmsg">'+(m==='NOT_ALLOWED'?'అనుమతి లేదు · Not allowed':m==='NO_CARD_FOLDER'?'కార్డుల ఫోల్డర్ Drive లో లేదు · Card folder not in Drive yet':'📵 లోడ్ కాలేదు · '+esc(m))+'</div>'); });
+}
+document.addEventListener('click', function(e){ var b=e.target.closest('[data-vcard]'); if (b){ e.preventDefault(); e.stopPropagation(); showCard(b.dataset.vcard); } }, true);
 function isContribF(f){ return 'tc' in f || 'c' in f || 'cppl' in f || 'cfor' in f; }
 function hasContrib(v){ return !!(Number(v.tc) || Number(v.c) || Number(v.cppl) || v.cfor); }
 function newVisitId(){ return 'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
@@ -1186,6 +1213,7 @@ function renderVoter(){
     '<span class="vst"><span class="vb '+(isDone(v)?'ok':'no')+'">'+(isDone(v)?'✓ కలిశాం':'కలవలేదు')+'</span><span class="vb s-'+(s?s.v:'none')+'">'+(s?esc(s.te):'మద్దతు ?')+'</span></span>'+
     (v.mobile?'<a class="vcall" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'</div>'+r26Html(v)+
     '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(relTxt(v))+'<br>'+(v.gp?'GP క్ర.సం. <b>'+esc(v.gp)+'</b> · ':'')+esc(v.e)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
+    cardBtn(v)+
     (S.cMode ? '' : visitHtml(v))+   // 💰 screen: no visit box (keeps it short)
     Survey.render(v, svUI(v, ''), v.id)+'</div>';
   if (v.gone) html = '<div class="drgh">'+esc(v.gone)+'</div>'+html;
@@ -1240,11 +1268,11 @@ function renderHouse(){
         (ex ? '<small>'+ageTxt(v)+'</small>' : quickDet(v))+'</span>'+
       '<span class="vst"><span class="vb '+(isDone(v)?'ok':'no')+'">'+(isDone(v)?'✓ కలిశాం':'కలవలేదు')+'</span>'+
         '<span class="vb s-'+(s?s.v:'none')+'">'+(s?esc(s.te):'మద్దతు ?')+'</span></span>'+
-      (v.mobile&&!ex?'<a class="vcall" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'<span class="chev">'+(ex?'▴':'▾')+'</span></div>';
+      (ex?'':cardIco(v))+(v.mobile&&!ex?'<a class="vcall" href="tel:'+esc(v.mobile)+'" title="Call">📞</a>':'')+'<span class="chev">'+(ex?'▴':'▾')+'</span></div>';
     if (!ex) return '<div class="vc vmin '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+head+'</div>';
     return '<div class="vc ex '+(v.support||'')+'" data-id="'+esc(v.id)+'">'+head+r26Html(v)+
       '<div class="vm">'+(v.gen==='Female'?'స్త్రీ':v.gen==='Male'?'పురుషుడు':esc(v.gen))+' · '+esc(v.age)+' ఏళ్ళు · '+(REL[v.relT]||esc(v.relT))+': '+esc(relTxt(v))+'<br>'+(v.gp?'GP క్ర.సం. <b>'+esc(v.gp)+'</b> · ':'')+esc(v.e)+' · క్ర.సం. '+esc(v.sr)+(v.vol?' · ✍️ '+esc(v.vol):'')+'</div>'+
-      visitHtml(v)+
+      cardBtn(v)+visitHtml(v)+
       Survey.render(v, svUI(v, hc), v.id)+   // the same survey as the families page (survey.js)
     '</div>';
   }).join('');
@@ -2106,7 +2134,7 @@ function drLine(v){   // 23 Nov: same look as the caste / ward lists; no street;
   if (DRL && DRL.contrib) l2 = (hasContrib(v) ? '<b class="camt">💰 TC '+Survey.rupees(v.tc)+' · C '+Survey.rupees(v.c)+(Number(v.cppl)?' · 👥 '+esc(v.cppl):'')+'</b>'+(v.cfor?' · '+esc(v.cfor):'') : '<span class="cnone">💰 ఇంకా లేదు</span>')+' · '+l2;
   var nm = v.te ? '<span class="tn">'+esc(v.te)+'</span><small class="enn">'+esc(v.name)+(rel?' · '+rel:'')+'</small>' : esc(v.name)+(rel?' <small class="enn">'+rel+'</small>':'');
   return '<div class="dv su-'+(v.support||'none')+(v.gone?' gone':'')+'" role="button" data-drh="'+esc(h.id||'')+'" data-drid="'+esc(v.id)+'"><div class="l1">'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+
-    '<span class="nm hscr">'+nm+'</span>'+(v.mobile&&!v.gone?'<a class="drcall" href="tel:'+esc(v.mobile)+'" title="'+esc(v.mobile)+'">📞</a>':'')+'</div><div class="l2 hscr">'+(v.gone?'<span class="gtag">మరణించారు · Expired</span> ':'')+(v.mobile&&!v.gone?'📱 '+esc(v.mobile)+' · ':'')+l2+'</div></div>';
+    '<span class="nm hscr">'+nm+'</span>'+cardIco(v)+(v.mobile&&!v.gone?'<a class="drcall" href="tel:'+esc(v.mobile)+'" title="'+esc(v.mobile)+'">📞</a>':'')+'</div><div class="l2 hscr">'+(v.gone?'<span class="gtag">మరణించారు · Expired</span> ':'')+(v.mobile&&!v.gone?'📱 '+esc(v.mobile)+' · ':'')+l2+'</div></div>';
 }
 function renderDrill(){
   if (!DRL) return;
