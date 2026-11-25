@@ -594,6 +594,13 @@ function svLoad(full){
 }
 function svRedraw(){ var c=cur(); if (c.p && !document.activeElement.matches('[data-svin]')) renderPerson(c.p, false); }
 function svNewId(){ return 'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+// phone location for App Log: only read when the phone already allows it (never asks here); refreshed when > 2 min old
+var FG = null, FGB = false;
+function famGeo(){
+  if (FGB || !navigator.geolocation || (FG && Date.now()-FG.t < 2*60000)) return;
+  var go = function(){ FGB = true; navigator.geolocation.getCurrentPosition(function(p){ FGB=false; FG={v:p.coords.latitude.toFixed(6)+','+p.coords.longitude.toFixed(6)+','+Math.round(p.coords.accuracy), t:Date.now()}; }, function(){ FGB=false; }, {enableHighAccuracy:true, timeout:15000, maximumAge:120000}); };
+  try { navigator.permissions.query({name:'geolocation'}).then(function(s){ if (s.state==='granted') go(); }).catch(function(){}); } catch(e){}
+}
 function svEdit(e, f){
   if (RO()) return false;
   var v = SV.byE[e]; if (!v) return false;
@@ -601,6 +608,7 @@ function svEdit(e, f){
   svApply(v, f);
   var pend = LS.get('mvs_pending')||{}, id = v.s+':'+v.e, q = pend[id] || (pend[id] = {s:v.s, r:v.r, e:v.e, f:{}});
   Object.keys(f).forEach(function(k){ q.f[k] = k==='visits' ? (q.f.visits||[]).concat(f.visits) : f[k]; });
+  famGeo(); if (FG && Date.now()-FG.t < 10*60000) q.lg = FG.v;   // 25 Nov: location for App Log
   LS.set('mvs_pending', pend);
   // the family tree shows support / caste / mobile too
   var r = DATA && DATA.voters.filter(function(x){ return String(x[0])===e; })[0];
@@ -825,6 +833,7 @@ function addClear(inp){
   upd();
 }
 addClear($('q'));
+try { famGeo(); } catch(e){}   // location ready for the first edit (App Log), only if the phone already allows it
 if (U && U.name && U.pin) load(false); else showLogin('');
 })();
 </script>

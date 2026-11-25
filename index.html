@@ -360,7 +360,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 18:45 -->
+    <!-- app version: 25 Nov · 19:45 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -856,7 +856,7 @@ function fixNow(cb){
     {enableHighAccuracy:true, maximumAge:0, timeout:15000});
   setTimeout(function(){ if (!done){ toast('📍 స్థానం దొరకలేదు — లేకుండా సేవ్ · Saved without location'); fin(null); } }, 17000);
 }
-function canContrib(){ return !!(S.user && (DEMO || /^(magallu|main|admin)$/i.test(String(S.user.name||'').trim()))); }   // 💰 only these 3 logins (server checks too)
+function canContrib(){ return !!(S.user && (DEMO || (S.user.contrib===true || S.user.contrib===false ? S.user.contrib : /^(magallu|main|admin)$/i.test(String(S.user.name||'').trim())))); }   // 💰 App Users "Contributions" = Yes (server checks too)
 /* 🪪 voter card (25 Nov): the voter's box from the official GP ward roll, fetched on tap (server getCard, Drive),
    Magallu / Main / Admin only; kept in memory for this visit only (never saved on the phone) */
 function canCard(){ return !!(S.user && (S.user.admin || canContrib())); }   // 25 Nov: every admin login sees voter cards
@@ -902,6 +902,9 @@ function edit(v, f){
   applyLocal(v,f); if (!('voted' in f && Object.keys(f).length===1)) v.vol = S.user.name;
   if ((v.avail==='Expired' || v.avail==='No')!==expWas){ regroup(S.rows.concat(S.gone)); if (v.avail==='Expired') S.vexp=null; }   // మరణించారు: moves to the grey box, out of every count
   var p = S.pending[v.id] || (S.pending[v.id] = {s:v.s,r:v.r,e:v.e,f:{}});
+  // 25 Nov: location for App Log — the latest reading (≤ 10 min old); refresh it quietly when older than 2 min
+  if (S.geo && Date.now()-S.geo.t < 10*60000) p.lg = S.geo.lat.toFixed(6)+','+S.geo.lng.toFixed(6)+','+Math.round(S.geo.acc);
+  if (!S.geo || Date.now()-S.geo.t > 2*60000) try { requestGeo(); } catch(e){}
   for (var k in f) p.f[k] = k==='visits' ? (p.f.visits||[]).concat(f.visits) : f[k];
   LS.set('pending',S.pending);
   renderSync(); scheduleFlush(700);
@@ -2332,7 +2335,7 @@ function loadData(force){
 function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
-    S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
+    S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; S.user.contrib = u.contrib; LS.set('user',S.user); applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
     $('tCaste').classList.toggle('hide', !S.user.admin); $('tContrib').classList.toggle('hide', !canContrib()); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API); renderHome();
     if (S.openHouse) renderHouse();
   }).catch(function(){});
@@ -2455,7 +2458,7 @@ $('lGo').onclick=function(){
   $('lErr').textContent=''; $('lGo').disabled=true;
   $('lGo').textContent='లోడ్ అవుతోంది… · Loading voters…';
   call('login',n,p,true).then(function(u){
-    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,myWards:u.myWards||[]}; LS.set('user',S.user);
+    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,contrib:u.contrib,myWards:u.myWards||[]}; LS.set('user',S.user);
     if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); LS.set('ver',u.voters.ver||0); LS.set('fullAt',Date.now()); S.fresh=u.voters.rows; }
     if (window.mvsIdleMark) mvsIdleMark();   // a fresh login starts a fresh hour (idle.js)
     $('lGo').disabled=false; showApp(); askGeoOnce();
