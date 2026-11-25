@@ -295,6 +295,12 @@ details.dcard[open]>summary{margin-bottom:10px}
 .fold.opt{opacity:.8;border-style:dashed}
 .wbadge{background:#fde047;color:#1c1917;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem;white-space:nowrap}.wbadge.no{background:#fee2e2;color:#b91c1c}.wtxt{color:#854d0e}
 .camt{color:#166534}
+.vfam{background:#fff;border:2px solid #fde68a;border-radius:14px;padding:10px 12px;margin:4px 0 10px}.vfh{font-weight:700;margin-bottom:6px}
+.vfr{display:flex;align-items:center;gap:6px;padding:7px 8px;margin:4px 0;border-radius:10px;border-left:5px solid var(--sc,#cbd5e1);background:var(--st,#fff);cursor:pointer}
+.vfr.me{outline:2px solid #1c1917}.vfn{flex:1;min-width:0;font-weight:700;font-size:.92rem}.vfn small{display:block;font-weight:400;color:#57534e;font-size:.75rem}
+.vfgave{flex:none;background:#15803d;color:#fff;border-radius:999px;padding:2px 8px;font-size:.78rem}.vfnot{flex:none;color:#a8a29e;font-size:.75rem;font-weight:700}
+.vfme{font-style:normal;font-size:.7rem;background:#1c1917;color:#FACC15;border-radius:999px;padding:1px 7px}
+.vfamlink{display:block;text-align:center;margin-top:8px;padding:9px;border-radius:10px;background:#0f766e;color:#fff;font-weight:700;text-decoration:none}.vfamlink small{font-weight:400;opacity:.85;margin-left:4px}
 /* 25 Nov: support colour on every voter row — stripe + light tint */
 .su-Strong{--sc:#15803d;--st:#dcfce7}.su-Leaning{--sc:#65a30d;--st:#ecfccb}.su-Undecided{--sc:#ea580c;--st:#ffedd5}.su-Opposed{--sc:#dc2626;--st:#fee2e2}.su-none{--sc:#cbd5e1;--st:#fff}
 .dv[class*=su-]{border-left:6px solid var(--sc);background:var(--st)}.dv.gone{border-left-color:#a8a29e;background:#f5f5f4}
@@ -346,7 +352,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 14:00 -->
+    <!-- app version: 25 Nov · 14:30 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1179,9 +1185,22 @@ function renderVoter(){
     (S.cMode ? '' : visitHtml(v))+   // 💰 screen: no visit box (keeps it short)
     Survey.render(v, svUI(v, ''), v.id)+'</div>';
   if (v.gone) html = '<div class="drgh">'+esc(v.gone)+'</div>'+html;
+  html += vmFamHtml(v, h);
   html += '<div class="nav2"><button class="next"'+(S.vm.i>0?'':' disabled')+' data-vprev="1">← ముందు ఓటరు <small>Previous voter</small></button><button class="next"'+(S.vm.i<n-1?'':' disabled')+' data-vnext="1">తర్వాతి ఓటరు → <small>Next voter</small></button></div>'+
     (h.id && S.hById[h.id] && S.hById[h.id].v.length>1 ? '<button class="vmhouse" data-vmhouse="1">🏠 ఇంట్లో అందరూ ('+S.hById[h.id].v.length+') <small>Whole house</small></button>' : '');
   $('hBody').innerHTML = html;
+}
+// 25 Nov: who votes from this voter's house (tally against ఎంత మంది) + link to the full family tree
+function vmFamHtml(v, h){
+  var hh = h.id && S.hById[h.id] ? S.hById[h.id] : null, mem = hh ? hh.v.slice() : [v];
+  mem.sort(function(a,b){ return MultiSort.gpn(a.gp)-MultiSort.gpn(b.gp); });
+  var gave = mem.filter(hasContrib).length, sum = mem.reduce(function(a,x){ return a+(Number(x.tc)||0)+(Number(x.c)||0); },0);
+  return '<div class="vfam"><div class="vfh">🏠 ఈ ఇంట్లో <b>'+mem.length+'</b> ఓటర్లు'+(S.cMode?' · 💰 '+gave+' ఇచ్చారు'+(sum?' · '+Survey.rupees(sum):''):'')+'</div>'+
+    mem.map(function(m){ var me=m.id===v.id;
+      return '<div class="vfr su-'+(m.support||'none')+(me?' me':'')+'" role="button" data-vfm="'+esc(m.id)+'">'+(m.gp?'<span class="gpn">GP '+esc(m.gp)+'</span>':'')+
+        '<span class="vfn">'+esc(m.te||m.name)+' <small>'+(m.gen==='Female'?'👩':'👨')+esc(m.age)+(m.relT?' · '+(REL[m.relT]||esc(m.relT))+': '+esc(m.teR||m.relN||''):'')+'</small></span>'+
+        (S.cMode ? (hasContrib(m) ? '<b class="vfgave">✓ ₹'+((Number(m.tc)||0)+(Number(m.c)||0)).toLocaleString('en-IN')+(Number(m.cppl)?' · 👥'+esc(m.cppl):'')+'</b>' : '<span class="vfnot">ఇవ్వలేదు</span>') : '')+(me?'<i class="vfme">ఇప్పుడు</i>':'')+'</div>'; }).join('')+
+    (HAS_API?'<a class="vfamlink" href="family/#p='+encodeURIComponent(v.e)+'" target="_blank" rel="noopener">👪 పూర్తి కుటుంబ చెట్టు <small>Family tree (new tab)</small></a>':'')+'</div>';
 }
 function renderHouse(){
   if (S.vm) return renderVoter();
@@ -1403,6 +1422,9 @@ $('hBody').onclick=function(e){
   if (S.vm){   // voter screen
     if (e.target.closest('[data-vprev]') && S.vm.i>0){ S.vm.i--; S.svOpen={}; renderHouse(); $('vHouse').scrollTop=0; return; }
     if (e.target.closest('[data-vnext]') && S.vm.i<S.vm.ids.length-1){ S.vm.i++; S.svOpen={}; renderHouse(); $('vHouse').scrollTop=0; return; }
+    var fm=e.target.closest('[data-vfm]');
+    if (fm && S.byId[fm.dataset.vfm] && fm.dataset.vfm!==S.vm.ids[S.vm.i]){ var j=S.vm.ids.indexOf(fm.dataset.vfm);
+      if (j<0){ S.vm.ids.splice(S.vm.i+1, 0, fm.dataset.vfm); j=S.vm.i+1; } S.vm.i=j; S.svOpen={}; renderHouse(); $('vHouse').scrollTop=0; return; }
     if (e.target.closest('[data-vmhouse]')){ var vv0=S.byId[S.vm.ids[S.vm.i]]; S.vm=null; S.vexp=vv0&&vv0.id; renderHouse(); $('vHouse').scrollTop=0; return; }
   }
   var ux = e.target.closest('[data-unexp]');
