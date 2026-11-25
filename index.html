@@ -346,7 +346,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 13:00 -->
+    <!-- app version: 25 Nov · 14:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -621,7 +621,7 @@ var S = {
   pv: (function(){ var p=Object.assign({f:['caste'], sk:-1, sd:1, v:''}, LS.get('pv2') || {}); if (!Array.isArray(p.f)) p.f=[]; if (p.s==='n' && p.sk===undefined){ p.sk='n'; p.sd=-1; } delete p.s; return p; })(),
   df: (function(){ var d=Object.assign({w:[], b:[], s:[], c:[], g:'', a:[]}, LS.get('dfil') || {}); d.b=[]; d.s=arr(d.s); d.c=arr(d.c); d.a=arr(d.a); d.g=(d.g==='F'||d.g==='M')?d.g:''; return d; })(),
   dashMore: {}, dashOpen: {}, dview: LS.get('dview') || 'chart',
-  booth: [], sec: [], lcaste: arr(LS.get('lcaste')), wsel: LS.get('wsel') || [], stat: 'todo', q: '', limit: 40,
+  booth: [], sec: [], lcaste: arr(LS.get('lcaste')), wsel: LS.get('wsel') || [], stat: 'all', q: '', limit: 40,
   pending: LS.get('pending') || {}, // id -> {s,r,e,f}
   inflight: false, online: navigator.onLine !== false,
   openHouse: null, wards: 14,
@@ -983,10 +983,11 @@ function buildFilters(){
   $('lFil').innerHTML = 
     mSel('ls', '🛣️ వీధి', S.sec, Object.keys(secs).sort().map(function(s){ return [s, s, secs[s]+' ఇళ్ళు']; })) +
     mSel('lc', '🏷 కులం', S.lcaste, co.map(function(o){ return [o[0], o[1], o[2]+' ఓటర్లు']; }));
-  var st = [['todo','మిగిలినవి','Pending'],['all','అన్నీ','All'],['done','పూర్తయినవి','Done'],['revisit','🔁 మళ్ళీ వెళ్ళాలి','Revisit'],['needs','📋 సమస్యలు','Open needs']];
+  var st = [['all','అన్నీ','All'],['todo','మిగిలినవి','Pending'],['done','పూర్తయినవి','Done'],['revisit','🔁 మళ్ళీ వెళ్ళాలి','Revisit'],['needs','📋 సమస్యలు','Open needs']];
   var mineN = S.houses.filter(isMine).length;
-  if (mineN || S.stat==='mine') st.push(['mine','👤 నా కుటుంబాలు ('+mineN+')','I lead']);
-  $('statChips').innerHTML = st.map(function(x){ return '<button class="chip'+(S.stat===x[0]?' on':'')+'" data-s="'+x[0]+'">'+x[1]+' <span class="en" style="color:inherit;opacity:.7">'+x[2]+'</span></button>'; }).join('')+
+  if (mineN || S.stat==='mine') st.push(['mine','👤 నా కుటుంబాలు','I lead']);
+  var sn = statCounts();   // 25 Nov: houses on each tab, so an empty tab is obvious
+  $('statChips').innerHTML = st.map(function(x){ return '<button class="chip'+(S.stat===x[0]?' on':'')+'" data-s="'+x[0]+'">'+x[1]+' ('+(sn[x[0]]||0)+') <span class="en" style="color:inherit;opacity:.7">'+x[2]+'</span></button>'; }).join('')+
     (S.stat==='revisit'?'<select id="revDays" class="chip">'+[3,7,14,30].map(function(d){ return '<option value="'+d+'"'+(S.revDays===d?' selected':'')+'>'+d+'+ రోజులు</option>'; }).join('')+'</select>':'');
   var rd=$('revDays'); if (rd) rd.onchange=function(){ S.revDays=Number(this.value); S.limit=40; renderList(); };
   lFoldBars(st);
@@ -1027,6 +1028,10 @@ function needsRevisit(h){
 }
 function hasOpenNeeds(h){ return h.v.some(function(v){ var st=istat(v); return issues(v).some(function(x){ return (st[x]||'Open')!=='Solved'; }); }); }
 function isMine(h){ var L=leaderName(topLeader(h.v)).toLowerCase(), me=String(S.user&&S.user.name||'').toLowerCase(); return !!L && !!me && (L===me || L.indexOf(me)>=0 || me.indexOf(L)>=0); }
+// houses on each status tab (ward / street / caste filters applied, search ignored)
+function statCounts(){ var o={all:0,todo:0,done:0,revisit:0,needs:0,mine:0};
+  S.houses.forEach(function(h){ if (!inScope(h)) return; o.all++; var d=h.v.every(isDone); if (!d) o.todo++; if (h.v.some(isDone)) o.done++;
+    if (needsRevisit(h)) o.revisit++; if (hasOpenNeeds(h)) o.needs++; if (isMine(h)) o.mine++; }); return o; }
 function houseMatches(h){
   if (!inScope(h)) return false;
   var gq=S.q?MultiSort.gpQ(S.q):'';
@@ -1078,7 +1083,8 @@ function renderList(){
   renderHome();
   var voters = hs.reduce(function(a,h){return a+h.v.length;},0);
   $('count').textContent = hs.length+' ఇళ్ళు · '+voters+' ఓటర్లు';
-  if (!hs.length){ $('list').innerHTML='<div class="empty">ఏమీ దొరకలేదు 🙂<br><span class="en">Nothing here</span></div>'; return; }
+  if (!hs.length){ $('list').innerHTML='<div class="empty">ఏమీ దొరకలేదు 🙂<br><span class="en">Nothing here</span>'+
+    (S.stat!=='all'?'<br><button class="chip on" data-s="all" style="margin-top:12px;font-size:1rem;padding:10px 18px">అన్నీ చూపించు · Show all</button>':'')+'</div>'; return; }
   var html = hs.slice(0,S.limit).map(function(h){
     var d = h.v.filter(isDone).length, all = d===h.v.length;
     var anyNew = h.v.some(function(v){return v.isNew;});
@@ -1099,6 +1105,7 @@ function renderList(){
 }
 $('list').onclick=function(e){
   if (e.target.id==='moreBtn'){ S.limit+=40; renderList(); return; }
+  var sa=e.target.closest('[data-s]'); if (sa){ S.stat=sa.dataset.s; S.limit=40; buildFilters(); renderList(); return; }   // "Show all" on an empty tab
   var b=e.target.closest('[data-h]'); if(b) openHouse(b.dataset.h);
 };
 
@@ -1852,14 +1859,14 @@ function renderDash(){
   h += dfHtml();
   // tiles
   var vToday = V ? V.filter(function(x){ return x[0]===today; }).length : null;
-  h += '<div class="tiles">'+
-    tile(total,'అందరూ ఓటర్లు','All voters · list', drA('అందరూ ఓటర్లు · All voters', rows))+tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+
-    tile(V?V.length:'…','సందర్శనలు','Visits total')+tile(vToday===null?'…':vToday,'ఈ రోజు','Visits today')+'</div>';
+  // 25 Nov: Visits total / Visits today tiles removed; one block, కలిశాం (Visited) last
   // 23 Nov: win mark and +15% target (same rule as the printed report): voters here already exclude expired / duplicate / ❌
   var wRows=rows.filter(function(v){ return v.ward!=='' && v.ward!=null; }), wSup=wRows.filter(isSup).length, wMark=Math.floor(wRows.length/2)+1,   // only voters with a ward (on the GP roll)
      wDummy=0, wTgt=Math.ceil(wMark*1.15), wNeed=Math.max(wTgt-wSup,0);
-  h += '<div class="tiles">'+tile(wMark,'గెలుపు సంఖ్య','Win mark · '+wRows.length+' can vote')+tile(wTgt,'లక్ష్యం +15%','Target · 15% buffer')+
-    tile(wSup,'పూర్తి + మొగ్గు','Strong + Leaning', drA('పూర్తి + మొగ్గు · Strong + Leaning', wRows.filter(isSup)))+tile(wNeed||'✔','ఇంకా కావాలి','Still needed for target')+'</div>';
+  h += '<div class="tiles">'+tile(total,'అందరూ ఓటర్లు','All voters · list', drA('అందరూ ఓటర్లు · All voters', rows))+
+    tile(wMark,'గెలుపు సంఖ్య','Win mark · '+wRows.length+' can vote')+tile(wTgt,'లక్ష్యం +15%','Target · 15% buffer')+
+    tile(wSup,'పూర్తి + మొగ్గు','Strong + Leaning', drA('పూర్తి + మొగ్గు · Strong + Leaning', wRows.filter(isSup)))+tile(wNeed||'✔','ఇంకా కావాలి','Still needed for target')+
+    tile(pct(visited,total)+'%','కలిశాం','Visited · '+visited, drA('కలిశాం · Visited', rows.filter(isDone)))+'</div>';
   // 📋 how the voter total is made: 2025 roll ("All Voters") + new voters 2026, by booth (whole data this login can see)
   var rb={}, rA=0, rN=0, rR=S.rows.filter(function(v){ return v.r26; }).length;
   S.rows.forEach(function(v){ var o=rb[v.booth]||(rb[v.booth]={a:0,n:0,g:0}); if (v.isNew){ o.n++; rN++; } else { o.a++; rA++; } });
