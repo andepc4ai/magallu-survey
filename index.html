@@ -294,6 +294,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 .pvb.on{background:#16a34a;border-color:#16a34a;color:#fff}.pvb.ask{background:#b91c1c;border-color:#b91c1c;color:#fff}
 .fold.opt{opacity:.8;border-style:dashed}
 .wbadge{background:#fde047;color:#1c1917;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem;white-space:nowrap}.wbadge.no{background:#fee2e2;color:#b91c1c}.wtxt{color:#854d0e}
+.camt{color:#166534}.cnone{color:#a8a29e}
 </style>
 </head>
 <body>
@@ -334,9 +335,10 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="castes/" class="hide" id="tCaste"><i>🏷️</i><b>కులాలు</b><small>Castes</small></a>
       <a href="wards/" class="hide" id="tWard"><i>🗺️</i><b>వార్డులు</b><small>Houses → wards</small></a>
       <a href="#" id="tDash"><i>📊</i><b>డాష్‌బోర్డ్</b><small>Dashboard</small></a>
+      <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 24 Nov · 21:30 -->
+    <!-- app version: 25 Nov · 11:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -706,7 +708,7 @@ function demoCall(fn,args){
     var rows = LS.get('demo_rows') || JSON.parse(JSON.stringify(DEMO_ROWS));
     args[2].forEach(function(u){ rows.forEach(function(r){ if(r[10]===u.e){
       var f=u.f; if('ward' in f) r[13]=f.ward; if('visited' in f) r[14]=f.visited; if('support' in f) r[15]=f.support;
-      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; if('issueStatus' in f) r[28]=f.issueStatus; if('voted' in f) r[29]=f.voted; if('avail' in f) r[34]=f.avail;
+      if('issue' in f) r[16]=f.issue; if('notes' in f) r[17]=f.notes; if('mobile' in f) r[20]=f.mobile; if('caste' in f) r[21]=f.caste; if('occupation' in f) r[22]=f.occupation; if('leader' in f) r[24]=f.leader; if('issueStatus' in f) r[28]=f.issueStatus; if('voted' in f) r[29]=f.voted; if('avail' in f) r[34]=f.avail; ['tc','c','cppl','cfor'].forEach(function(k,j){ if(k in f) r[37+j]=f[k]; });
       if(f.visits){ var dv=LS.get('demo_visits')||[]; f.visits.forEach(function(id){ dv.push({id:id,t:Date.now(),by:args[0],e:r[10]}); }); LS.set('demo_visits',dv); r[25]=(r[25]||0)+f.visits.length; r[26]=Date.now(); r[27]=args[0]; }
       r[18]=args[0]; }});});
     LS.set('demo_rows',rows);
@@ -719,7 +721,7 @@ var BOOTH_2025 = {207:204, 208:205, 209:206};   // show booths as on the 2025 ro
 function toObj(a){
   return {s:a[0],r:a[1],booth:BOOTH_2025[a[2]]||a[2],sr:a[3],name:a[4],relT:a[5],relN:a[6],house:String(a[7]||'').trim(),age:a[8],gen:a[9],
     e:a[10],secNo:a[11],sec:String(a[12]||'').replace(/,\s*MAGALLU$/i,''),ward:a[13]===''||a[13]==null?'':Number(a[13]),
-    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',hh:a[32]?String(a[32]):'',gp:a[33]!=null&&a[33]!==''?String(a[33]):'',avail:a[34]?String(a[34]):'',te:a[35]?String(a[35]):'',teR:a[36]?String(a[36]):'',id:a[0]+':'+a[10]};
+    visited:a[14]==='Visited',support:a[15]||'',issue:a[16]||'',notes:a[17]||'',vol:a[18]||'',isNew:!!a[19],mobile:a[20]?String(a[20]):'',caste:a[21]||'',occupation:a[22]||'',surname:a[23]||'',leader:a[24]?String(a[24]):'',visits:Number(a[25])||0,lastVisit:Number(a[26])||0,lastBy:a[27]?String(a[27]):'',issueStatus:a[28]?String(a[28]):'',voted:a[29]==='Yes',fhead:a[30]==='Yes',gone:a[31]?String(a[31]):'',hh:a[32]?String(a[32]):'',gp:a[33]!=null&&a[33]!==''?String(a[33]):'',avail:a[34]?String(a[34]):'',te:a[35]?String(a[35]):'',teR:a[36]?String(a[36]):'',tc:a[37]!=null&&a[37]!==''?String(a[37]):'',c:a[38]!=null&&a[38]!==''?String(a[38]):'',cppl:a[39]!=null&&a[39]!==''?String(a[39]):'',cfor:a[40]?String(a[40]):'',id:a[0]+':'+a[10]};
 }
 function natKey(h){ return String(h).split(/[^0-9]+/).filter(Boolean).map(function(n){return ('00000'+n).slice(-5);}).join('-') + '~' + h; }
 function ingest(raw){
@@ -767,6 +769,7 @@ function applyLocal(v,f){
   if('issueStatus' in f) v.issueStatus = f.issueStatus;
   if('voted' in f) v.voted = f.voted==='Yes';
   if('hh' in f) v.hh = String(f.hh||'');
+  ['tc','c','cppl','cfor'].forEach(function(k){ if (k in f) v[k] = String(f[k]==null?'':f[k]); });
   if(f.visits && f.visits.length){ v.visits=(v.visits||0)+f.visits.length; v.lastVisit=Date.now(); v.lastBy=S.user?S.user.name:''; v.visited=true; }
 }
 function cleanMobile(s){
@@ -808,12 +811,36 @@ function geoNote(){
   if (S.geoErr==='denied') return '<div class="geo">📍 స్థానం అనుమతి లేదు — ఫోన్ సెట్టింగ్స్‌లో Location అనుమతించండి <span class="en">Location blocked</span></div>';
   return '<div class="geo">📍 స్థానం వెతుకుతోంది… <span class="en">Finding location</span></div>';
 }
+/* 💰 exact location for contributions: while a voter from the 💰 list is open the phone keeps reading GPS
+   (watchPosition, high accuracy, no cached fixes); a save uses a fix under 15 s old and ≤ 50 m, else waits for a new one (≤ 15 s). */
+var CW = null;
+function cWatchStart(){ if (CW!=null || !navigator.geolocation) return;
+  try { CW = navigator.geolocation.watchPosition(function(p){ S.geo={lat:p.coords.latitude, lng:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()}; S.geoErr=null; cGeoUpd(); },
+    function(err){ if (err && err.code===1){ S.geoErr='denied'; cGeoUpd(); } }, {enableHighAccuracy:true, maximumAge:0, timeout:20000}); } catch(e){ CW=null; } }
+function cWatchStop(){ if (CW!=null && navigator.geolocation) navigator.geolocation.clearWatch(CW); CW=null; }
+function cGeoUpd(){ [].forEach.call(document.querySelectorAll('.cgn'), function(el){ el.innerHTML = geoNote(); }); }
+function fixNow(cb){
+  var g=S.geo, done=false, fin=function(x){ if (done) return; done=true; cb(x); };
+  if (g && Date.now()-g.t < 15000 && g.acc <= 50) return fin(g);
+  if (!navigator.geolocation){ toast('📍 స్థానం లేదు — లేకుండా సేవ్ · Saved without location'); return fin(null); }
+  toast('📍 స్థానం తీసుకుంటోంది… · Getting exact location');
+  navigator.geolocation.getCurrentPosition(function(p){ S.geo={lat:p.coords.latitude, lng:p.coords.longitude, acc:p.coords.accuracy, t:Date.now()}; S.geoErr=null; cGeoUpd(); toast('✓ సేవ్ · 📍 ±'+Math.round(p.coords.accuracy)+' m'); fin(S.geo); },
+    function(err){ if (err && err.code===1) S.geoErr='denied'; toast('📍 స్థానం దొరకలేదు — లేకుండా సేవ్ · Saved without location'); fin(null); },
+    {enableHighAccuracy:true, maximumAge:0, timeout:15000});
+  setTimeout(function(){ if (!done){ toast('📍 స్థానం దొరకలేదు — లేకుండా సేవ్ · Saved without location'); fin(null); } }, 17000);
+}
+function canContrib(){ return !!(S.user && (DEMO || /^(magallu|main|admin)$/i.test(String(S.user.name||'').trim()))); }   // 💰 only these 3 logins (server checks too)
+function isContribF(f){ return 'tc' in f || 'c' in f || 'cppl' in f || 'cfor' in f; }
+function hasContrib(v){ return !!(Number(v.tc) || Number(v.c) || Number(v.cppl) || v.cfor); }
 function newVisitId(){ return 'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function edit(v, f){
   if (isRO()){ roToast(); return; }
   // answering a question for someone never visited counts as a visit
   if (f.visited==='Visited' && !f.visits && !v.visited) f.visits=[newVisitId()];
   if (f.visits && S.geo && Date.now()-S.geo.t < 5*60000) f.geo = S.geo.lat.toFixed(6)+','+S.geo.lng.toFixed(6)+','+Math.round(S.geo.acc);
+  if (isContribF(f) && !('cgeo' in f)){   // 💰 exact location: a fresh GPS fix taken at the moment of saving, then save
+    fixNow(function(g){ f.cgeo = g ? g.lat.toFixed(6)+','+g.lng.toFixed(6)+','+Math.round(g.acc) : ''; edit(v, f); if (S.openHouse) renderHouse(); });
+    return; }
   var expWas = v.avail==='Expired' || v.avail==='No';
   applyLocal(v,f); if (!('voted' in f && Object.keys(f).length===1)) v.vol = S.user.name;
   if ((v.avail==='Expired' || v.avail==='No')!==expWas){ regroup(S.rows.concat(S.gone)); if (v.avail==='Expired') S.vexp=null; }   // మరణించారు: moves to the grey box, out of every count
@@ -1076,7 +1103,7 @@ function openHouse(hid){
 }
 function closeHouse(){
   if (S.famBack!=null){ var b=S.famBack; S.famBack=null; location.href='family/'+b; return; }   // opened from the Families page: go back there
-  S.hpick=null; S.hhist=false; S.vdel=null; S.drNav=null;
+  S.hpick=null; S.hhist=false; S.vdel=null; S.drNav=null; S.cMode=false; cWatchStop();
   S.openHouse=null; $('vHouse').classList.add('hide'); document.body.style.overflow=''; renderList();
   // back on the dashboard / its voter list: show the edits made in the house at once (they are already in S.rows)
   if (!$('vDash').classList.contains('hide')){ var ds=$('vDash').scrollTop; renderDash(); $('vDash').scrollTop=ds; }
@@ -1333,7 +1360,7 @@ function nextHouseIndex(h, dir){
   return list.indexOf(h)>=0 && j>=0 && j<list.length ? S.houses.indexOf(list[j]) : -1;
 }
 // shared survey (survey.js) settings for one voter: open question, lists, caste hint (house caste or surname caste)
-function svUI(v, hc){ return {open:S.svOpen[v.id]||'', lists:lists(), hint:{caste: v.caste ? '' : (hc || suggestCaste(v.surname))}, ro:isRO()}; }
+function svUI(v, hc){ return {open:S.svOpen[v.id]||'', lists:lists(), hint:{caste: v.caste ? '' : (hc || suggestCaste(v.surname))}, ro:isRO(), contrib:!!S.cMode, cnote:S.cMode?'<div class="cgn">'+geoNote()+'</div>':''}; }
 $('hBody').onclick=function(e){
   var h = S.hById[S.openHouse];
   if (e.target.closest('a')) return;                       // call / family links work as links
@@ -1933,7 +1960,7 @@ $('dBody').onclick=function(e){
   var b=e.target.closest('[data-h]'); if (b) openHouse(b.dataset.h);
 };
 var DRL = null;   // open drill list {t, rows, sort, lim}
-function openDrill(d){ DRL={t:d.t, rows:d.rows, gone:d.gone||[], ms:MultiSort.norm(LS.get('drms2'),'gp'), lim:100, q:'', fo:false, so:false, f:{w:[], c:'', s:'', sup:[], g:'', vis:'', av:[]}};
+function openDrill(d){ DRL={t:d.t, rows:d.rows, gone:d.gone||[], contrib:!!d.contrib, ms:MultiSort.norm(LS.get(d.contrib?'drcms':'drms2'),'gp'), lim:100, q:'', fo:false, so:false, f:{w:[], c:'', s:'', sup:[], g:'', vis:'', av:[], cg:''}};
   $('drQ').value=''; renderDrill(); $('vDrill').classList.remove('hide'); $('vDrill').scrollTop=0; }
 /* drill list filters (inside the list only) + sorts. Tap the picked sort again to reverse it. */
 var DRSORTS=[['gp','GP క్ర.సం.','GP no.'],['tgt','🎯 ముందు','Targets first'],['house','🏠 ఇంటి నం.','House'],['name','పేరు','Name'],['ward','📍 వార్డు','Ward'],
@@ -1949,8 +1976,14 @@ var DSORT = {   // d = 1 natural order of each key
   age: function(a,b){ return (Number(a.age)||0)-(Number(b.age)||0); },
   sup: function(a,b){ var O={Strong:0,Leaning:1,Undecided:2,Opposed:3}; return (O[a.support]||0)-(O[b.support]||0); }
 };
+var DRSORTS_C = DRSORTS.filter(function(x){ return x[0]!=='tgt'; }).concat([['tc','💰 TC','TC amount'],['camt','💰 C','C amount'],['cppl','👥 మంది','People']]);
+DSORT.tc = function(a,b){ return (Number(b.tc)||0)-(Number(a.tc)||0); };      // biggest first
+DSORT.camt = function(a,b){ return (Number(b.c)||0)-(Number(a.c)||0); };
+DSORT.cppl = function(a,b){ return (Number(b.cppl)||0)-(Number(a.cppl)||0); };
+function drSorts(){ return DRL && DRL.contrib ? DRSORTS_C : DRSORTS; }
 var DLAST = { ward: function(v){ return drWard(v)==='none'?1:0; }, caste: function(v){ return v.caste?0:1; }, sur: function(v){ return v.surname?0:1; },
-  sup: function(v){ return v.support?0:1; }, gp: function(v){ return v.gp?0:1; } };
+  sup: function(v){ return v.support?0:1; }, gp: function(v){ return v.gp?0:1; },
+  tc: function(v){ return Number(v.tc)?0:1; }, camt: function(v){ return Number(v.c)?0:1; }, cppl: function(v){ return Number(v.cppl)?0:1; } };
 function drWard(v){ var w=v._h?hWard(v._h):'none'; return w; }
 function drOk(v){ var f=DRL.f;
   if (f.w.length && f.w.indexOf(drWard(v))<0) return false;
@@ -1960,6 +1993,7 @@ function drOk(v){ var f=DRL.f;
   if (f.g && (f.g==='F'?v.gen!=='Female':v.gen!=='Male')) return false;
   if (f.vis && (f.vis==='y')!==isDone(v)) return false;
   if (f.av.length && f.av.indexOf(v.avail||'none')<0) return false;
+  if (f.cg && (f.cg==='y')!==hasContrib(v)) return false;
   if (DRL.q && !vMatch(v, DRL.q) && !Fuzzy.score(v.name, DRL.Q)) return false;
   return true; }
 function drFilHtml(){
@@ -1967,7 +2001,9 @@ function drFilHtml(){
   var cw=cnt(drWard), cc=cnt(function(v){ return v.caste||'none'; }), cs=cnt(function(v){ return String(v.surname||'').trim(); }), cu=cnt(function(v){ return v.support||'none'; }), ca=cnt(function(v){ return v.avail||'none'; });
   var chip=function(attr,val,on,txt){ return '<button class="chip'+(on?' on':'')+'" '+attr+'="'+esc(val)+'">'+txt+'</button>'; };
   var wk=Object.keys(cw).sort(function(a,b){ return (a==='none')-(b==='none') || a-b; });
-  return '<div class="dsubh">📍 వార్డు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drw','all',!f.w.length,'అన్నీ')+wk.map(function(w){ return chip('data-drw',w,f.w.indexOf(w)>=0,(w==='none'?'లేదు':w)+' <small>('+cw[w]+')</small>'); }).join('')+'</div>'+
+  var ccg = R.filter(hasContrib).length;
+  return (DRL.contrib ? '<div class="dsubh">💰 విరాళం</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drcg','',!f.cg,'అందరూ')+chip('data-drcg','y',f.cg==='y','✓ ఇచ్చారు <small>('+ccg+')</small>')+chip('data-drcg','n',f.cg==='n','✗ ఇంకా లేదు <small>('+(R.length-ccg)+')</small>')+'</div>' : '')+
+    '<div class="dsubh">📍 వార్డు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drw','all',!f.w.length,'అన్నీ')+wk.map(function(w){ return chip('data-drw',w,f.w.indexOf(w)>=0,(w==='none'?'లేదు':w)+' <small>('+cw[w]+')</small>'); }).join('')+'</div>'+
     '<div class="dsubh">💪 మద్దతు</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drsup','all',!f.sup.length,'అన్నీ')+SUPC.map(function(x){ var k=x[0]||'none'; return cu[k]?chip('data-drsup',k,f.sup.indexOf(k)>=0,'<i class="sd" style="background:'+x[2]+'"></i>'+x[1]+' <small>('+cu[k]+')</small>'):''; }).join('')+'</div>'+
     '<div class="dsubh">👫 లింగం</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drg','',!f.g,'అందరూ')+chip('data-drg','F',f.g==='F','👩 స్త్రీలు')+chip('data-drg','M',f.g==='M','👨 పురుషులు')+'</div>'+
     '<div class="dsubh">🗳️ ఓటు వేయగలరా</div><div class="chips" style="flex-wrap:wrap">'+chip('data-drav','all',!f.av.length,'అందరూ')+AVF.map(function(x){ return ca[x[0]]?chip('data-drav',x[0],f.av.indexOf(x[0])>=0,x[1]+' <small>('+ca[x[0]]+')</small>'):''; }).join('')+'</div>'+
@@ -1980,21 +2016,22 @@ function drFilHtml(){
 }
 // expired voters in a drill list follow the ward / caste / surname / gender / search filters (support, visited, can-vote don't apply)
 function drOkG(v){ var f=DRL.f;
-  if (f.sup.length || f.vis || f.av.length) return false;
+  if (f.sup.length || f.vis || f.av.length || f.cg) return false;
   if (f.w.length && f.w.indexOf(v.ward===''||v.ward==null?'none':String(v.ward))<0) return false;
   if (f.c && (v.caste||'none')!==f.c) return false;
   if (f.s && String(v.surname||'').trim()!==f.s) return false;
   if (f.g && (f.g==='F'?v.gen!=='Female':v.gen!=='Male')) return false;
   if (DRL.q && !vMatch(v, DRL.q) && !Fuzzy.score(v.name, DRL.Q)) return false;
   return true; }
-function drFActive(){ var f=DRL.f; return f.w.length||f.c||f.s||f.sup.length||f.g||f.vis||f.av.length; }
+function drFActive(){ var f=DRL.f; return f.w.length||f.c||f.s||f.sup.length||f.g||f.vis||f.av.length||f.cg; }
 function drLine(v){   // 23 Nov: same look as the caste / ward lists; no street; relation next to the English name
   var s=SUPC.filter(function(x){ return x[0]===(v.support||''); })[0] || SUPC[SUPC.length-1], h=v._h||{}, w=hWard(h);
   var rel=(REL[v.relT]||esc(v.relT||''))+(v.relN?': '+esc(v.teR||v.relN):'');
   var l2=[v.gone?'':'<i class="sd" style="background:'+s[2]+'"></i>'+esc(s[1]), (v.gen==='Female'?'👩 ':'👨 ')+esc(v.age)+' ఏళ్ళు', '🏠 '+esc(v.house||'—'),
     w!=='none'?'<b class="wtxt">వార్డు '+esc(w)+'</b>':'', v.caste?esc(CASTE_TE[v.caste]||v.caste):'', v.gone?'':(isDone(v)?'✓ కలిశాం':'కలవలేదు')].filter(Boolean).join(' · ');
+  if (DRL && DRL.contrib) l2 = (hasContrib(v) ? '<b class="camt">💰 TC '+Survey.rupees(v.tc)+' · C '+Survey.rupees(v.c)+(Number(v.cppl)?' · 👥 '+esc(v.cppl):'')+'</b>'+(v.cfor?' · '+esc(v.cfor):'') : '<span class="cnone">💰 ఇంకా లేదు</span>')+' · '+l2;
   var nm = v.te ? '<span class="tn">'+esc(v.te)+'</span><small class="enn">'+esc(v.name)+(rel?' · '+rel:'')+'</small>' : esc(v.name)+(rel?' <small class="enn">'+rel+'</small>':'');
-  return '<div class="dv'+(v.gone?' gone':'')+'" role="button" data-drh="'+esc(h.id||'')+'"><div class="l1">'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+
+  return '<div class="dv'+(v.gone?' gone':'')+'" role="button" data-drh="'+esc(h.id||'')+'" data-drid="'+esc(v.id)+'"><div class="l1">'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+
     '<span class="nm hscr">'+nm+'</span>'+(v.mobile&&!v.gone?'<a class="drcall" href="tel:'+esc(v.mobile)+'" title="'+esc(v.mobile)+'">📞</a>':'')+'</div><div class="l2 hscr">'+(v.gone?'<span class="gtag">మరణించారు · Expired</span> ':'')+(v.mobile&&!v.gone?'📱 '+esc(v.mobile)+' · ':'')+l2+'</div></div>';
 }
 function renderDrill(){
@@ -2004,22 +2041,28 @@ function renderDrill(){
   var gq=MultiSort.gpQ(DRL.q); if (gq){ var hit=r.filter(function(v){ return MultiSort.gpEq(v.gp,gq); }); if (hit.length) r=hit; }   // GP no. typed: just that voter
   $('drTitle').textContent = DRL.t;
   var ph = r.filter(function(v){ return v.mobile; }).length;
-  $('drSub').textContent = r.length+(r.length!==DRL.rows.length?' / '+DRL.rows.length:'')+' ఓటర్లు · 📞 '+ph+' నంబర్లు'+(dfActive()?' · 🔎 ఫిల్టర్ ఉంది':'');
+  $('drSub').textContent = r.length+(r.length!==DRL.rows.length?' / '+DRL.rows.length:'')+' ఓటర్లు · 📞 '+ph+' నంబర్లు'+(dfActive()&&!DRL.contrib?' · 🔎 ఫిల్టర్ ఉంది':'');
+  if (DRL.contrib){ var cs=cSum(r); $('drSub').innerHTML = '<span style="display:block;width:100%"><b>TC '+Survey.rupees(cs.tc)+' · C '+Survey.rupees(cs.c)+' · మొత్తం '+Survey.rupees(cs.tc+cs.c)+'</b><br>💰 '+cs.n+' ఇచ్చారు · 👥 '+cs.p+' మంది · '+r.length+(r.length!==DRL.rows.length?' / '+DRL.rows.length:'')+' ఓటర్లు</span>'; }
   var fa=drFActive(), dflt=ms[0].k==='gp'&&ms[0].d===1&&!ms[1].k;
   $('drFilTog').className='wtog'+(fa?' act':''); $('drFilTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+(fa?'ఉన్నాయి · On':'అన్నీ · All')+'</span><span class="wc">'+(DRL.fo?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('drFil').classList.toggle('hide', !DRL.fo); if (DRL.fo) $('drFil').innerHTML = drFilHtml();
-  $('drSortTog').className='wtog'+(dflt?'':' act'); $('drSortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(ms, DRSORTS))+'</span><span class="wc">'+(DRL.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('drSortTog').className='wtog'+(dflt?'':' act'); $('drSortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(ms, drSorts()))+'</span><span class="wc">'+(DRL.so?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('drSort').classList.toggle('hide', !DRL.so);
-  if (DRL.so) $('drSort').innerHTML = MultiSort.html(ms, DRSORTS, 'gp');
+  if (DRL.so) $('drSort').innerHTML = MultiSort.html(ms, drSorts(), 'gp');
   var gx = DRL.gone.filter(function(v){ return drOkG(v); }).sort(MultiSort.cmp(ms, DSORT, function(a,b){ return String(a.name).localeCompare(String(b.name)); }, DLAST));
   if (gq) gx = gx.filter(function(v){ return MultiSort.gpEq(v.gp,gq); });
-  if (gx.length) $('drSub').textContent += ' · ఓటు వేయలేనివారు '+gx.length;
+  if (gx.length && !DRL.contrib) $('drSub').textContent += ' · ఓటు వేయలేనివారు '+gx.length;
   DRL.shown = r;   // the voters in the order shown: the house screen's previous / next follow it
   $('drList').innerHTML = r.slice(0,DRL.lim).map(drLine).join('') + (r.length>DRL.lim?'<button class="more" data-drmore="1">ఇంకా చూపించు ('+(r.length-DRL.lim)+')</button>':'') +
     (gx.length ? '<div class="drgh">ఓటు వేయలేనివారు · Cannot vote — '+gx.length+' <small>ఓటు లేదు, లెక్కల్లో లేరు · not counted</small></div>'+gx.map(drLine).join('') : '');
 }
 $('btnDrillBack').onclick=function(){ $('vDrill').classList.add('hide'); DRL=null; };
-MultiSort.bind($('drSort'), function(){ return DRL.ms; }, function(st){ DRL.ms=st; LS.set('drms2',st); DRL.lim=100; renderDrill(); });
+MultiSort.bind($('drSort'), function(){ return DRL.ms; }, function(st){ DRL.ms=st; LS.set(DRL.contrib?'drcms':'drms2',st); DRL.lim=100; renderDrill(); });
+function cSum(r){ var o={tc:0,c:0,n:0,p:0}; r.forEach(function(v){ o.tc+=Number(v.tc)||0; o.c+=Number(v.c)||0; o.p+=Number(v.cppl)||0; if (hasContrib(v)) o.n++; }); return o; }
+// 💰 contributions: every voter (in the chosen wards), same search / filters / sort as the other lists; GP no. first
+function openContrib(){ var sc=[]; S.houses.forEach(function(h){ if (wardOk(h)) sc=sc.concat(h.v); });
+  openDrill({t:'💰 విరాళాలు · Contributions', rows:sc, gone:[], contrib:true}); }
+$('tContrib').onclick=function(e){ e.preventDefault(); if (canContrib()) openContrib(); };
 $('drFilTog').onclick=function(){ DRL.fo=!DRL.fo; renderDrill(); };
 $('drSortTog').onclick=function(){ DRL.so=!DRL.so; renderDrill(); };
 var drQT; $('drQ').oninput=function(){ var t=this; clearTimeout(drQT); drQT=setTimeout(function(){ if(!DRL) return; DRL.q=t.value.trim().toLowerCase(); DRL.Q=Fuzzy.query(DRL.q); DRL.lim=100; renderDrill(); },200); };
@@ -2028,8 +2071,9 @@ $('drFil').onclick=function(e){ var f=DRL.f, b;
   else if ((b=e.target.closest('[data-drsup]'))){ var s=b.dataset.drsup; if (s==='all') f.sup=[]; else { var j=f.sup.indexOf(s); if (j>=0) f.sup.splice(j,1); else f.sup.push(s); } }
   else if ((b=e.target.closest('[data-drg]'))) f.g=b.dataset.drg;
   else if ((b=e.target.closest('[data-drv]'))) f.vis=b.dataset.drv;
+  else if ((b=e.target.closest('[data-drcg]'))) f.cg=b.dataset.drcg;
   else if ((b=e.target.closest('[data-drav]'))){ var a=b.dataset.drav; if (a==='all') f.av=[]; else { var k=f.av.indexOf(a); if (k>=0) f.av.splice(k,1); else f.av.push(a); } }
-  else if (e.target.closest('[data-drclr]')) DRL.f={w:[], c:'', s:'', sup:[], g:'', vis:'', av:[]};
+  else if (e.target.closest('[data-drclr]')) DRL.f={w:[], c:'', s:'', sup:[], g:'', vis:'', av:[], cg:''};
   else return;
   DRL.lim=100; renderDrill(); };
 $('drFil').onchange=function(e){ var t=e.target; if (t.dataset.drsel){ DRL.f[t.dataset.drsel]=t.value; DRL.lim=100; renderDrill(); } };
@@ -2040,7 +2084,9 @@ $('drList').onclick=function(e){
   if (d && d.dataset.drh && S.hById[d.dataset.drh]){
     var seen={}; S.drNav=[]; (DRL.shown||[]).forEach(function(v){ var id=v._h&&v._h.id; if (id && !seen[id]){ seen[id]=1; S.drNav.push(id); } });
     if (!seen[d.dataset.drh]) S.drNav=null;   // an expired-only house: plain house navigation
+    S.cMode = !!DRL.contrib;
     openHouse(d.dataset.drh);
+    if (S.cMode){ cWatchStart(); if (d.dataset.drid && S.byId[d.dataset.drid]){ S.vexp = d.dataset.drid; renderHouse(); } }   // the tapped voter opens at once; GPS kept fresh
   }
 };
 // 👥 who used the app (admin only) — loaded from the server only when this card is opened
@@ -2164,7 +2210,7 @@ function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
     S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
-    $('tCaste').classList.toggle('hide', !S.user.admin); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API); renderHome();
+    $('tCaste').classList.toggle('hide', !S.user.admin); $('tContrib').classList.toggle('hide', !canContrib()); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API); renderHome();
     if (S.openHouse) renderHouse();
   }).catch(function(){});
 }
@@ -2219,6 +2265,7 @@ function renderHome(){
   $('homeTxt').textContent = 'పూర్తి '+vis+' / '+scope.length + (S.wsel.length ? ' · వార్డు '+S.wsel.map(function(w){ return w==='none'?'లేదు':w; }).join(', ') : '');
   $('homeBar').style.width = (scope.length?(100*vis/scope.length):0)+'%';
   $('tHousesN').textContent = S.houses.length+' ఇళ్ళు · '+S.rows.length+' ఓటర్లు';
+  var cs0=cSum(scope); $('tContribN').textContent = cs0.n ? Survey.rupees(cs0.tc+cs0.c)+' · '+cs0.n+' ఓటర్లు' : 'Contributions';
 }
 $('tHouses').onclick=function(e){ e.preventDefault(); showView('list'); };
 $('btnHome').onclick=function(){ showView('home'); };
@@ -2256,7 +2303,7 @@ function showApp(){
   $('vLogin').classList.add('hide');
   $('who').textContent = '👤 '+S.user.name;
   $('tFam').classList.toggle('hide', !HAS_API);
-  $('tCaste').classList.toggle('hide', !S.user.admin); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API);
+  $('tCaste').classList.toggle('hide', !S.user.admin); $('tContrib').classList.toggle('hide', !canContrib()); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API);
   applyRO();
   showView(LS.get('view')==='list' ? 'list' : 'home');
   S.wards = S.user.wards || 12;

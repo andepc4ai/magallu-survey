@@ -35,8 +35,14 @@ var Q = [
   {k:'mobile', icon:'📱', te:'మొబైల్', en:'Mobile', type:'phone', empty:'నంబర్ లేదు'},
   {k:'issue', icon:'⚠️', te:'సమస్యలు', en:'Needs', type:'many', opts:ISS, status:'issueStatus', empty:'లేవు'},
   {k:'occupation', icon:'💼', te:'వృత్తి', en:'Occupation', type:'one', list:'occupations', te_map:OCC_TE, empty:'—'},
-  {k:'notes', icon:'📝', te:'వివరాలు', en:'Notes', type:'text', empty:'—'}
+  {k:'notes', icon:'📝', te:'వివరాలు', en:'Notes', type:'text', empty:'—'},
+  // 25 Nov: contributions the voter / family gives to the campaign (shown only when ui.contrib — the 💰 list)
+  {k:'tc', icon:'💰', te:'TC Amount', en:'TC', type:'num', money:true, contrib:true, empty:'₹ —'},
+  {k:'c', icon:'💰', te:'C Amount', en:'C', type:'num', money:true, contrib:true, empty:'₹ —'},
+  {k:'cppl', icon:'👥', te:'ఎంత మంది', en:'People', type:'num', max:99, contrib:true, empty:'—'},
+  {k:'cfor', icon:'🧾', te:'దేనికి', en:'For what', type:'text', ph:'ఉదా: పోస్టర్లు, మీటింగ్', contrib:true, empty:'—'}
 ];
+function rupees(n){ n=Number(n)||0; return '₹ '+n.toLocaleString('en-IN'); }
 
 function optsOf(q, ui){
   if (q.opts) return q.opts;
@@ -54,6 +60,7 @@ function valueHtml(q, v){
   if (!x) return '';
   if (q.type==='text') return esc(String(x).length>36?String(x).slice(0,36)+'…':x);
   if (q.type==='phone') return '<span style="letter-spacing:.03em">'+esc(x)+'</span>';
+  if (q.type==='num') return q.money ? '<b>'+rupees(x)+'</b>' : '<b>'+esc(x)+'</b> మంది';
   return esc(label(q, x));
 }
 
@@ -61,7 +68,11 @@ function valueHtml(q, v){
 function render(v, ui, id){
   ui = ui || {};
   var h = '<div class="sv" data-svid="'+esc(id)+'">';
-  Q.forEach(function(q){
+  var QQ = ui.contrib ? Q.filter(function(q){ return q.contrib; }).concat(Q.filter(function(q){ return q.k==='mobile'; }), Q.filter(function(q){ return !q.contrib && q.k!=='mobile'; })) : Q;   // 💰 list: contribution + phone first
+  QQ.forEach(function(q){
+    if (q.contrib && !ui.contrib) return;
+    if (q.k==='tc') h += '<div class="svch">💰 విరాళం <small>Contribution</small></div>'+(ui.cnote||'');
+    if (ui.contrib && q.k==='support') h += '<div class="svch" style="background:#f5f5f4;color:#44403c">📝 సర్వే <small>Survey</small></div>';
     if (q.type==='seg'){
       h += '<div class="svq"><span class="svk">'+q.te+'</span><div class="seg" style="grid-template-columns:repeat('+q.opts.length+',1fr)">'+q.opts.map(function(o){
         return '<button class="sg'+(v[q.k]===o[0]?' on':'')+'" style="--c:'+o[2]+'" data-svf="'+q.k+'" data-svv="'+esc(o[0])+'">'+o[1]+'</button>'; }).join('')+'</div></div>';
@@ -85,8 +96,10 @@ function render(v, ui, id){
       h += '<button class="svok" data-svo="'+q.k+'">✓ అయింది</button>';
     } else if (q.type==='phone'){
       h += '<div class="svin"><input data-svin="'+q.k+'" type="tel" inputmode="numeric" maxlength="14" placeholder="10 అంకెలు" value="'+esc(v[q.k]||'')+'"><button class="svok" data-svsave="'+q.k+'">✓ సేవ్</button></div><div class="svmsg" data-svmsg="'+q.k+'"></div>';
+    } else if (q.type==='num'){
+      h += '<div class="svin"><input data-svin="'+q.k+'" type="tel" inputmode="numeric" maxlength="'+(q.money?9:2)+'" placeholder="'+(q.money?'₹ మొత్తం · Amount':'మంది · People')+'" value="'+esc(v[q.k]||'')+'"><button class="svok" data-svsave="'+q.k+'">✓ సేవ్</button></div><div class="svmsg" data-svmsg="'+q.k+'"></div>';
     } else if (q.type==='text'){
-      h += '<div class="svin"><textarea data-svin="'+q.k+'" rows="2" placeholder="ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు">'+esc(v[q.k]||'')+'</textarea><button class="svok" data-svsave="'+q.k+'">✓ సేవ్</button></div>';
+      h += '<div class="svin"><textarea data-svin="'+q.k+'" rows="2" placeholder="'+esc(q.ph||'ఉదా: హైదరాబాద్‌లో పని చేస్తున్నారు')+'">'+esc(v[q.k]||'')+'</textarea><button class="svok" data-svsave="'+q.k+'">✓ సేవ్</button></div>';
     }
     h += '</div>';
   });
@@ -116,6 +129,8 @@ function click(e, v, ui, edit){
   if ((t = e.target.closest('[data-svsave]'))){
     var k5=t.dataset.svsave, root=t.closest('.sv'), inp=root.querySelector('[data-svin="'+k5+'"]'), val5=inp?inp.value.trim():'';
     if (k5==='mobile'){ val5=val5.replace(/\D/g,''); if (val5 && val5.length!==10){ var m=root.querySelector('[data-svmsg="mobile"]'); if (m) m.textContent='⚠️ 10 అంకెలు ఉండాలి · 10 digits'; return false; } }
+    var q5 = Q.filter(function(x){ return x.k===k5; })[0];
+    if (q5 && q5.type==='num'){ val5=val5.replace(/\D/g,'').replace(/^0+(?=\d)/,''); if (q5.max && Number(val5)>q5.max){ var m5=root.querySelector('[data-svmsg="'+k5+'"]'); if (m5) m5.textContent='⚠️ 1–'+q5.max; return false; } if (k5==='cppl' && val5==='0') val5=''; }
     if (String(v[k5]||'')!==val5){ var f5={}; f5[k5]=val5; edit(f5); }
     ui.open=''; return true;
   }
@@ -150,8 +165,9 @@ var css = '.sv{margin-top:6px}'+
 '.svin{display:flex;gap:6px;width:100%}.svin input,.svin textarea{flex:1;min-width:0;border:2px solid #e7e5e4;border-radius:10px;padding:8px 10px;font:inherit;font-size:1rem;background:#fff}'+
 '.svok{flex:none;border:0;border-radius:10px;background:#1c1917;color:#FACC15;font-weight:700;padding:0 14px;min-height:40px}'+
 '.sved>.svok{margin-left:auto}.svmsg{width:100%;font-size:.8rem;color:#b91c1c}'+
+'.svch{margin:12px 0 2px;padding:6px 8px;border-radius:10px;background:#fef9c3;font-weight:800;font-size:.9rem;color:#713f12}.svch small{font-weight:600;color:#a16207;margin-left:4px}'+
 '.svdot{display:inline-block;width:9px;height:9px;border-radius:50%;background:#cbd5e1;margin-right:4px;vertical-align:0}';
 if (typeof document!=='undefined'){ var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st); }
 
-window.Survey = {Q:Q, render:render, click:click, summary:summary, CASTE_TE:CASTE_TE, OCC_TE:OCC_TE, ISS:ISS};
+window.Survey = {Q:Q, render:render, click:click, summary:summary, rupees:rupees, CASTE_TE:CASTE_TE, OCC_TE:OCC_TE, ISS:ISS};
 })();
