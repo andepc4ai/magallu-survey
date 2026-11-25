@@ -360,7 +360,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 17:30 -->
+    <!-- app version: 25 Nov · 18:15 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1789,7 +1789,7 @@ function pvMoney(rows, title){ if (!canContrib()) return ''; var c=cSum(rows);
   // 25 Nov: any money cell → the voters who gave in this row (💰 list: amounts, totals, 🪪)
   var g=c.n ? drAc('💰 '+(title?title+' · ':'')+'ఇచ్చినవారు · Givers', rows.filter(hasContrib)) : '';
   var td=function(x,b){ return '<td class="pvm"'+(x?g:'')+'>'+(x?(b?'<b>':'')+Number(x).toLocaleString('en-IN')+(b?'</b>':''):'—')+'</td>'; };
-  return td(c.tc)+td(c.c)+td(c.tc+c.c,1)+td(c.n)+td(c.p); }
+  return td(c.tc+c.c,1)+td(c.p); }   // 25 Nov: only total ₹ and people (TC / C / givers columns dropped on request)
 function drAc(title, rows){ if (!rows.length) return ''; DR.push({t:title, rows:rows, gone:[], contrib:true}); return ' data-dr="'+(DR.length-1)+'"'; }
 function pvNl(x){ return /లేదు|కాలేదు|^—$/.test(x)?1:0; }   // 'no ward' / 'not recorded' always last when sorting by name
 function pvCmp(f){ return PDIM[f][3] ? function(a,b){ return a.localeCompare(b, undefined, {numeric:true}); } : function(a,b){ return a.localeCompare(b); }; }
@@ -1823,23 +1823,23 @@ function pivotCard(rows){
       if (fs.length>1 && j>0 && o.key[0]!==list[j-1].key[0]) out.push(pvSub(list[j-1].key[0], first[list[j-1].key[0]], tot, fs.length, rows, fs[0]));
       out.push('<tr>'+o.key.map(function(x,i){ var same=prev.length && prev.slice(0,i+1).join('\u0001')===o.key.slice(0,i+1).join('\u0001');
           return '<td>'+(same?'':'<b>'+esc(pvLab(x))+'</b>')+'</td>'; }).join('')+
-        '<td class="pvc"'+drA(o.key.map(pvLab).join(' · '), o.rows)+'><b>'+o.rows.length+'</b></td><td class="shr">'+share1(o.rows.length,tot)+'%</td>'+pvMoney(o.rows, o.key.map(pvLab).join(' · '))+'</tr>');
+        '<td class="pvc"'+drA(o.key.map(pvLab).join(' · '), o.rows)+'><b>'+o.rows.length+'</b></td>'+pvMoney(o.rows, o.key.map(pvLab).join(' · '))+'</tr>');
       prev=o.key; shown++; }
     if (fs.length>1 && shown===list.length && list.length) out.push(pvSub(list[list.length-1].key[0], first[list[list.length-1].key[0]], tot, fs.length, rows, fs[0]));
     var arr=function(k){ return '<span class="pva'+(sk===k?' on':'')+'">'+(sk===k?(sd===1?'▲':'▼'):'↕')+'</span>'; };
-    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f,i){ return '<th data-pvh="'+i+'">'+esc(PDIM[f][0])+' '+arr(i)+'</th>'; }).join('')+'<th data-pvh="n">ఓటర్లు '+arr('n')+'<br><small>Count</small></th><th>వాటా<br><small>Share</small></th>'+
-      (canContrib()?'<th class="pvm">💰 TC ₹</th><th class="pvm">💰 C ₹</th><th class="pvm" data-pvh="m">మొత్తం ₹ '+arr('m')+'<br><small>Total</small></th><th class="pvm">ఇచ్చినవారు<br><small>Givers</small></th><th class="pvm">👥 మంది<br><small>People</small></th>':'')+'</tr>'+out.join('')+
-      '<tr class="pvtot"><td colspan="'+fs.length+'"><b>మొత్తం · Grand total</b></td><td><b>'+tot+'</b></td><td class="shr">100%</td>'+pvMoney(rows, 'మొత్తం')+'</tr></table></div>'+
+    tbl='<div class="pvw"><table class="dt pvt"><tr>'+fs.map(function(f,i){ return '<th data-pvh="'+i+'">'+esc(PDIM[f][0])+' '+arr(i)+'</th>'; }).join('')+'<th data-pvh="n">ఓటర్లు '+arr('n')+'<br><small>Count</small></th>'+
+      (canContrib()?'<th class="pvm" data-pvh="m">💰 మొత్తం ₹ '+arr('m')+'<br><small>Total</small></th><th class="pvm">👥 మంది<br><small>People</small></th>':'')+'</tr>'+out.join('')+
+      '<tr class="pvtot"><td colspan="'+fs.length+'"><b>మొత్తం · Grand total</b></td><td><b>'+tot+'</b></td>'+pvMoney(rows, 'మొత్తం')+'</tr></table></div>'+
       moreBtn('pv', list.length, 60, 'అన్ని వరుసలు')+
       '<div class="dleg" style="margin-top:4px">↕ నిలువు పేరు నొక్కితే ఆ క్రమంలో · Tap a column name to sort (tap again to reverse)</div>';
   }
   return '<details class="dcard" data-dk="pv"'+(S.dashOpen.pv?' open':'')+'><summary><h3>🧮 మీ పట్టిక <span class="en">Custom table'+(fs.length?' · '+fs.map(function(f){ return PDIM[f][1]; }).join(' × '):'')+'</span></h3></summary>'+
     chips+vh+tbl+
-    '<div class="dleg">సంఖ్య నొక్కితే ఆ ఓటర్లు కనిపిస్తారు · Tap a count to see those voters. వాటా = మొత్తం '+rows.length+' లో ఎంత శాతం'+(dfActive()?' (ఫిల్టర్ ప్రకారం · filtered)':'')+'. సేవ్ చేసినవి ఈ ఫోన్‌లో మాత్రమే · Saved on this phone only.</div></details>';
+    '<div class="dleg">సంఖ్య నొక్కితే ఆ ఓటర్లు కనిపిస్తారు · Tap a count to see those voters'+(dfActive()?' (ఫిల్టర్ ప్రకారం · filtered)':'')+'. సేవ్ చేసినవి ఈ ఫోన్‌లో మాత్రమే · Saved on this phone only.</div></details>';
 }
 function pvSub(k, n, tot, cols, rows, f){
   var sub=rows.filter(function(v){ return PDIM[f][2](v)===k; });
-  return '<tr class="pvsub"><td colspan="'+cols+'">'+esc(pvLab(k))+' మొత్తం · total</td><td'+drA(pvLab(k), sub)+'><b>'+n+'</b></td><td class="shr">'+share1(n,tot)+'%</td>'+pvMoney(sub, pvLab(k))+'</tr>';
+  return '<tr class="pvsub"><td colspan="'+cols+'">'+esc(pvLab(k))+' మొత్తం · total</td><td'+drA(pvLab(k), sub)+'><b>'+n+'</b></td>'+pvMoney(sub, pvLab(k))+'</tr>';
 }
 function share1(n,d){ return d ? Math.round(n*1000/d)/10 : 0; }
 function stat(list){
