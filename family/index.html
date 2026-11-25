@@ -101,6 +101,17 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 .pin{text-align:center;letter-spacing:.5em;font-size:1.4rem}
 .go{width:100%;height:54px;border:0;border-radius:14px;background:#FACC15;color:#1c1917;box-shadow:0 2px 0 #CA8A04;font-size:1.05rem;font-weight:700;margin-top:18px}
 .err{color:#dc2626;font-weight:700;margin-top:10px;min-height:1.2em}
+/* 25 Nov: support colour in trees + compact list */
+.su-Strong{--sc:#15803d;--st:#dcfce7}.su-Leaning{--sc:#65a30d;--st:#ecfccb}.su-Undecided{--sc:#ea580c;--st:#ffedd5}.su-Opposed{--sc:#dc2626;--st:#fee2e2}.su-none{--sc:#cbd5e1;--st:#fff}
+.pc[class*=su-]{border-left:6px solid var(--sc);background:var(--st)}.pc.su-none{border-left-color:#e5dfd2}
+.pc .d.c-Strong{background:#15803d}.pc .d.c-Leaning{background:#84cc16}.pc .d.c-Undecided{background:#f59e0b}.pc .d.c-Opposed{background:#dc2626}
+.pc{padding:6px 8px;gap:6px}.node{margin:4px 0}.kids{margin-left:10px;padding-left:8px}
+.fc{padding:9px 12px;margin-bottom:7px;border-radius:12px}.fc b{font-size:1rem}.fc .m{margin:1px 0 4px;font-size:.8rem}
+.fc .sbar{height:7px}.fc .leg{font-size:.74rem;margin-top:3px;gap:2px 10px}.fc .contact{margin-top:5px;padding-top:5px;font-size:.82rem}.fc .callb{padding:4px 9px}.fc .lmini{margin-top:2px;font-size:.8rem}
+.ctl{display:flex;gap:6px;margin:8px 0 4px}.ctl .wtog{flex:1;min-width:0;margin:0;min-height:40px;padding:0 8px;font-size:.85rem}.ctl .wtog .wc{display:none}.ctl .wtog .wv{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ctl .vt{flex:none;border:2px solid #e5dfd2;background:#fff;border-radius:12px;min-width:44px;min-height:40px;font-size:1.1rem}.ctl .vt.on{background:#1d1b16;border-color:#1d1b16}
+#vList .f#q{height:44px}#vList .count{margin:4px 2px}
+body.kb #vList .top .sub,body.kb #vList .ctl{display:none}body.kb #vList .top{padding:6px 12px}
 </style>
 </head>
 <body>
@@ -125,7 +136,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
   </div>
   <div class="wrap">
     <input id="q" class="f" type="search" placeholder="పేరు / ఇంటిపేరు / ఇంటి నం. వెతకండి">
-    <button class="wtog" id="filTog" style="margin-top:10px"></button>
+    <div class="ctl"><button class="wtog" id="filTog"></button><button class="wtog" id="sortTog"></button><span id="viewChips" style="display:flex;gap:6px"></span></div>
     <div id="filBox" class="hide">
       <div class="chips" id="sizeChips"></div>
       <div class="chips hide" id="boothChips"></div>
@@ -134,9 +145,7 @@ label{display:block;font-weight:700;margin:14px 0 6px}
       <select class="f" id="surSel" style="margin-top:8px"></select>
       <select class="f" id="casSel" style="margin-top:8px"></select>
     </div>
-    <button class="wtog" id="sortTog"></button>
     <div class="chips hide" id="sortChips"></div>
-    <div class="chips" id="viewChips"></div>
     <div class="count" id="lcount"></div>
     <div id="flist"><div class="msg">లోడ్ అవుతోంది… · Loading…</div></div>
   </div>
@@ -401,14 +410,14 @@ function renderList(){
   $('surSel').innerHTML='<option value="">👪 ఇంటిపేరు · Surname: అన్నీ</option>'+Object.keys(sc).sort(function(a,b){ return (tes(a)||a).localeCompare(tes(b)||b); }).map(function(k){ return '<option value="'+esc(k)+'"'+(F.sur===k?' selected':'')+'>'+esc(tes(k)||k)+(tes(k)?' · '+esc(k):'')+' ('+sc[k]+')</option>'; }).join('');
   $('casSel').innerHTML='<option value="">🏷️ కులం · Caste: అన్నీ</option>'+Object.keys(cc).sort(function(a,b){ return cte(a).localeCompare(cte(b)); }).map(function(k){ return '<option value="'+esc(k)+'"'+(F.cas===k?' selected':'')+'>'+esc(cte(k))+' ('+cc[k]+')</option>'; }).join('')+'<option value="none"'+(F.cas==='none'?' selected':'')+'>కులం నమోదు కాలేదు · Not recorded ('+nc+')</option>';
   $('filTog').className='wtog'+(fsum.length?' act':'');
-  $('filTog').innerHTML='🔎 ఫిల్టర్లు <span class="wv">'+(fsum.length?fsum.join(' · '):'అన్నీ ఓటర్లు · All')+'</span><span class="wc">'+(F.fopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('filTog').innerHTML='🔎 <span class="wv">'+(fsum.length?fsum.join(' · '):'అన్నీ ఓటర్లు · All')+'</span><span class="wc">'+(F.fopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('filBox').classList.toggle('hide', !F.fopen);
   var ms = F.ms, sdf = ms[0].k==='gp' && ms[0].d===1 && !ms[1].k;
   $('sortTog').className='wtog'+(sdf?'':' act');
-  $('sortTog').innerHTML='↕️ క్రమం <span class="wv">'+esc(MultiSort.summary(ms, SORTS))+'</span><span class="wc">'+(F.sopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
+  $('sortTog').innerHTML='↕️ <span class="wv">'+esc(MultiSort.summary(ms, SORTS))+'</span><span class="wc">'+(F.sopen?'▴ మూసివేయి':'▾ మార్చు')+'</span>';
   $('sortChips').classList.toggle('hide', !F.sopen);
   if (F.sopen) $('sortChips').innerHTML = MultiSort.html(ms, SORTS, 'gp');
-  $('viewChips').innerHTML = '<button class="chip'+(F.tree?'':' on')+'" data-view="0">📋 జాబితా · List</button><button class="chip'+(F.tree?' on':'')+'" data-view="1">🌳 కుటుంబ చెట్లు · Trees</button>';
+  $('viewChips').innerHTML = '<button class="vt'+(F.tree?'':' on')+'" data-view="0" title="జాబితా · List">📋</button><button class="vt'+(F.tree?' on':'')+'" data-view="1" title="కుటుంబ చెట్లు · Trees">🌳</button>';
   $('sizeChips').innerHTML = [[1,'అన్నీ'],[2,'2+'],[5,'5+'],[10,'10+']].map(function(x){
     return '<button class="chip'+(F.size===x[0]&&!F.check&&!F.swing?' on':'')+'" data-size="'+x[0]+'">'+x[1]+' ఓటర్లు</button>'; }).join('')+
     '<button class="chip warn'+(F.check?' on':'')+'" data-chk="1">⚠ సరిచూడాలి ('+checks+')</button>'+
@@ -500,6 +509,9 @@ $('wardChips').onclick=function(e){ var b=e.target.closest('[data-fw]'); if(!b) 
 $('surSel').onchange=function(){ F.sur=this.value; F.limit=40; renderList(); };
 $('casSel').onchange=function(){ F.cas=this.value; F.limit=40; renderList(); };
 $('boothChips').onclick=function(e){ var b=e.target.closest('[data-booth]'); if(!b) return; F.booth=b.dataset.booth; F.limit=40; renderList(); };
+// keyboard open / searching: hide the header line and the control row so the results get the screen
+function kbMode(){ document.body.classList.toggle('kb', !!$('q').value.trim()); }   // only while text is typed (Android keeps focus after the keyboard closes)
+$('q').addEventListener('input', kbMode); $('q').addEventListener('search', kbMode);
 var qt; $('q').oninput=function(){ clearTimeout(qt); var v=this.value; qt=setTimeout(function(){ F.q=v.trim().toLowerCase(); F.Q=Fuzzy.query(F.q); F.limit=40; renderList(); },200); };
 $('flist').onclick=function(e){
   if (e.target.id==='more'){ F.limit+=40; renderList(); return; }
@@ -516,7 +528,7 @@ $('lcount').onclick=function(e){ if (e.target.id==='clrSur'){ F.sur=''; F.size=1
 function pcard(p, me){
   var chk = p.vote && p.rel && !p.sure;
   if (p.gone) return '<button class="pc gone" data-p="'+esc(p.id)+'"><div><b>'+dnHtml(p)+'</b><span>'+esc(goneTe(p.gone))+' · Expired'+(p.age?' · '+p.age:'')+'</span></div></button>';
-  return '<button class="pc'+(p.r26?' r26':'')+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+(F.wsel.length&&p.vote&&!inSel(p)?' ow':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
+  return '<button class="pc'+(p.vote?' su-'+(p.support||'none'):'')+(p.r26?' r26':'')+(p.vote?'':' nv')+(me?' me':'')+(chk?' chk':'')+(p.vote&&p.fhead?' fh':'')+(F.wsel.length&&p.vote&&!inSel(p)?' ow':'')+'" data-p="'+esc(p.id)+'">'+(p.vote?sdot(p):'')+
     '<div>'+(p.vote&&p.fhead?'<span class="crown">👑 కుటుంబ పెద్ద</span>':'')+'<b>'+(p.vote&&p.gp?'<em class="gpn">GP '+esc(p.gp)+'</em>':'')+dnHtml(p)+(chk?' ⚠':'')+'</b><span>'+(p.vote?(p.g==='Female'?'👩 ':'👨 ')+(p.age||'')+' · 🏠 '+esc(p.house||'—')+(p.ward?' · వా '+esc(p.ward):''):'ఓటు లేదు · no vote')+'</span>'+(p.r26?'<span class="r26t">⚠ 2026లో తొలగింపు: '+esc(goneTe(p.r26))+'</span>':'')+'</div></button>';
 }
 function treeHtml(id, seen, me){

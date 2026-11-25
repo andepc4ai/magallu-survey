@@ -295,6 +295,12 @@ details.dcard[open]>summary{margin-bottom:10px}
 .fold.opt{opacity:.8;border-style:dashed}
 .wbadge{background:#fde047;color:#1c1917;border-radius:999px;padding:2px 10px;font-weight:800;font-size:.85rem;white-space:nowrap}.wbadge.no{background:#fee2e2;color:#b91c1c}.wtxt{color:#854d0e}
 .camt{color:#166534}
+/* 25 Nov: support colour on every voter row — stripe + light tint */
+.su-Strong{--sc:#15803d;--st:#dcfce7}.su-Leaning{--sc:#65a30d;--st:#ecfccb}.su-Undecided{--sc:#ea580c;--st:#ffedd5}.su-Opposed{--sc:#dc2626;--st:#fee2e2}.su-none{--sc:#cbd5e1;--st:#fff}
+.dv[class*=su-]{border-left:6px solid var(--sc);background:var(--st)}.dv.gone{border-left-color:#a8a29e;background:#f5f5f4}
+.names .nm[class*=su-]{background:var(--st);border-left:4px solid var(--sc);border-radius:6px;padding:1px 6px;margin:1px 0}
+.pv[class*=su-]{border-left-color:var(--sc);background:var(--st)}.pv.on{border-left-color:#16a34a;background:#f0fdf4}
+.vc.vmin.Strong{background:#f0fdf4}.vc.vmin.Leaning{background:#f7fee7}.vc.vmin.Undecided{background:#fff7ed}.vc.vmin.Opposed{background:#fef2f2}
 .vmhouse{display:block;width:100%;margin:8px 0 16px;padding:10px;border:2px dashed #d6d3d1;border-radius:12px;background:#fff;font:inherit;font-weight:700;color:#57534e}.vmhouse small{font-weight:500;color:#a8a29e;margin-left:4px}
 #hTitle .gpn{font-size:.8rem;vertical-align:2px}.cnone{color:#a8a29e}
 </style>
@@ -340,7 +346,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 12:00 -->
+    <!-- app version: 25 Nov · 13:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1085,7 +1091,7 @@ function renderList(){
       '<div class="st">'+esc(h.sec)+(h.v[0].ward?' · వార్డు '+h.v[0].ward:'')+
         (S.stat==='revisit'?' · '+(function(){ var t=Math.max.apply(null,h.v.map(lastSeen)); return t>1?'చివరిసారి '+Math.floor((Date.now()-t)/DAY)+' రోజుల క్రితం':t===1?'పాత నమోదు':'ఎప్పుడూ వెళ్ళలేదు'; })():'')+'</div>'+
       '<div class="names">'+h.v.map(function(v){
-        return '<span class="nm'+(v.r26?' r26':'')+'"><i class="dot '+(v.support|| (v.visited?'v':''))+'"></i>'+lnm(v)+(v.r26?' <b>⚠2026</b>':'')+'</span>';
+        return '<span class="nm su-'+(v.support||'none')+(v.r26?' r26':'')+'"><i class="dot '+(v.support|| (v.visited?'v':''))+'"></i>'+lnm(v)+(v.r26?' <b>⚠2026</b>':'')+'</span>';
       }).join('')+(h.gone||[]).map(function(v){ return '<span class="nm gone" title="'+esc(v.gone)+'">'+lnm(v)+' · మరణించారు</span>'; }).join('')+'</div></button>';
   }).join('');
   if (hs.length>S.limit) html += '<button class="more" id="moreBtn">ఇంకా చూపించు ('+(hs.length-S.limit)+') · Show more</button>';
@@ -1620,7 +1626,7 @@ function renderPoll(){
   $('pCount').textContent=list.length+' ఓటర్లు'+(q?' · 🔎 అందరిలో వెతికాం (All tabs)':'');
   $('pList').innerHTML = list.slice(0,P.limit).map(function(v){
     var ask=P.ask===v.id, lv=leaderName(v.leader);
-    return '<div class="pv'+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+nmHtml(v)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
+    return '<div class="pv su-'+(v.support||'none')+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+nmHtml(v)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
       (v.avail==='Far'?' <span class="pav far">🚌 రప్పించాలి</span>':v.avail==='No'?' <span class="pav no">❌ రాలేరు</span>':'')+
       '<div class="pm">'+(v.gp?'GP <b>'+esc(v.gp)+'</b> · ':'')+'క్ర.సం. <b>'+esc(v.sr)+'</b> · <b class="wtxt">📍 వార్డు '+esc(hWard(v._h)==='none'?'లేదు':hWard(v._h))+'</b> · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
       (v.mobile&&!v.voted?'<a class="pcall" href="tel:'+esc(v.mobile)+'">📞 '+esc(v.mobile)+'</a>':'')+'</div>'+
@@ -2059,7 +2065,7 @@ function drLine(v){   // 23 Nov: same look as the caste / ward lists; no street;
     w!=='none'?'<b class="wtxt">వార్డు '+esc(w)+'</b>':'', v.caste?esc(CASTE_TE[v.caste]||v.caste):'', v.gone?'':(isDone(v)?'✓ కలిశాం':'కలవలేదు')].filter(Boolean).join(' · ');
   if (DRL && DRL.contrib) l2 = (hasContrib(v) ? '<b class="camt">💰 TC '+Survey.rupees(v.tc)+' · C '+Survey.rupees(v.c)+(Number(v.cppl)?' · 👥 '+esc(v.cppl):'')+'</b>'+(v.cfor?' · '+esc(v.cfor):'') : '<span class="cnone">💰 ఇంకా లేదు</span>')+' · '+l2;
   var nm = v.te ? '<span class="tn">'+esc(v.te)+'</span><small class="enn">'+esc(v.name)+(rel?' · '+rel:'')+'</small>' : esc(v.name)+(rel?' <small class="enn">'+rel+'</small>':'');
-  return '<div class="dv'+(v.gone?' gone':'')+'" role="button" data-drh="'+esc(h.id||'')+'" data-drid="'+esc(v.id)+'"><div class="l1">'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+
+  return '<div class="dv su-'+(v.support||'none')+(v.gone?' gone':'')+'" role="button" data-drh="'+esc(h.id||'')+'" data-drid="'+esc(v.id)+'"><div class="l1">'+(v.gp?'<span class="gpn">GP '+esc(v.gp)+'</span>':'')+
     '<span class="nm hscr">'+nm+'</span>'+(v.mobile&&!v.gone?'<a class="drcall" href="tel:'+esc(v.mobile)+'" title="'+esc(v.mobile)+'">📞</a>':'')+'</div><div class="l2 hscr">'+(v.gone?'<span class="gtag">మరణించారు · Expired</span> ':'')+(v.mobile&&!v.gone?'📱 '+esc(v.mobile)+' · ':'')+l2+'</div></div>';
 }
 function renderDrill(){
