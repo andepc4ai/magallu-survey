@@ -2186,11 +2186,11 @@ function drPdf(){
   if (!DRL) return;
   var r=(DRL.shown||[]).slice(), gx=DRL.gone.filter(function(v){ return drOkG(v); });
   var e=function(x){ return esc(x==null?'':String(x)); };
-  var wards={}; r.concat(gx).forEach(function(v){ var w=hWard(v._h||{v:[v]}); wards[w]=1; });
+  var wards={}; r.concat(gx).forEach(function(v){ var w=(v.ward===''||v.ward==null)?'none':String(v.ward); wards[w]=1; });
   var wk=Object.keys(wards), one=wk.length===1&&WCAND[wk[0]]?wk[0]:'';
-  var row=function(v){ var w=v._h?hWard(v._h):(v.ward||'');
+  var row=function(v){ var w=(v.ward===''||v.ward==null)?'none':String(v.ward);
     var note=[v.avail==='Far'?'దూరం':'', v.r26?'తొలగింపు':'', v.gone?goneTe(v.gone):''].filter(Boolean).join(' · ');
-    return '<tr><td class="n">'+e(v.gp)+'</td><td>'+e(v.te||v.name)+'</td><td>'+e((REL[v.relT]||'').slice(0,1)+': '+(v.teR||v.relN||''))+'</td><td class="n">'+(v.gen==='Female'?'♀':'♂')+e(v.age)+'</td><td>'+e(v.house)+'</td>'+
+    return '<tr><td class="n">'+e(v.gp)+'</td><td>'+e(v.te||v.name)+'</td><td>'+e(({Father:'తం',Husband:'భ',Mother:'త',Wife:'భా'}[v.relT]||'సం')+': '+(v.teR||v.relN||''))+'</td><td class="n">'+(v.gen==='Female'?'♀':'♂')+e(v.age)+'</td><td>'+e(v.house)+'</td>'+
       (one?'':'<td class="n">'+e(w==='none'?'':w)+'</td>')+'<td>'+e(CASTE_TE[v.caste]||v.caste||'')+'</td><td>'+e(v.e)+'</td><td>'+e(note)+'</td><td class="t">☐</td></tr>'; };
   var head='<tr><th class="n">GP</th><th>పేరు</th><th>తండ్రి / భర్త</th><th class="n">వయసు</th><th>ఇ.నం</th>'+(one?'':'<th class="n">వా.</th>')+'<th>కులం</th><th>EPIC</th><th>గమనిక</th><th class="t">✔</th></tr>';
   var SECS=[['Strong','● పూర్తి మద్దతు'],['Leaning','◐ మొగ్గు ఉంది'],['Undecided','○ నిర్ణయించలేదు'],['Opposed','■ వ్యతిరేకం'],['','· అడగలేదు']];
@@ -2206,7 +2206,7 @@ function drPdf(){
     'thead{display:table-header-group}tr{break-inside:avoid}.n{text-align:right;white-space:nowrap}.t{text-align:center;width:18px}'+
     '.f{position:fixed;bottom:0;left:0;right:0;font-size:8pt;color:#555;text-align:center}</style></head><body>'+
     '<h1>'+e(DRL.t)+'</h1>'+(c?'<div class="c">వార్డు సభ్యులు: <b>'+e(c[0])+'</b> · గుర్తు: <b>'+e(c[1])+'</b> · క్ర.సం. <b>'+c[2]+'</b></div>':'')+
-    '<div class="m">'+r.length+' ఓటర్లు'+(gx.length?' · ఓటు వేయలేనివారు '+gx.length:'')+' · '+today+' · తం = తండ్రి · భ = భర్త · ☐ = ఓటు వేసిన తర్వాత ✔</div>'+body+
+    '<div class="m">'+r.length+' ఓటర్లు'+(gx.length?' · ఓటు వేయలేనివారు '+gx.length:'')+' · '+today+' · తం = తండ్రి · భ = భర్త · త = తల్లి · ☐ = ఓటు వేసిన తర్వాత ✔</div>'+body+
     '<div class="f">అంతర్గత ఉపయోగం మాత్రమే · Analysis by Data Strive Labs Private Limited</div></body></html>';
   var w=window.open('','_blank');
   if (!w){ toast('పాప్-అప్ ఆపేశారు — అనుమతించండి · Allow pop-ups'); return; }
