@@ -450,6 +450,7 @@ details.dcard[open]>summary{margin-bottom:10px}
     <div class="row">
       <button class="iconbtn" id="btnDrillBack">← వెనక్కి</button>
       <h1 id="drTitle" style="font-size:1.05rem"></h1>
+      <button class="iconbtn sq" id="btnDrPdf" title="PDF డౌన్‌లోడ్ · Download PDF" aria-label="Download PDF">📄</button>
       <button class="iconbtn sq" data-gohome="1" title="Home" aria-label="Home">🏠</button>
     </div>
     <div class="prog" id="drSub"></div>
@@ -2180,6 +2181,39 @@ function renderDrill(){
     (gx.length ? '<div class="drgh">ఓటు వేయలేనివారు · Cannot vote — '+gx.length+' <small>ఓటు లేదు, లెక్కల్లో లేరు · not counted</small></div>'+gx.map(drLine).join('') : '');
 }
 $('btnDrillBack').onclick=function(){ $('vDrill').classList.add('hide'); DRL=null; };
+/* 26 Nov: 📄 download the list shown in the dashboard drill-down as a PDF (print → Save as PDF), grouped by support */
+function drPdf(){
+  if (!DRL) return;
+  var r=(DRL.shown||[]).slice(), gx=DRL.gone.filter(function(v){ return drOkG(v); });
+  var e=function(x){ return esc(x==null?'':String(x)); };
+  var wards={}; r.concat(gx).forEach(function(v){ var w=hWard(v._h||{v:[v]}); wards[w]=1; });
+  var wk=Object.keys(wards), one=wk.length===1&&WCAND[wk[0]]?wk[0]:'';
+  var row=function(v){ var w=v._h?hWard(v._h):(v.ward||'');
+    var note=[v.avail==='Far'?'దూరం':'', v.r26?'తొలగింపు':'', v.gone?goneTe(v.gone):''].filter(Boolean).join(' · ');
+    return '<tr><td class="n">'+e(v.gp)+'</td><td>'+e(v.te||v.name)+'</td><td>'+e((REL[v.relT]||'').slice(0,1)+': '+(v.teR||v.relN||''))+'</td><td class="n">'+(v.gen==='Female'?'♀':'♂')+e(v.age)+'</td><td>'+e(v.house)+'</td>'+
+      (one?'':'<td class="n">'+e(w==='none'?'':w)+'</td>')+'<td>'+e(CASTE_TE[v.caste]||v.caste||'')+'</td><td>'+e(v.e)+'</td><td>'+e(note)+'</td><td class="t">☐</td></tr>'; };
+  var head='<tr><th class="n">GP</th><th>పేరు</th><th>తండ్రి / భర్త</th><th class="n">వయసు</th><th>ఇ.నం</th>'+(one?'':'<th class="n">వా.</th>')+'<th>కులం</th><th>EPIC</th><th>గమనిక</th><th class="t">✔</th></tr>';
+  var SECS=[['Strong','● పూర్తి మద్దతు'],['Leaning','◐ మొగ్గు ఉంది'],['Undecided','○ నిర్ణయించలేదు'],['Opposed','■ వ్యతిరేకం'],['','· అడగలేదు']];
+  var body=SECS.map(function(sc){ var g=r.filter(function(v){ return (v.support||'')===sc[0]; }); if (!g.length) return '';
+    return '<h3>'+sc[1]+' — '+g.length+' మంది</h3><table><thead>'+head+'</thead><tbody>'+g.map(row).join('')+'</tbody></table>'; }).join('')+
+    (gx.length?'<h3>⊘ ఓటు వేయలేనివారు — '+gx.length+' మంది</h3><table><thead>'+head+'</thead><tbody>'+gx.map(row).join('')+'</tbody></table>':'');
+  var c=one?WCAND[one]:null, today=new Date().toLocaleDateString('en-GB').replace(/\//g,'-');
+  var html='<!doctype html><html><head><meta charset="utf-8"><title>'+e(DRL.t)+'</title><style>'+
+    '@page{size:A4;margin:8mm}body{font-family:"Noto Sans Telugu","Nirmala UI",Gautami,sans-serif;font-size:11pt;color:#000;margin:0}'+
+    'h1{font-size:16pt;margin:0;color:#1f3a5f}.c{font-size:13pt;color:#5a2d00;margin:2px 0}.c b{color:#c62828}.m{font-size:9pt;color:#555;border-bottom:2px solid #1f3a5f;padding-bottom:3px;margin-bottom:4px}'+
+    'h3{font-size:12pt;margin:8px 0 3px;padding:2px 6px;background:#eef2f7;border-left:6px solid #1f3a5f;break-after:avoid}'+
+    'table{border-collapse:collapse;width:100%}th,td{border:1px solid #999;padding:2px 4px;vertical-align:top}th{background:#1f3a5f;color:#fff;text-align:left;font-size:10pt}'+
+    'thead{display:table-header-group}tr{break-inside:avoid}.n{text-align:right;white-space:nowrap}.t{text-align:center;width:18px}'+
+    '.f{position:fixed;bottom:0;left:0;right:0;font-size:8pt;color:#555;text-align:center}</style></head><body>'+
+    '<h1>'+e(DRL.t)+'</h1>'+(c?'<div class="c">వార్డు సభ్యులు: <b>'+e(c[0])+'</b> · గుర్తు: <b>'+e(c[1])+'</b> · క్ర.సం. <b>'+c[2]+'</b></div>':'')+
+    '<div class="m">'+r.length+' ఓటర్లు'+(gx.length?' · ఓటు వేయలేనివారు '+gx.length:'')+' · '+today+' · తం = తండ్రి · భ = భర్త · ☐ = ఓటు వేసిన తర్వాత ✔</div>'+body+
+    '<div class="f">అంతర్గత ఉపయోగం మాత్రమే · Analysis by Data Strive Labs Private Limited</div></body></html>';
+  var w=window.open('','_blank');
+  if (!w){ toast('పాప్-అప్ ఆపేశారు — అనుమతించండి · Allow pop-ups'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  setTimeout(function(){ try{ w.focus(); w.print(); }catch(_){} }, 600);
+}
+$('btnDrPdf').onclick=drPdf;
 MultiSort.bind($('drSort'), function(){ return DRL.ms; }, function(st){ DRL.ms=st; LS.set(DRL.contrib?'drcms':'drms2',st); DRL.lim=100; renderDrill(); });
 function cSum(r){ var o={tc:0,c:0,n:0,p:0}; r.forEach(function(v){ o.tc+=Number(v.tc)||0; o.c+=Number(v.c)||0; o.p+=Number(v.cppl)||0; if (hasContrib(v)) o.n++; }); return o; }
 // 💰 contributions: every voter (in the chosen wards), same search / filters / sort as the other lists; GP no. first
