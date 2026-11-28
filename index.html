@@ -317,7 +317,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 .vc.vmin.Strong{background:#f0fdf4}.vc.vmin.Leaning{background:#f7fee7}.vc.vmin.Undecided{background:#fff7ed}.vc.vmin.Opposed{background:#fef2f2}
 .vmhouse{display:block;width:100%;margin:8px 0 16px;padding:10px;border:2px dashed #d6d3d1;border-radius:12px;background:#fff;font:inherit;font-weight:700;color:#57534e}.vmhouse small{font-weight:500;color:#a8a29e;margin-left:4px}
 #hTitle .gpn{font-size:.8rem;vertical-align:2px}.cnone{color:#a8a29e}
-.pv .pcard{float:left;margin:2px 8px 0 0}
+.pv .pcard{align-self:center;width:42px;height:42px;font-size:1.2rem;margin:0 8px 0 4px}
 .gtag{display:inline-block;background:#e5e7eb;color:#374151;border-radius:6px;padding:0 6px;font-size:.75rem;font-weight:600;vertical-align:middle}
 /* 28 Nov: Viewer logins (App Users col E = Viewer) — basic voter-list details only; the server sends no survey data */
 body.viewer #tDash, body.viewer #tContrib, body.viewer [data-pt="sup"], body.viewer [data-pt="far"], body.viewer .pcall, body.viewer .pav, body.viewer #tWard, body.viewer #tCaste,
@@ -367,7 +367,7 @@ body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !import
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 28 Nov · 07:55 -->
+    <!-- app version: 28 Nov · 08:00 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -1697,8 +1697,8 @@ function renderPoll(){
   $('pWard').innerHTML = wChips('data-pw', P.wsel, pch, pn, 'ఓటర్లు');
   wTog('wtogPoll', 'pWard', 'poll', P.wsel);
   var inAll=S.rows.concat(S.gone).filter(function(v){ return v._h && (P.booth==='all' || String(v.booth)===String(P.booth)) && (!P.wsel.length || P.wsel.indexOf(pWardOf(v))>=0); });   // 28 Nov: deleted-2026 voters too (still on the GP roll)
-  var inB=inAll.filter(function(v){ return !v.gone; });
-  var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(isSup), supV=sup.filter(function(v){ return v.voted; }).length;
+  var inB=inAll;   // 28 Nov: counts over the whole GP roll, like the printed list
+  var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(function(v){ return isSup(v) && !v.gone; }), supV=sup.filter(function(v){ return v.voted; }).length;
   $('pTxt').innerHTML='ఓటు వేశారు <b>'+voted+' / '+inB.length+'</b> ('+pct(voted,inB.length)+'%) · మన వాళ్ళు <b>'+supV+' / '+sup.length+'</b>';
   $('pBar').style.width=pct(voted,inB.length)+'%';
   var farN=inB.filter(function(v){ return v.avail==='Far' && !v.voted; }).length;
@@ -1717,10 +1717,11 @@ function renderPoll(){
   $('pCount').textContent=list.length+' ఓటర్లు'+(q?' · 🔎 అందరిలో వెతికాం (All tabs)':'');
   $('pList').innerHTML = list.slice(0,P.limit).map(function(v){
     var ask=P.ask===v.id, lv=leaderName(v.leader);
-    return '<div class="pv su-'+(v.support||'none')+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi">'+(v.gp?'<button class="cardico pcard" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>':'')+'<b>'+nmHtml(v)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
+    return '<div class="pv su-'+(v.support||'none')+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+nmHtml(v)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
       (v.avail==='Far'?' <span class="pav far">🚌 రప్పించాలి</span>':v.avail==='No'?' <span class="pav no">❌ రాలేరు</span>':'')+
       '<div class="pm">'+(v.gp?'GP <b>'+esc(v.gp)+'</b> · ':'')+'క్ర.సం. <b>'+esc(v.sr)+'</b> · <b class="wtxt">📍 వార్డు '+esc(pWardOf(v)==='none'?'లేదు':pWardOf(v))+'</b> · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
       (v.mobile&&!v.voted?'<a class="pcall" href="tel:'+esc(v.mobile)+'">📞 '+esc(v.mobile)+'</a>':'')+'</div>'+
+      (v.gp?'<button class="cardico pcard" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>':'')+   // 28 Nov: voter card, right side like the house list
       '<button class="pvb'+(v.voted?' on':'')+(ask?' ask':'')+'" data-pvote="1">'+(ask?'తీసేయాలా? ✓':v.voted?'✓ వేశారు':'ఓటు<br>వేశారు')+'</button></div>';
   }).join('') + (list.length>P.limit?'<button class="more" data-pmore="1">ఇంకా చూపించు ('+(list.length-P.limit)+')</button>':'') + (!list.length?'<div class="empty">ఎవరూ లేరు 🙂</div>':'');
 }
