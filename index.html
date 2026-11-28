@@ -317,6 +317,11 @@ details.dcard[open]>summary{margin-bottom:10px}
 .vc.vmin.Strong{background:#f0fdf4}.vc.vmin.Leaning{background:#f7fee7}.vc.vmin.Undecided{background:#fff7ed}.vc.vmin.Opposed{background:#fef2f2}
 .vmhouse{display:block;width:100%;margin:8px 0 16px;padding:10px;border:2px dashed #d6d3d1;border-radius:12px;background:#fff;font:inherit;font-weight:700;color:#57534e}.vmhouse small{font-weight:500;color:#a8a29e;margin-left:4px}
 #hTitle .gpn{font-size:.8rem;vertical-align:2px}.cnone{color:#a8a29e}
+/* 28 Nov: Viewer logins (App Users col E = Viewer) — basic voter-list details only; the server sends no survey data */
+body.viewer #tDash, body.viewer #tPoll, body.viewer #tContrib, body.viewer #tWard, body.viewer #tCaste,
+body.viewer .prog:not(#hSub), body.viewer #statChips, body.viewer #lFilTog, body.viewer #lSortTog, body.viewer .sv, body.viewer .vst, body.viewer .vlist, body.viewer .vrow,
+body.viewer .hbox, body.viewer .htop, body.viewer .splitb, body.viewer .vcall, body.viewer .vcardb, body.viewer .cardico, body.viewer .vfgave, body.viewer .vfnot { display: none !important; }
+body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !important; background: #fff !important; }
 </style>
 </head>
 <body>
@@ -360,7 +365,7 @@ details.dcard[open]>summary{margin-bottom:10px}
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 25 Nov · 19:45 -->
+    <!-- app version: 28 Nov · 07:15 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -2310,7 +2315,7 @@ $('surFix').onclick=function(e){
 /* ---------- Reader accounts (App Users col E = "Reader"): see everything, change nothing ---------- */
 function isRO(){ return !!(S.user && S.user.reader); }
 function roToast(){ toast('👁 చూడటానికి మాత్రమే · View only'); }
-function applyRO(){ document.body.classList.toggle('ro', isRO()); $('roBadge').classList.toggle('hide', !isRO()); }
+function applyRO(){ document.body.classList.toggle('ro', isRO()); document.body.classList.toggle('viewer', !!(S.user && S.user.viewer)); $('roBadge').classList.toggle('hide', !isRO()); }
 var RO_OK = '[data-vhist],[data-hvh],[data-fold],[data-unfold],[data-vexp],a';
 ['hBody','pList','surList'].forEach(function(id){
   $(id).addEventListener('click', function(e){
@@ -2369,7 +2374,7 @@ function loadData(force){
 function refreshLists(){
   if (DEMO || !S.user) return;
   call('login', S.user.name, S.user.pin).then(function(u){
-    S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; S.user.contrib = u.contrib; LS.set('user',S.user); applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
+    S.user.lists = u.lists; S.user.admin = !!u.admin; S.user.reader = !!u.reader; S.user.viewer = !!u.viewer; S.user.contrib = u.contrib; LS.set('user',S.user); applyRO(); S.user.myWards = u.myWards||[]; S.user.wards = u.wards||12; S.wards = S.user.wards; LS.set('user', S.user);
     $('tCaste').classList.toggle('hide', !S.user.admin); $('tContrib').classList.toggle('hide', !canContrib()); $('tWard').classList.toggle('hide', !(S.user.admin || S.user.reader) || !HAS_API); renderHome();
     if (S.openHouse) renderHouse();
   }).catch(function(){});
@@ -2492,7 +2497,7 @@ $('lGo').onclick=function(){
   $('lErr').textContent=''; $('lGo').disabled=true;
   $('lGo').textContent='లోడ్ అవుతోంది… · Loading voters…';
   call('login',n,p,true).then(function(u){
-    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,contrib:u.contrib,myWards:u.myWards||[]}; LS.set('user',S.user);
+    S.user={name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,viewer:!!u.viewer,contrib:u.contrib,myWards:u.myWards||[]}; LS.set('user',S.user);
     if (u.voters && u.voters.rows){ LS.set('rows',u.voters.rows); LS.set('ver',u.voters.ver||0); LS.set('fullAt',Date.now()); S.fresh=u.voters.rows; }
     if (window.mvsIdleMark) mvsIdleMark();   // a fresh login starts a fresh hour (idle.js)
     $('lGo').disabled=false; showApp(); askGeoOnce();

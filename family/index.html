@@ -112,6 +112,8 @@ label{display:block;font-weight:700;margin:14px 0 6px}
 .ctl .vt{flex:none;border:2px solid #e5dfd2;background:#fff;border-radius:12px;min-width:44px;min-height:40px;font-size:1.1rem}.ctl .vt.on{background:#1d1b16;border-color:#1d1b16}
 #vList .f#q{height:44px}#vList .count{margin:4px 2px}
 body.kb #vList .top .sub,body.kb #vList .ctl{display:none}body.kb #vList .top{padding:6px 12px}
+/* 28 Nov: Viewer logins — no survey, support colours or counts */
+.viewer .sv { display: none !important; }
 </style>
 </head>
 <body>
@@ -203,6 +205,7 @@ function RO(){ if (U && U.reader){ st('bad','👁 చూడటానికి �
 function st(cls, text){ var e=$('st'); e.className='st '+cls; e.textContent=text; }
 
 var U = LS.get('mvs_user');           // shared with the volunteer app
+if (U && U.viewer) document.documentElement.classList.add('viewer');   // 28 Nov: Viewer = basic details only
 var TE = {}, DATA = null, M = null, links = {}, queue = {}, busy = false, PK = null;  // PK = open picker {slot, as}
 var F = { q:'', size:1, booth:'all', wsel:[], check:false, sur:'', cas:'', limit:40, ms:MultiSort.norm(LS.get('fam_ms2'),'gp'), fopen:false, sopen:false }, scrolls = {};
 // house numbers in natural order: 2-5 before 2-10, empty last
@@ -225,7 +228,7 @@ $('go').onclick=function(){
   var n=$('who').value, p=$('pin').value.trim(); if(!n||!p){ $('err').textContent='పేరు, పిన్ ఇవ్వండి'; return; }
   $('go').disabled=true; $('go').textContent='లోడ్ అవుతోంది…';
   call('login',[n,p]).then(function(u){
-    U = Object.assign(LS.get('mvs_user')||{}, {name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader});
+    U = Object.assign(LS.get('mvs_user')||{}, {name:u.name,pin:p,booth:u.booth,wards:u.wards,lists:u.lists,admin:!!u.admin,reader:!!u.reader,viewer:!!u.viewer}); document.body.classList.toggle('viewer', !!u.viewer);
     LS.set('mvs_user',U); if (window.mvsIdleMark) mvsIdleMark(); $('vLogin').classList.add('hide'); load(true);
   }).catch(function(e){ $('err').textContent = String(e.message)==='WRONG_PIN' ? 'పిన్ తప్పు · Wrong PIN' : 'లోడ్ కాలేదు · '+e.message; })
     .then(function(){ $('go').disabled=false; $('go').textContent='లోపలికి · Enter'; });
