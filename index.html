@@ -317,12 +317,12 @@ details.dcard[open]>summary{margin-bottom:10px}
 .vc.vmin.Strong{background:#f0fdf4}.vc.vmin.Leaning{background:#f7fee7}.vc.vmin.Undecided{background:#fff7ed}.vc.vmin.Opposed{background:#fef2f2}
 .vmhouse{display:block;width:100%;margin:8px 0 16px;padding:10px;border:2px dashed #d6d3d1;border-radius:12px;background:#fff;font:inherit;font-weight:700;color:#57534e}.vmhouse small{font-weight:500;color:#a8a29e;margin-left:4px}
 #hTitle .gpn{font-size:.8rem;vertical-align:2px}.cnone{color:#a8a29e}
-.pv .pcard{align-self:center;width:42px;height:42px;font-size:1.2rem;margin:0 8px 0 4px}
+.pv .pcard{flex:0 0 auto;align-self:center;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;height:52px;border:1.5px solid #eab308;border-radius:12px;background:#fef9c3;color:#713f12;font-size:1.1rem;line-height:1.1;padding:2px 4px;margin:0 6px 0 2px}.pv .pcard small{font-size:.72rem;font-weight:700}
 .gtag{display:inline-block;background:#e5e7eb;color:#374151;border-radius:6px;padding:0 6px;font-size:.75rem;font-weight:600;vertical-align:middle}
 /* 28 Nov: Viewer logins (App Users col E = Viewer) — basic voter-list details only; the server sends no survey data */
 body.viewer #tDash, body.viewer #tContrib, body.viewer [data-pt="sup"], body.viewer [data-pt="far"], body.viewer .pcall, body.viewer .pav, body.viewer #tWard, body.viewer #tCaste,
 body.viewer .prog:not(#hSub), body.viewer #statChips, body.viewer #lFilTog, body.viewer #lSortTog, body.viewer .sv, body.viewer .vst, body.viewer .vlist, body.viewer .vrow,
-body.viewer .hbox, body.viewer .htop, body.viewer .splitb, body.viewer .vcall, body.viewer .vcardb, body.viewer .cardico:not(.pcard), body.viewer .vfgave, body.viewer .vfnot { display: none !important; }
+body.viewer .hbox, body.viewer .htop, body.viewer .splitb, body.viewer .vcall, body.viewer .vcardb, body.viewer .cardico, body.viewer .vfgave, body.viewer .vfnot { display: none !important; }
 body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !important; background: #fff !important; }
 </style>
 </head>
@@ -367,8 +367,8 @@ body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !import
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 28 Nov · 08:00 -->
-    <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
+    <!-- app version: 28 Nov · 08:05 -->
+    <div class="appby"><span id="appVer"></span> · Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
 
@@ -1704,7 +1704,7 @@ function renderPoll(){
   var farN=inB.filter(function(v){ return v.avail==='Far' && !v.voted; }).length;
   var tabs=[['sup','🎯 మనవాళ్ళు — ఇంకా వేయలేదు', sup.length-supV],['far','🚌 రప్పించాలి', farN],['not','ఇంకా వేయనివారు', inB.length-voted],['voted','✓ వేశారు', voted],['all','అందరూ', inAll.length]];
   $('pTabs').innerHTML=tabs.map(function(t){ return '<button class="chip'+(P.tab===t[0]?' on':'')+'" data-pt="'+t[0]+'">'+t[1]+' <b>'+t[2]+'</b></button>'; }).join('');
-  var list=inB.filter(function(v){ return P.tab==='sup' ? isSup(v)&&!v.voted : P.tab==='far' ? v.avail==='Far'&&!v.voted : P.tab==='not' ? !v.voted : P.tab==='voted' ? v.voted : true; });
+  var list=inB.filter(function(v){ return P.tab==='sup' ? isSup(v)&&!v.voted&&!v.gone : P.tab==='far' ? v.avail==='Far'&&!v.voted : P.tab==='not' ? !v.voted : P.tab==='voted' ? v.voted : true; });
   if (P.tab==='all') list=inAll.slice(); else if (P.tab==='voted') list=inAll.filter(function(v){ return v.voted; });
   var q=P.q;
   if (q){
@@ -1721,7 +1721,7 @@ function renderPoll(){
       (v.avail==='Far'?' <span class="pav far">🚌 రప్పించాలి</span>':v.avail==='No'?' <span class="pav no">❌ రాలేరు</span>':'')+
       '<div class="pm">'+(v.gp?'GP <b>'+esc(v.gp)+'</b> · ':'')+'క్ర.సం. <b>'+esc(v.sr)+'</b> · <b class="wtxt">📍 వార్డు '+esc(pWardOf(v)==='none'?'లేదు':pWardOf(v))+'</b> · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
       (v.mobile&&!v.voted?'<a class="pcall" href="tel:'+esc(v.mobile)+'">📞 '+esc(v.mobile)+'</a>':'')+'</div>'+
-      (v.gp?'<button class="cardico pcard" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>':'')+   // 28 Nov: voter card, right side like the house list
+      (v.gp?'<button class="pcard" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪<small>కార్డు</small></button>':'')+   // 28 Nov: voter card, right side; word too (old iPhones cannot draw 🪪)
       '<button class="pvb'+(v.voted?' on':'')+(ask?' ask':'')+'" data-pvote="1">'+(ask?'తీసేయాలా? ✓':v.voted?'✓ వేశారు':'ఓటు<br>వేశారు')+'</button></div>';
   }).join('') + (list.length>P.limit?'<button class="more" data-pmore="1">ఇంకా చూపించు ('+(list.length-P.limit)+')</button>':'') + (!list.length?'<div class="empty">ఎవరూ లేరు 🙂</div>':'');
 }
@@ -2472,6 +2472,7 @@ window.addEventListener('popstate', function(){
 $('btnListRef').onclick=function(){ manualRefresh(this); };
 // ⟳ : spin the icon, say we are on it, then load the full list (not just changes)
 // 28 Nov: compare the app version comment of the live page with this page; reload (cache-busted) when it changed
+(function(){ var m=document.documentElement.innerHTML.match(/app version: ([^<]*?) -->/); var e=document.getElementById('appVer'); if (e && m) e.textContent='v '+m[1]; })();
 function appUpdateCheck(){
   if (DEMO || !window.fetch) return;
   var mine = (document.documentElement.innerHTML.match(/app version: ([^<]*?) -->/)||[])[1];
