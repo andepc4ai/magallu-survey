@@ -317,10 +317,12 @@ details.dcard[open]>summary{margin-bottom:10px}
 .vc.vmin.Strong{background:#f0fdf4}.vc.vmin.Leaning{background:#f7fee7}.vc.vmin.Undecided{background:#fff7ed}.vc.vmin.Opposed{background:#fef2f2}
 .vmhouse{display:block;width:100%;margin:8px 0 16px;padding:10px;border:2px dashed #d6d3d1;border-radius:12px;background:#fff;font:inherit;font-weight:700;color:#57534e}.vmhouse small{font-weight:500;color:#a8a29e;margin-left:4px}
 #hTitle .gpn{font-size:.8rem;vertical-align:2px}.cnone{color:#a8a29e}
+.pv .pcard{float:left;margin:2px 8px 0 0}
+.gtag{display:inline-block;background:#e5e7eb;color:#374151;border-radius:6px;padding:0 6px;font-size:.75rem;font-weight:600;vertical-align:middle}
 /* 28 Nov: Viewer logins (App Users col E = Viewer) — basic voter-list details only; the server sends no survey data */
 body.viewer #tDash, body.viewer #tContrib, body.viewer [data-pt="sup"], body.viewer [data-pt="far"], body.viewer .pcall, body.viewer .pav, body.viewer #tWard, body.viewer #tCaste,
 body.viewer .prog:not(#hSub), body.viewer #statChips, body.viewer #lFilTog, body.viewer #lSortTog, body.viewer .sv, body.viewer .vst, body.viewer .vlist, body.viewer .vrow,
-body.viewer .hbox, body.viewer .htop, body.viewer .splitb, body.viewer .vcall, body.viewer .vcardb, body.viewer .cardico, body.viewer .vfgave, body.viewer .vfnot { display: none !important; }
+body.viewer .hbox, body.viewer .htop, body.viewer .splitb, body.viewer .vcall, body.viewer .vcardb, body.viewer .cardico:not(.pcard), body.viewer .vfgave, body.viewer .vfnot { display: none !important; }
 body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !important; background: #fff !important; }
 </style>
 </head>
@@ -365,7 +367,7 @@ body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !import
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 28 Nov · 07:30 -->
+    <!-- app version: 28 Nov · 07:50 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -767,7 +769,8 @@ function ingest(raw){
 // expired = on the roll as Expired (ASDD) OR a volunteer answered ఓటు వేయగలరా = మరణించారు. Grey, never counted.
 function regroup(all){
   all.forEach(function(v){ v.volExp = !v.sgone && v.avail==='Expired'; v.volNo = !v.sgone && !v.volExp && v.avail==='No'; v.gone = v.sgone || (v.volExp ? 'Expired (volunteer)' : v.volNo ? 'Cannot vote (volunteer)' : ''); });   // 23 Nov: ❌ రాలేరు also leaves the counts
-  S.rows = all.filter(function(v){ return !v.gone; }); S.gone = all.filter(function(v){ return v.gone; }); S.byId = {};
+  var vw = !!(S.user && S.user.viewer);   // 28 Nov: Viewers see the whole GP roll (deleted ones tagged), like the printed list
+  S.rows = all.filter(function(v){ return vw || !v.gone; }); S.gone = all.filter(function(v){ return !vw && v.gone; }); S.byId = {};
   all.forEach(function(v){ S.byId[v.id]=v; });
   buildHouses();
 }
@@ -1204,7 +1207,7 @@ function goneHtml(h){
     '<div class="gonen">ఓటు లేదు — లెక్కల్లో చేర్చలేదు · No vote, not counted</div></div>';
 }
 // name: Telugu big first, English small under it (English only when there is no Telugu yet)
-function nmHtml(v){ return v.te ? '<span class="tn">'+esc(v.te)+'</span><small class="enn">'+esc(v.name)+'</small>' : esc(v.name); }
+function nmHtml(v){ return (v.te ? '<span class="tn">'+esc(v.te)+'</span><small class="enn">'+esc(v.name)+'</small>' : esc(v.name))+(v.gone?' <span class="gtag">'+esc(goneTe(v.gone))+'</span>':''); }   // 28 Nov: grey tag for 2026-deleted voters
 function lnm(v){ return v.te ? esc(v.te)+' <small class="ens">'+esc(v.name)+'</small>' : esc(v.name); }   // one-line: Telugu + small English
 function nmTxt(v){ return v.te ? v.te+' · '+v.name : v.name; }
 function relTxt(v){ return v.teR ? v.teR+' ('+v.relN+')' : (v.relN||''); }
@@ -1684,6 +1687,7 @@ function pollRefresh(loud){
     .then(function(){ $('btnPollRef').classList.remove('spinning'); });
 }
 function isSup(v){ return v.support==='Strong' || v.support==='Leaning'; }
+function pWardOf(v){ var w=hWard(v._h); return w==='none' && v.ward!=='' && v.ward!=null ? String(v.ward) : w; }   // house of only deleted voters: use the voter's own ward
 function renderPoll(){
   var booths={}; S.rows.forEach(function(v){ booths[v.booth]=1; });
   $('pBooth').style.display='none'; $('pBooth').innerHTML=['all'].concat(Object.keys(booths).sort()).map(function(b){ return '<button class="chip'+(String(P.booth)===String(b)?' on':'')+'" data-pb="'+b+'">'+(b==='all'?'అన్ని బూత్‌లు':'బూత్ '+b)+'</button>'; }).join('');
@@ -1692,28 +1696,30 @@ function renderPoll(){
   var pn={}; S.rows.forEach(function(v){ if (P.booth==='all' || String(v.booth)===String(P.booth)){ var w=hWard(v._h); pn[w]=(pn[w]||0)+1; } });
   $('pWard').innerHTML = wChips('data-pw', P.wsel, pch, pn, 'ఓటర్లు');
   wTog('wtogPoll', 'pWard', 'poll', P.wsel);
-  var inB=S.rows.filter(function(v){ return (P.booth==='all' || String(v.booth)===String(P.booth)) && (!P.wsel.length || P.wsel.indexOf(hWard(v._h))>=0); });
+  var inAll=S.rows.concat(S.gone).filter(function(v){ return v._h && (P.booth==='all' || String(v.booth)===String(P.booth)) && (!P.wsel.length || P.wsel.indexOf(pWardOf(v))>=0); });   // 28 Nov: deleted-2026 voters too (still on the GP roll)
+  var inB=inAll.filter(function(v){ return !v.gone; });
   var voted=inB.filter(function(v){ return v.voted; }).length, sup=inB.filter(isSup), supV=sup.filter(function(v){ return v.voted; }).length;
   $('pTxt').innerHTML='ఓటు వేశారు <b>'+voted+' / '+inB.length+'</b> ('+pct(voted,inB.length)+'%) · మన వాళ్ళు <b>'+supV+' / '+sup.length+'</b>';
   $('pBar').style.width=pct(voted,inB.length)+'%';
   var farN=inB.filter(function(v){ return v.avail==='Far' && !v.voted; }).length;
-  var tabs=[['sup','🎯 మనవాళ్ళు — ఇంకా వేయలేదు', sup.length-supV],['far','🚌 రప్పించాలి', farN],['not','ఇంకా వేయనివారు', inB.length-voted],['voted','✓ వేశారు', voted],['all','అందరూ', inB.length]];
+  var tabs=[['sup','🎯 మనవాళ్ళు — ఇంకా వేయలేదు', sup.length-supV],['far','🚌 రప్పించాలి', farN],['not','ఇంకా వేయనివారు', inB.length-voted],['voted','✓ వేశారు', voted],['all','అందరూ', inAll.length]];
   $('pTabs').innerHTML=tabs.map(function(t){ return '<button class="chip'+(P.tab===t[0]?' on':'')+'" data-pt="'+t[0]+'">'+t[1]+' <b>'+t[2]+'</b></button>'; }).join('');
   var list=inB.filter(function(v){ return P.tab==='sup' ? isSup(v)&&!v.voted : P.tab==='far' ? v.avail==='Far'&&!v.voted : P.tab==='not' ? !v.voted : P.tab==='voted' ? v.voted : true; });
+  if (P.tab==='all') list=inAll.slice(); else if (P.tab==='voted') list=inAll.filter(function(v){ return v.voted; });
   var q=P.q;
   if (q){
     var num=/^\d+$/.test(q), Q=Fuzzy.query(q), gq=MultiSort.gpQ(q);
     // a search looks at everyone in the booth/ward, whichever tab is picked
-    list=inB.map(function(v){ var sc=0;
+    list=inAll.map(function(v){ var sc=0;
       if (gq && MultiSort.gpEq(v.gp,gq)) sc=110; else if (num && String(v.sr)===q) sc=100; else if (num && String(v.house).indexOf(q)===0) sc=30; else if (String(v.e).toLowerCase().indexOf(q)>=0) sc=50; else if (String(v.house).toLowerCase().indexOf(q)===0) sc=30; else sc=Math.max(Fuzzy.score(v.name+' '+v.relN, Q), vMatch(v,q)?20:0);
       v._ps=sc; return v; }).filter(function(v){ return v._ps>0; }).sort(function(a,b){ return b._ps-a._ps; });
   } else list=list.slice().sort(function(a,b){ return MultiSort.gpn(a.gp)-MultiSort.gpn(b.gp) || String(a.booth).localeCompare(String(b.booth)) || (Number(a.sr)||0)-(Number(b.sr)||0); });   // GP roll order
   $('pCount').textContent=list.length+' ఓటర్లు'+(q?' · 🔎 అందరిలో వెతికాం (All tabs)':'');
   $('pList').innerHTML = list.slice(0,P.limit).map(function(v){
     var ask=P.ask===v.id, lv=leaderName(v.leader);
-    return '<div class="pv su-'+(v.support||'none')+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi"><b>'+nmHtml(v)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
+    return '<div class="pv su-'+(v.support||'none')+(v.voted?' on':'')+'" data-pid="'+esc(v.id)+'"><div class="pi">'+(v.gp?'<button class="cardico pcard" data-vcard="'+esc(v.gp)+'" title="Voter card" aria-label="Voter card">🪪</button>':'')+'<b>'+nmHtml(v)+'</b>'+(v.support?' <i class="dot '+v.support+'"></i>':'')+
       (v.avail==='Far'?' <span class="pav far">🚌 రప్పించాలి</span>':v.avail==='No'?' <span class="pav no">❌ రాలేరు</span>':'')+
-      '<div class="pm">'+(v.gp?'GP <b>'+esc(v.gp)+'</b> · ':'')+'క్ర.సం. <b>'+esc(v.sr)+'</b> · <b class="wtxt">📍 వార్డు '+esc(hWard(v._h)==='none'?'లేదు':hWard(v._h))+'</b> · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
+      '<div class="pm">'+(v.gp?'GP <b>'+esc(v.gp)+'</b> · ':'')+'క్ర.సం. <b>'+esc(v.sr)+'</b> · <b class="wtxt">📍 వార్డు '+esc(pWardOf(v)==='none'?'లేదు':pWardOf(v))+'</b> · 🏠 '+esc(v.house)+' · '+esc(v.age)+' ఏళ్ళు'+(lv?' · 👤 '+esc(lv):'')+'</div>'+
       (v.mobile&&!v.voted?'<a class="pcall" href="tel:'+esc(v.mobile)+'">📞 '+esc(v.mobile)+'</a>':'')+'</div>'+
       '<button class="pvb'+(v.voted?' on':'')+(ask?' ask':'')+'" data-pvote="1">'+(ask?'తీసేయాలా? ✓':v.voted?'✓ వేశారు':'ఓటు<br>వేశారు')+'</button></div>';
   }).join('') + (list.length>P.limit?'<button class="more" data-pmore="1">ఇంకా చూపించు ('+(list.length-P.limit)+')</button>':'') + (!list.length?'<div class="empty">ఎవరూ లేరు 🙂</div>':'');
