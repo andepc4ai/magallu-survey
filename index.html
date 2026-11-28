@@ -367,7 +367,7 @@ body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !import
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 28 Nov · 07:50 -->
+    <!-- app version: 28 Nov · 07:55 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -2470,8 +2470,18 @@ window.addEventListener('popstate', function(){
 });
 $('btnListRef').onclick=function(){ manualRefresh(this); };
 // ⟳ : spin the icon, say we are on it, then load the full list (not just changes)
+// 28 Nov: compare the app version comment of the live page with this page; reload (cache-busted) when it changed
+function appUpdateCheck(){
+  if (DEMO || !window.fetch) return;
+  var mine = (document.documentElement.innerHTML.match(/app version: ([^<]*?) -->/)||[])[1];
+  fetch(location.pathname+'?chk='+Date.now(), {cache:'no-store'}).then(function(r){ return r.text(); }).then(function(t){
+    var live = (t.match(/app version: ([^<]*?) -->/)||[])[1];
+    if (mine && live && live !== mine){ toast('🔄 కొత్త వెర్షన్ · Updating app'); flush(); setTimeout(function(){ location.replace(location.pathname+'?v='+Date.now()+location.hash); }, 900); }
+  }).catch(function(){});
+}
 function manualRefresh(btn){
   if (btn.classList.contains('spinning')) return;
+  appUpdateCheck();   // 28 Nov: ⟳ also picks up a newer app version (the browser may hold the old page up to 10 min)
   btn.classList.add('spinning'); toast('⏳ తాజా చేస్తున్నాం… · Refreshing');
   flush(); loadData(true).then(function(){ btn.classList.remove('spinning'); if (isOpen('vDash')) renderDash(); if (isOpen('vPoll')) renderPoll(); }, function(){ btn.classList.remove('spinning'); });
 }
@@ -2487,6 +2497,7 @@ function showApp(){
   S.booth = [];   // 23 Nov: no booth filter any more — wards only
   renderSync(); loadData(false); scheduleFlush(500);
   if (!DEMO && window.logOpen) logOpen('app', S.user, function(fn, a){ return call.apply(null, [fn].concat(a)); });   // quiet usage log (usage.js)
+  setTimeout(appUpdateCheck, 4000); document.addEventListener('visibilitychange', function(){ if (!document.hidden && Date.now()-(S.updChk||0) > 5*60000){ S.updChk=Date.now(); appUpdateCheck(); } });   // 28 Nov: new app version → reload
   if (!DEMO && window.trackLoc) trackLoc('app', S.user, function(fn, a){ return call.apply(null, [fn].concat(a)); });   // 28 Nov: Viewer logins — location tracked (usage.js)
 }
 function initLogin(){
