@@ -318,7 +318,7 @@ details.dcard[open]>summary{margin-bottom:10px}
 .vmhouse{display:block;width:100%;margin:8px 0 16px;padding:10px;border:2px dashed #d6d3d1;border-radius:12px;background:#fff;font:inherit;font-weight:700;color:#57534e}.vmhouse small{font-weight:500;color:#a8a29e;margin-left:4px}
 #hTitle .gpn{font-size:.8rem;vertical-align:2px}.cnone{color:#a8a29e}
 /* 28 Nov: Viewer logins (App Users col E = Viewer) — basic voter-list details only; the server sends no survey data */
-body.viewer #tDash, body.viewer #tPoll, body.viewer #tContrib, body.viewer #tWard, body.viewer #tCaste,
+body.viewer #tDash, body.viewer #tContrib, body.viewer [data-pt="sup"], body.viewer [data-pt="far"], body.viewer .pcall, body.viewer .pav, body.viewer #tWard, body.viewer #tCaste,
 body.viewer .prog:not(#hSub), body.viewer #statChips, body.viewer #lFilTog, body.viewer #lSortTog, body.viewer .sv, body.viewer .vst, body.viewer .vlist, body.viewer .vrow,
 body.viewer .hbox, body.viewer .htop, body.viewer .splitb, body.viewer .vcall, body.viewer .vcardb, body.viewer .cardico, body.viewer .vfgave, body.viewer .vfnot { display: none !important; }
 body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !important; background: #fff !important; }
@@ -365,7 +365,7 @@ body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !import
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 28 Nov · 07:20 -->
+    <!-- app version: 28 Nov · 07:30 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -897,7 +897,7 @@ function isContribF(f){ return 'tc' in f || 'c' in f || 'cppl' in f || 'cfor' in
 function hasContrib(v){ return !!(Number(v.tc) || Number(v.c) || Number(v.cppl) || v.cfor); }
 function newVisitId(){ return 'v'+Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 function edit(v, f){
-  if (isRO()){ roToast(); return; }
+  if (isRO() && !(S.user.viewer && Object.keys(f).length===1 && 'voted' in f)){ roToast(); return; }   // 28 Nov: Viewers may tick voted only
   // answering a question for someone never visited counts as a visit
   if (f.visited==='Visited' && !f.visits && !v.visited) f.visits=[newVisitId()];
   if (f.visits && S.geo && Date.now()-S.geo.t < 5*60000) f.geo = S.geo.lat.toFixed(6)+','+S.geo.lng.toFixed(6)+','+Math.round(S.geo.acc);
@@ -1673,6 +1673,7 @@ $('btnPollRef').onclick=function(){ pollRefresh(true); };
 function openPoll(){
   $('vPoll').classList.remove('hide'); $('vPoll').scrollTop=0; document.body.style.overflow='hidden';
   P.booth = 'all';   // booth chips removed 23 Nov
+  if (S.user.viewer && (P.tab==='sup' || P.tab==='far')) P.tab = 'not';   // 28 Nov: Viewers have no support data
   renderPoll(); clearInterval(P.timer); P.timer=setInterval(function(){ pollRefresh(false); }, 60000);   // see other agents' ticks every minute
 }
 function pollRefresh(loud){
@@ -2320,6 +2321,7 @@ var RO_OK = '[data-vhist],[data-hvh],[data-fold],[data-unfold],[data-vexp],a';
 ['hBody','pList','surList'].forEach(function(id){
   $(id).addEventListener('click', function(e){
     if (!isRO()) return;
+    if (S.user.viewer && e.target.closest('[data-pvote]')) return;   // 28 Nov: Viewers mark votes
     var b = e.target.closest('button,select,input,textarea,[role=button]'); if (!b || e.target.closest(RO_OK) || b.classList.contains('next')) return;
     e.stopPropagation(); e.preventDefault(); roToast();
   }, true);
