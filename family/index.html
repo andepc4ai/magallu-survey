@@ -257,9 +257,9 @@ function load(force){
   else $('flist').innerHTML='<div class="msg">కుటుంబాలు తయారవుతున్నాయి… · Building families…</div>';
   // send the version we already have: the server answers {same:true} when nothing changed (no big download)
   return call('getFamilyData',[U.name,U.pin, cached && !force ? (LS.get('fam_ver')||'') : '']).then(function(d){
-    if (d && d.same && DATA){ st('','✓ తాజా · Up to date'); svLoad(force); if (window.logOpen) logOpen('family', U, call); return; }
+    if (d && d.same && DATA){ st('','✓ తాజా · Up to date'); svLoad(force); if (window.logOpen) logOpen('family', U, call); if (window.trackLoc) trackLoc('family', U, call); return; }
     DATA=d; LS.set('fam_data',d); LS.set('fam_ver', d.ver||''); rebuild(); route(); st('','✓ తాజా · Up to date'); svLoad(force);
-    if (window.logOpen) logOpen('family', U, call);
+    if (window.logOpen) logOpen('family', U, call); if (window.trackLoc) trackLoc('family', U, call);
   }).catch(function(e){
     if (String(e.message)==='WRONG_PIN'){ LS.set('mvs_user',null); U=null; showLogin('మళ్ళీ లాగిన్ అవ్వండి · Please log in again'); return; }
     if (!DATA) $('flist').innerHTML='<div class="msg">లోడ్ కాలేదు · '+esc(e.message)+'</div>';

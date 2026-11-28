@@ -33,4 +33,31 @@ window.logOpen = function(page, user, callFn){
     }, 3000);
   } catch(e){}
 };
+// 28 Nov: Viewer logins — location is tracked. Asks the phone for permission, logs a row (with location) when the
+// page opens and every 10 minutes while it is on screen; shows a red banner while location is blocked.
+window.trackLoc = function(page, user, callFn){
+  try {
+    if (!user || !user.viewer || !user.name || !user.pin || !callFn || window.__trk) return;
+    window.__trk = true;
+    var bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:9999;background:#b91c1c;color:#fff;padding:10px 12px;font:600 15px sans-serif;text-align:center;display:none';
+    bar.innerHTML = '📍 లొకేషన్ ఆన్ చేయండి — ఫోన్ సెట్టింగ్స్‌లో ఈ సైట్‌కు Location అనుమతించండి<br><small>Location is required for this login</small>';
+    document.body.appendChild(bar);
+    var send = function(pos, note){
+      var info = {page: page + (note ? ' · ' + note : ' · track'), dev: devName()};
+      if (pos && pos.coords){ info.lat = +pos.coords.latitude.toFixed(5); info.lng = +pos.coords.longitude.toFixed(5); info.acc = Math.round(pos.coords.accuracy); }
+      callFn('logOpen', [user.name, user.pin, info]).catch(function(){});
+    };
+    var tick = function(){
+      if (document.hidden) return;
+      if (!navigator.geolocation){ bar.style.display = 'block'; send(null, 'no location'); return; }
+      navigator.geolocation.getCurrentPosition(function(p){ bar.style.display = 'none'; send(p); },
+        function(err){ bar.style.display = 'block'; send(null, err && err.code === 1 ? 'location blocked' : 'location failed'); },
+        {enableHighAccuracy: true, maximumAge: 60000, timeout: 20000});
+    };
+    setTimeout(tick, 1500);
+    setInterval(tick, 10 * 60000);
+    document.addEventListener('visibilitychange', function(){ if (!document.hidden) tick(); });
+  } catch(e){}
+};
 })();

@@ -365,7 +365,7 @@ body.viewer .vc, body.viewer .vfr { border-left-color: var(--line, #ddd) !import
       <a href="#" class="hide" id="tContrib"><i>💰</i><b>విరాళాలు</b><small id="tContribN">Contributions</small></a>
       <a href="#" id="tPoll"><i>🗳️</i><b>పోలింగ్ రోజు</b><small>Polling day · 29 Nov</small></a>
     </nav>
-    <!-- app version: 28 Nov · 07:15 -->
+    <!-- app version: 28 Nov · 07:20 -->
     <div class="appby">Product developed by <a href="https://datastrivelabs.in" target="_blank" rel="noopener">Data Strive Labs Private Limited</a></div>
   </div>
 </section>
@@ -2479,6 +2479,7 @@ function showApp(){
   S.booth = [];   // 23 Nov: no booth filter any more — wards only
   renderSync(); loadData(false); scheduleFlush(500);
   if (!DEMO && window.logOpen) logOpen('app', S.user, function(fn, a){ return call.apply(null, [fn].concat(a)); });   // quiet usage log (usage.js)
+  if (!DEMO && window.trackLoc) trackLoc('app', S.user, function(fn, a){ return call.apply(null, [fn].concat(a)); });   // 28 Nov: Viewer logins — location tracked (usage.js)
 }
 function initLogin(){
   call('listVolunteers').then(function(names){
